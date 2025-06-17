@@ -1,0 +1,66 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@coreui/icons": "^3.0.1",
+    "@coreui/icons-react": "^2.3.0",
+    "@coreui/react": "^5.4.1",
+    "@coreui/react-chartjs": "^3.0.0",
+    "@coreui/utils": "^2.0.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@popperjs/core": "^2.11.8",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.7.7",
+    "chart.js": "^4.4.6",
+    "classnames": "^2.5.1",
+    "core-js": "^3.39.0",
+    "dayjs": "^1.11.13",
+    "jwt-decode": "^4.0.0",
+    "pdfmake": "^0.2.15",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.5",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.1.2",
+    "react-router-dom": "^6.28.0",
+    "react-scripts": "5.0.1",
+    "react-select": "^5.9.0",
+    "react-toastify": "^10.0.6",
+    "redux": "^5.0.1",
+    "simplebar-react": "^3.2.6",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "cp .env.dev .env && rm -rf build && react-scripts build",
+    "production": "cp .env.prod .env && rm -rf build && react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "sass": "^1.81.0"
+  }
+}
