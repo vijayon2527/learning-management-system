@@ -1,0 +1,31 @@
+.hero-section {
+  width: 100%;
+  overflow: hidden;
+}
+
+.hero-image {
+  width: 100%;
+  height: clamp(40vh, 60vh, 80vh);
+  object-fit: cover;
+}
+
+/* Tablet screens */
+@media (max-width: 1024px) {
+  .hero-image {
+    height: 60vh;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  .hero-image {
+    height: 50vh;
+  }
+}
+
+/* Extra small devices (very narrow phones) */
+@media (max-width: 480px) {
+  .hero-image {
+    height: 40vh;
+  }
+}

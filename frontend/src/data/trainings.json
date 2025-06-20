@@ -1,0 +1,62 @@
+[
+    {
+        "img": "/assets/images/trainings/training1.jpg",
+        "img_hover": "/assets/images/trainings/training1_1.jpg",
+        "title": "Six Sigma Green Belt Strategic Robotic Process Automation",
+        "price": "$699.00"
+    },
+    {
+        "img": "/assets/images/trainings/training2.jpg",
+        "img_hover": "/assets/images/trainings/training2_1.jpg",
+        "title": "DIP IFRS ACCA UK Instructor Led Online Training",
+        "price": "$1,199.00"
+    },
+    {
+        "img": "/assets/images/trainings/training3.jpg",
+        "img_hover": "/assets/images/trainings/training3_1.jpg",
+        "title": "Human Resource Analytics Instructor Led Online Training",
+        "price": "$699.00"
+    },
+    {
+        "img": "/assets/images/trainings/training4.jpg",
+        "img_hover": "/assets/images/trainings/training4_1.jpg",
+        "title": "CFA Level 1 Preparatory Course",
+        "price": "$1,599.00"
+    },
+    {
+        "img": "/assets/images/trainings/training1.jpg",
+        "img_hover": "/assets/images/trainings/training1_1.jpg",
+        "title": "Six Sigma Green Belt Strategic Robotic Process Automation",
+        "price": "$699.00"
+    },
+    {
+        "img": "/assets/images/trainings/training2.jpg",
+        "img_hover": "/assets/images/trainings/training2_1.jpg",
+        "title": "DIP IFRS ACCA UK Instructor Led Online Training",
+        "price": "$1,199.00"
+    },
+    {
+        "img": "/assets/images/trainings/training3.jpg",
+        "img_hover": "/assets/images/trainings/training3_1.jpg",
+        "title": "Human Resource Analytics Instructor Led Online Training",
+        "price": "$699.00"
+    },
+    {
+        "img": "/assets/images/trainings/training4.jpg",
+        "img_hover": "/assets/images/trainings/training4_1.jpg",
+        "title": "CFA Level 1 Preparatory Course",
+        "price": "$1,599.00"
+    },
+     {
+        "img": "/assets/images/trainings/training1.jpg",
+        "img_hover": "/assets/images/trainings/training1_1.jpg",
+        "title": "Six Sigma Green Belt Strategic Robotic Process Automation",
+        "price": "$699.00"
+    },
+    {
+        "img": "/assets/images/trainings/training2.jpg",
+        "img_hover": "/assets/images/trainings/training2_1.jpg",
+        "title": "DIP IFRS ACCA UK Instructor Led Online Training",
+        "price": "$1,199.00"
+    }
+]

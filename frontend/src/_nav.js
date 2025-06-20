@@ -1,7 +1,7 @@
 import React from 'react'
 import CIcon from '@coreui/icons-react'
-import {cilStar, cilSpeedometer, cilBuilding, cilShieldAlt,cilGroup, cilBook} from '@coreui/icons';
-import { CNavGroup, CNavItem } from '@coreui/react'
+import { cilSpeedometer, cilBuilding, cilShieldAlt,cilGroup, cilBook} from '@coreui/icons';
+import { CNavItem } from '@coreui/react'
 import Roles from './components/common/Roles';
 
 const _nav = [

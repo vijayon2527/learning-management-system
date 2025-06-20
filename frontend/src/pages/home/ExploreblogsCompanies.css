@@ -1,0 +1,56 @@
+.explore-blogs-banner {
+  width: 100%;
+  margin-top: 3rem;
+}
+
+.explore-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.explore-blogs-companies {
+  padding: 0.75rem 4rem;
+}
+
+.company-logo-slide {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 3rem;
+}
+
+.company-logo-slide img {
+  max-height: 100px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.explore-blogs-companies
+.slick-dots {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  gap: 0.1rem;
+}
+
+.explore-blogs-companies .slick-dots li button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--text-color-light);
+  opacity: 1;
+  transition: background-color 0.3s ease;
+}
+
+/* Remove default before pseudo-element */
+.explore-blogs-companies .slick-dots li button:before {
+  content: none;
+}
+
+/* Active dot */
+.explore-blogs-companies .slick-dots li.slick-active button {
+  background-color: var(--secondary-elements-background);
+}

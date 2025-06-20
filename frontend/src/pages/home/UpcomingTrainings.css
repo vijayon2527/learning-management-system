@@ -1,0 +1,100 @@
+.upcoming-trainings {
+  width: 100%;
+  padding: 2rem 1rem;
+  background: var(--navigation-background);
+  text-align: center;
+}
+
+.training-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+  padding: 1rem 2rem;
+  margin: 2rem auto;
+}
+
+@media screen and (min-width: 1024px) {
+  .training-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.training-card {
+  background: transparent;
+  text-align: center;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.card-img {
+  width: 100%;
+  height: auto;
+  transition: opacity 0.4s ease-in-out;
+  display: block;
+}
+
+.hover-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.image-wrapper:hover .hover-img {
+  opacity: 1;
+}
+
+.card-text {
+  margin-top: 1rem;
+}
+
+.card-price {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-color);
+  margin-top: 0.4rem;
+}
+
+.view-all-container {
+  margin-top: 1rem;
+}
+
+.view-all-btn {
+  background-color: var(--button-background);
+  color: var(--button-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.15rem;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.explore-blogs-banner {
+  width: 100%;
+  margin-top: 3rem;
+}
+
+.explore-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+
+@media (max-width: 480px) {
+  .training-cards {
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    margin: 1rem auto;
+  }
+
+}
