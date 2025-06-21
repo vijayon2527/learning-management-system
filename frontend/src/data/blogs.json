@@ -1,0 +1,152 @@
+[
+  {
+    "feature": {
+      "title": "Corporate Training",
+      "description": "Are you tracking your business performance metrics regularly? Can your team perform better if given regular upskilling training? Learn the insights you need from our corporate training blogs to upscale your business.",
+      "backgroundColor": "#0d4e94"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "How Do Professional Courses Help in Career Development?",
+        "description": "Success and career advancement in the fast-paced, constantly-evolving job market of today depend on ongoing education and professional development....",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "How to identify training needs of your employees?",
+        "description": "Identifying the training needs of your employees is one of the most important aspects of running a successful business. Having an und...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  },
+  {
+    "feature": {
+      "title": "Finance & Accounting",
+      "description": "Our goal is to provide an indispensable resource for finance professionals and students alike to help them stay ahead of the curve.",
+      "backgroundColor": "#effeff"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "Unlock Global Accounting Skills with IFRS Certification",
+        "description": "Today, the financial world is deeply interconnected. It has now become a necessity to have a common accounting language...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "Preparing for the CFA Exam: Strategies for Success in 2025",
+        "description": "The CFA exam is a globally recognized certification that forms a strong base in the career for any finance professional...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "Unlock Your Career Potential with IFRS Certification and Courses",
+        "description": "The world economy is becoming a global village, and companies operate across boundaries. Accordingly, the requirement for a single standard financi...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  },
+  {
+    "feature": {
+      "title": "Quality Management",
+      "description": "Are you tracking your business performance metrics regularly? Can your team perform better if given regular upskilling training? Learn the insights you need from our corporate training blogs to upscale your business.",
+      "backgroundColor": "#0d9438"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "How Do Professional Courses Help in Career Development?",
+        "description": "Success and career advancement in the fast-paced, constantly-evolving job market of today depend on ongoing education and professional development....",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "How to identify training needs of your employees?",
+        "description": "Identifying the training needs of your employees is one of the most important aspects of running a successful business. Having an und...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  },
+   {
+    "feature": {
+      "title": "Project Management",
+      "description": "Our goal is to provide an indispensable resource for finance professionals and students alike to help them stay ahead of the curve.",
+      "backgroundColor": "#fff5f5"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "Unlock Global Accounting Skills with IFRS Certification",
+        "description": "Today, the financial world is deeply interconnected. It has now become a necessity to have a common accounting language...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "Preparing for the CFA Exam: Strategies for Success in 2025",
+        "description": "The CFA exam is a globally recognized certification that forms a strong base in the career for any finance professional...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "Unlock Your Career Potential with IFRS Certification and Courses",
+        "description": "The world economy is becoming a global village, and companies operate across boundaries. Accordingly, the requirement for a single standard financi...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  },
+  {
+    "feature": {
+      "title": "Digital Marketing",
+      "description": "Are you tracking your business performance metrics regularly? Can your team perform better if given regular upskilling training? Learn the insights you need from our corporate training blogs to upscale your business.",
+      "backgroundColor": "#0ca5af"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/angular.jpg",
+        "title": "How Do Professional Courses Help in Career Development?",
+        "description": "Success and career advancement in the fast-paced, constantly-evolving job market of today depend on ongoing education and professional development....",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/react.jpg",
+        "title": "How to identify training needs of your employees?",
+        "description": "Identifying the training needs of your employees is one of the most important aspects of running a successful business. Having an und...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  },
+  {
+    "feature": {
+      "title": "Digital Transformation",
+      "description": "Our goal is to provide an indispensable resource for finance professionals and students alike to help them stay ahead of the curve.",
+      "backgroundColor": "#eefff6"
+    },
+    "blogs": [
+      {
+        "image": "/assets/images/vue.jpg",
+        "title": "Unlock Global Accounting Skills with IFRS Certification",
+        "description": "Today, the financial world is deeply interconnected. It has now become a necessity to have a common accounting language...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/vue.jpg",
+        "title": "Preparing for the CFA Exam: Strategies for Success in 2025",
+        "description": "The CFA exam is a globally recognized certification that forms a strong base in the career for any finance professional...",
+        "link": "#"
+      },
+      {
+        "image": "/assets/images/vue.jpg",
+        "title": "Unlock Your Career Potential with IFRS Certification and Courses",
+        "description": "The world economy is becoming a global village, and companies operate across boundaries. Accordingly, the requirement for a single standard financi...",
+        "link": "#"
+      }
+    ],
+    "buttonText": "VIEW ALL"
+  }
+]

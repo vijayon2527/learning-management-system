@@ -1,0 +1,317 @@
+.nav-link-container {
+  gap: 2rem;
+}
+
+.nav-icon{
+  font-size: var(--icon-size);
+}
+
+.nav-link, .dropdown-nav-link {
+  position: relative;
+  text-decoration: none;
+  padding: 1rem 0 !important;
+  font-size: var(--font-size-small) !important;
+  color: var(--text-color) !important;
+}
+.nav-link-container .nav-link, .dropdown-nav-link {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.5rem;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 0.1rem;
+  width: 0%;
+  background-color: var(--secondary-elements-background);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+.nav-dropdown:hover .nav-dropdown-menu {
+  display: block;
+}
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.5rem;
+}
+
+.nav-dropdown .nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 97%;
+  left: 0;
+  background: var(--light-background);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  min-width: 200px;
+  z-index: 1000;
+  padding: 0.5rem;
+}
+.nav-dropdown:hover::after {
+  width: 100%;
+}
+.nav-dropdown-menu .dropdown-underline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0.1rem;
+  width: 0%;
+  background-color: var(--secondary-elements-background);
+  transition: width 0.5s ease;
+}
+
+.nav-dropdown-menu.hovered .dropdown-underline {
+  width: 100%;
+}
+.dropdown-nav-link {
+  position: relative;
+  cursor: pointer;
+}
+
+.dropdown-item {
+  display: block;
+  color: var(--text-color) !important;
+  font-size: var(--font-size-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-background-color) !important;
+  color: var(--header-heading-color) !important;
+}
+
+
+.mobile-toggler {
+  display: none;
+  cursor: pointer;
+}
+
+/* Hamburger icon */
+.menu-icon {
+  font-size: var(--font-size-xlarge);
+  cursor: pointer;
+}
+
+/* Drawer */
+.mobile-menu-drawer {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 250px;
+  background-color: var(--light-background);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease-in-out;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.mobile-menu-drawer.open {
+  transform: translateX(0);
+}
+
+/* Backdrop */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  z-index: 150;
+}
+
+.backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Remove Bootstrap's default accordion arrow */
+.accordion-button::after {
+  display: none !important;
+}
+
+.accordion-item {
+  border: none !important;
+}
+
+/* Align custom + / − icon properly */
+.toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  padding-left: 1rem !important;
+  padding-right: 0 !important;
+  padding-top: 0rem !important;
+  background-color: var(--light-background);  
+}
+
+.mobile-menu-drawer .nav-item,
+.mobile-menu-drawer .accordion-button {
+  font-size: var(--font-size-medium);
+  color: var(--navigation-text-color) !important;
+  text-decoration: none;
+  padding: 0.75rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none !important;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid var(--navigation-border-color);
+  border-radius: 0 !important;
+}
+
+.mobile-menu-drawer {
+  overflow-y: auto;
+}
+
+.accordion-button:focus, .accordion-body .accordion-button {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1024px) {
+  .mobile-toggler {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-link-container {
+    display: none !important;
+  }
+}
+
+.header-wrapper.search-active::before {
+    content: '';
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 70px);
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+}
+.sticky-top {
+    position: sticky;
+    z-index: 1060 !important;
+    background-color: var(--light-background);
+}
+
+
+.search-overlay {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    background: var(--light-background);
+    z-index: 1061 !important;
+    animation: slideDown 0.3s ease-in-out;
+}
+
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.search-container {
+    margin:  auto;
+    padding: 1rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-input {
+    flex-grow: 1;
+    border: none;
+    font-size: 20px;
+    outline: none;
+    padding: 0.5rem;
+}
+
+.search-icon {
+    color: var( --text-color-light);
+}
+.close-btn {
+    font-size: 2.2rem;
+    color: var(--text-color-light);
+    cursor: pointer;
+}
+
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 380px;
+  max-width: 90%;
+  background-color: var(--light-background);
+  z-index: 1062;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s ease forwards;
+}
+.cart-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1061;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cart-header h3 {
+  margin: 0;
+}
+
+.cart-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
