@@ -1,8 +1,10 @@
 import React, { Suspense, useEffect, useContext } from 'react'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { CSpinner, useColorModes } from '@coreui/react'
+
 import './scss/style.scss'
 import './scss/examples.scss'
+import "./styles/root.css";
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -10,6 +12,11 @@ import AuthContext, { AuthProvider } from './components/context/AuthContext'
 import VerifyEmail from './components/users/VerifyEmail'
 import PrivateRoute from './components/common/PrivateRoute'
 import Courses from './components/Courses'
+
+import PageRoutes from './routes/PageRoutes'
+
+import 'aos/dist/aos.css';
+import AOS from 'aos';
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -40,6 +47,13 @@ const App = () => {
     }
   }, [isColorModeSet, setColorMode])
 
+   useEffect(() => {
+    AOS.init({
+      duration: 800, // animation duration
+      once: true     // whether animation should happen only once
+    });
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -52,8 +66,8 @@ const App = () => {
           }
         >
           <Routes>
-            {/* Use AuthRoute to prevent logged-in users from accessing login/register */}
-            <Route exact path="/" name="Login Page" element={
+            {/* Auth-protected routes */}
+            <Route exact path="/login" name="Login Page" element={
               <AuthRoute>
                 <Login />
               </AuthRoute>
@@ -63,11 +77,13 @@ const App = () => {
                 <Register />
               </AuthRoute>
             } />
-            <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail/>} />
+            <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />
             <Route exact path="/course" name="Courses" element={<Courses />} />
-            {/* Protect DefaultLayout */}
+        
+            {PageRoutes}
+
             <Route
               path="*"
               name="Home"
@@ -79,6 +95,7 @@ const App = () => {
             />
           </Routes>
         </Suspense>
+
       </AuthProvider>
     </BrowserRouter>
   )

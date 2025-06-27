@@ -1,0 +1,46 @@
+.recently-viewed {
+  border-top: 2px solid var(--border-color);
+  padding: 2rem 0;
+}
+
+.recently-viewed .section-title {
+  margin-bottom: 3rem;
+}
+
+.recent-cards-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;        /* Firefox */
+  margin: auto 1rem;
+}
+
+.recent-cards-scroll::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
+}
+
+.recent-cards-wrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2rem;
+  width: max-content;
+  padding: 0 1rem;
+}
+
+.recently-viewed .training-card {
+  flex: 0 0 auto;
+  width: 280px;
+}
+
+@media screen and (min-width: 1007px) {
+  .recent-cards-scroll {
+    overflow: hidden;
+  }
+
+  .recent-cards-wrapper {
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 0;
+  }
+}

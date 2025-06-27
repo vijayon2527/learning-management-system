@@ -2,16 +2,16 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import {
-  CButton, 
-  CCard, 
-  CCardBody, 
-  CCol, 
+  CButton,
+  CCard,
+  CCardBody,
+  CCol,
   CContainer,
-  CForm, 
+  CForm,
   CFormInput,
-  CInputGroup, 
+  CInputGroup,
   CInputGroupText,
-  CRow, 
+  CRow,
   CSpinner,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
@@ -20,9 +20,9 @@ import AuthContext from '../../../components/context/AuthContext';
 
 const Login = () => {
   const { loginUser } = useContext(AuthContext);
-  const [formData, setFormData] = useState({ 
-    email: '', 
-    password: '', 
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -30,18 +30,25 @@ const Login = () => {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
-    if (code) handleGitHubExchange(code);
-    loadFacebookSDK();
-  }, []);
 
-  const handleGitHubExchange = async (code) => {
-    try {
-      await loginUser({ provider: 'github', code });
-      navigate('/dashboard');
-    } catch {
-      setErrors({ general: 'GitHub login failed.' });
+    const handleGitHubExchange = async (code) => {
+      try {
+        await loginUser({ provider: 'github', code });
+        // Clean up URL
+        window.history.replaceState(null, '', window.location.pathname);
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('GitHub login failed:', error);
+        setErrors({ general: 'GitHub login failed.' });
+      }
+    };
+
+    if (code) {
+      handleGitHubExchange(code);
     }
-  };
+
+    loadFacebookSDK();
+  }, [loginUser, navigate]);
 
   const loadFacebookSDK = () => {
     if (window.FB) return;
@@ -61,13 +68,16 @@ const Login = () => {
 
   const handleFacebookLogin = () => {
     if (!window.FB) return setErrors({ general: 'Facebook SDK not loaded.' });
-    window.FB.login((res) => {
-      if (res.authResponse) {
-        loginUser({ provider: 'facebook', access_token: res.authResponse.accessToken })
-          .then(() => navigate('/dashboard'))
-          .catch(() => setErrors({ general: 'Facebook login failed.' }));
-      }
-    }, { scope: 'email,public_profile' });
+    window.FB.login(
+      (res) => {
+        if (res.authResponse) {
+          loginUser({ provider: 'facebook', access_token: res.authResponse.accessToken })
+            .then(() => navigate('/dashboard'))
+            .catch(() => setErrors({ general: 'Facebook login failed.' }));
+        }
+      },
+      { scope: 'email,public_profile' }
+    );
   };
 
   const handleGoogleLoginSuccess = async ({ credential }) => {
@@ -83,8 +93,7 @@ const Login = () => {
     const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
     if (!clientId) return console.error('Missing GitHub client ID');
     const redirectUri = window.location.origin;
-    window.location.href =
-      `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
   };
 
   const handleChange = (e) => {
@@ -94,12 +103,9 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    
     if (!formData.password) newErrors.password = 'Password is required';
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -128,7 +134,9 @@ const Login = () => {
               <h1 className="text-center mb-4">Login</h1>
               <CForm onSubmit={handleSubmit}>
                 <CInputGroup className="mb-3">
-                  <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
+                  <CInputGroupText>
+                    <CIcon icon={cilUser} />
+                  </CInputGroupText>
                   <CFormInput
                     placeholder="Email"
                     name="email"
@@ -142,7 +150,7 @@ const Login = () => {
                 <CInputGroup className="mb-3">
                   <CInputGroupText>
                     <CIcon icon={cilLockLocked} />
-                    </CInputGroupText>
+                  </CInputGroupText>
                   <CFormInput
                     type="password"
                     placeholder="Password"
@@ -160,12 +168,10 @@ const Login = () => {
                 </CButton>
               </CForm>
 
-              {/* Social Section Header */}
               <div className="text-center my-3">
                 <strong className="text-muted">— Continue with a Social Account —</strong>
               </div>
 
-              {/* Social Login Buttons */}
               <div className="d-grid gap-2">
                 <div className="d-grid gap-2 mb-2">
                   <GoogleLogin
@@ -196,7 +202,6 @@ const Login = () => {
                 </CButton>
               </div>
 
-              {/* Footer */}
               <div className="text-center mt-4">
                 <Link to="/forgot-password">Forgot Password?</Link>
                 <span className="mx-2">|</span>
