@@ -1,13 +1,22 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import {
-  CButton, CCard, CCardBody, CCol, CContainer, CForm,
-  CFormInput, CFormSelect, CInputGroup, CInputGroupText, CRow, CSpinner
+  CButton,
+  CCard,
+  CCardBody,
+  CCol,
+  CContainer,
+  CForm,
+  CFormInput,
+  CInputGroup,
+  CInputGroupText,
+  CRow,
+  CSpinner,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
 import AuthContext from '../../../components/context/AuthContext';
-import axiosInstance from '../../../utils/axiosInstance';
 
 const Login = () => {
   const { loginUser } = useContext(AuthContext);
@@ -16,26 +25,87 @@ const Login = () => {
     password: '',
   });
   const [errors, setErrors] = useState({});
-  const [roles, setRoles] = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+
+    const handleGitHubExchange = async (code) => {
+      try {
+        await loginUser({ provider: 'github', code });
+        // Clean up URL
+        window.history.replaceState(null, '', window.location.pathname);
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('GitHub login failed:', error);
+        setErrors({ general: 'GitHub login failed.' });
+      }
+    };
+
+    if (code) {
+      handleGitHubExchange(code);
+    }
+
+    loadFacebookSDK();
+  }, [loginUser, navigate]);
+
+  const loadFacebookSDK = () => {
+    if (window.FB) return;
+    window.fbAsyncInit = () => {
+      window.FB.init({
+        appId: process.env.REACT_APP_FACEBOOK_APP_ID,
+        cookie: true,
+        xfbml: true,
+        version: 'v18.0',
+      });
+    };
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/en_US/sdk.js';
+    script.async = true;
+    document.body.appendChild(script);
+  };
+
+  const handleFacebookLogin = () => {
+    if (!window.FB) return setErrors({ general: 'Facebook SDK not loaded.' });
+    window.FB.login(
+      (res) => {
+        if (res.authResponse) {
+          loginUser({ provider: 'facebook', access_token: res.authResponse.accessToken })
+            .then(() => navigate('/dashboard'))
+            .catch(() => setErrors({ general: 'Facebook login failed.' }));
+        }
+      },
+      { scope: 'email,public_profile' }
+    );
+  };
+
+  const handleGoogleLoginSuccess = async ({ credential }) => {
+    try {
+      await loginUser({ provider: 'google', access_token: credential });
+      navigate('/dashboard');
+    } catch {
+      setErrors({ general: 'Google login failed.' });
+    }
+  };
+
+  const handleGitHubLogin = () => {
+    const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    if (!clientId) return console.error('Missing GitHub client ID');
+    const redirectUri = window.location.origin;
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    setErrors({ ...errors, [name]: '' });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: '' });
   };
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    
     if (!formData.password) newErrors.password = 'Password is required';
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -57,57 +127,91 @@ const Login = () => {
 
   return (
     <CContainer className="d-flex justify-content-center align-items-center vh-100">
-    <CRow>
-      <CCol md={12}>
-        <CCard className="p-4">
-          <CCardBody>
-            <CForm onSubmit={handleSubmit}>
+      <CRow>
+        <CCol md={12}>
+          <CCard className="p-4 shadow-sm rounded-4">
+            <CCardBody>
               <h1 className="text-center mb-4">Login</h1>
-              
-              <CInputGroup className="mb-3">
-                <CInputGroupText>
-                  <CIcon icon={cilUser} />
-                </CInputGroupText>
-                <CFormInput
-                  placeholder="Email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={errors.email ? 'is-invalid' : ''}
-                />
-              </CInputGroup>
-              {errors.email && <div className="text-danger">{errors.email}</div>}
-  
-              <CInputGroup className="mb-3">
-                <CInputGroupText>
-                  <CIcon icon={cilLockLocked} />
-                </CInputGroupText>
-                <CFormInput
-                  type="password"
-                  placeholder="Password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={errors.password ? 'is-invalid' : ''}
-                />
-              </CInputGroup>
-              {errors.password && <div className="text-danger">{errors.password}</div>}
-  
-              <CButton type="submit" color="primary" className="w-100" disabled={loading}>
-                {loading ? <CSpinner size="sm" /> : 'Login'}
-              </CButton>
-            </CForm>
-  
-            <div className="text-center mt-3">
-              <Link to="/forgot-password">Forgot Password?</Link>
-              <span className="mx-2">|</span>
-              <Link to="/register">Register</Link>
-            </div>
-          </CCardBody>
-        </CCard>
-      </CCol>
-    </CRow>
-  </CContainer>
+              <CForm onSubmit={handleSubmit}>
+                <CInputGroup className="mb-3">
+                  <CInputGroupText>
+                    <CIcon icon={cilUser} />
+                  </CInputGroupText>
+                  <CFormInput
+                    placeholder="Email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={errors.email ? 'is-invalid' : ''}
+                  />
+                </CInputGroup>
+                {errors.email && <div className="text-danger">{errors.email}</div>}
+
+                <CInputGroup className="mb-3">
+                  <CInputGroupText>
+                    <CIcon icon={cilLockLocked} />
+                  </CInputGroupText>
+                  <CFormInput
+                    type="password"
+                    placeholder="Password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={errors.password ? 'is-invalid' : ''}
+                  />
+                </CInputGroup>
+                {errors.password && <div className="text-danger">{errors.password}</div>}
+                {errors.general && <div className="text-danger mb-2">{errors.general}</div>}
+
+                <CButton type="submit" color="primary" className="w-100 mb-3" disabled={loading}>
+                  {loading ? <CSpinner size="sm" /> : 'Login'}
+                </CButton>
+              </CForm>
+
+              <div className="text-center my-3">
+                <strong className="text-muted">— Continue with a Social Account —</strong>
+              </div>
+
+              <div className="d-grid gap-2">
+                <div className="d-grid gap-2 mb-2">
+                  <GoogleLogin
+                    onSuccess={handleGoogleLoginSuccess}
+                    onError={() => console.log('Google login failed')}
+                    useOneTap
+                    shape="pill"
+                    width="100%"
+                  />
+                </div>
+
+                <CButton
+                  color="primary"
+                  className="d-flex align-items-center justify-content-center gap-2"
+                  onClick={handleFacebookLogin}
+                >
+                  <i className="bi bi-facebook fs-5"></i>
+                  Continue with Facebook
+                </CButton>
+
+                <CButton
+                  color="dark"
+                  className="d-flex align-items-center justify-content-center gap-2"
+                  onClick={handleGitHubLogin}
+                >
+                  <i className="bi bi-github fs-5"></i>
+                  Continue with GitHub
+                </CButton>
+              </div>
+
+              <div className="text-center mt-4">
+                <Link to="/forgot-password">Forgot Password?</Link>
+                <span className="mx-2">|</span>
+                <Link to="/register">Register</Link>
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+    </CContainer>
   );
 };
 

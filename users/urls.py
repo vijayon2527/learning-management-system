@@ -15,5 +15,6 @@ urlpatterns = [
     path('activate-deactivate/<int:pk>/', views.UserActivateDeactivateView.as_view(), name='user_activate_deactivate'),
     path('profile/', views.UserProfileView.as_view(), name='user_profile'),
     path('profile_pic/',views.ProfilePictureView.as_view(),name='user_profilepic'),
+    path('set-password/', views.SetPasswordView.as_view(), name='set-password'),
 
 ]
