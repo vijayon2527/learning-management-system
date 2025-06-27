@@ -13,8 +13,8 @@ export const AuthProvider = ({ children }) => {
 
   // Utility: Retrieve stored tokens
   const getStoredTokens = () => {
-    const storedTokens = localStorage.getItem('authTokens');
-    return storedTokens ? JSON.parse(storedTokens) : null;
+    const stored = localStorage.getItem('authTokens');
+    return stored ? JSON.parse(stored) : null;
   };
 
   // States
@@ -29,38 +29,79 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Utility: Show notifications
+ // Utility: Show notifications
   const notify = (msg, type = 'success') => {
     type === 'error' ? toast.error(msg) : toast.success(msg);
   };
 
-  // Login
-  const loginUser = async (credentials) => {
-    try {
-      const response = await axiosInstance.post('api/users/token/', credentials);
-      const { access, refresh, role } = response.data;
-      const decodedUser = jwtDecode(access);
-  
-      const updatedUser = {
-        ...decodedUser,
-        role: role || "",
-      };
-  
-      setAuthTokens({ access, refresh, role });
-      setUser(updatedUser);
-      localStorage.setItem(
-        'authTokens',
-        JSON.stringify({ access, refresh, role })
-      );
-  
-      notify('Logged in successfully.');
-      navigate('/dashboard');
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
-      notify(errorMsg, 'error');
+// Login
+//   const loginUser = async (credentials) => {
+//     try {
+//       let response;
+
+//       if (credentials.email && credentials.password) {
+//         response = await axiosInstance.post('/api/users/token/', credentials);
+//       } else if (credentials.access_token) {
+//         response = await axiosInstance.post('/api/users/token/', {
+//           access_token: credentials.access_token,
+//         });
+//       } else {
+//         throw new Error('Invalid login credentials');
+//       }
+
+//       const { access, refresh, role } = response.data;
+//       const decoded = jwtDecode(access);
+//       const updatedUser = { ...decoded, role };
+
+//       setAuthTokens({ access, refresh, role });
+//       setUser(updatedUser);
+//       localStorage.setItem('authTokens', JSON.stringify({ access, refresh, role }));
+//       notify('Logged in successfully.');
+//       navigate('/dashboard');
+//     } catch (error) {
+//       const errMsg = error.response?.data?.detail || 'Login failed. Please try again.';
+//       notify(errMsg, 'error');
+//     }
+//   };
+
+
+const loginUser = async (credentials) => {
+  try {
+    let response;
+
+      if (credentials.email && credentials.password) {
+      response = await axiosInstance.post('/api/users/token/', credentials);
+    } else if (credentials.provider) {
+      response = await axiosInstance.post('/api/users/token/', {
+        access_token: credentials.access_token,
+        provider: credentials.provider,
+        code: credentials.code || null,
+      });
+
+    } else {
+      throw new Error('Invalid login credentials');
     }
-  };
+
+
+    const { access, refresh, role } = response.data;
+    const decoded = jwtDecode(access);
+    const updatedUser = { ...decoded, role };
+
+    setAuthTokens({ access, refresh, role });
+    setUser(updatedUser);
+    localStorage.setItem(
+      'authTokens', 
+      JSON.stringify({ access, refresh, role })
+    );
   
+    notify('Logged in successfully.');
+    navigate('/dashboard');
+  } catch (error) {
+    const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
+    notify(errorMsg, 'error');
+  }
+};
+
   // Logout
   const logoutUser = () => {
     setAuthTokens(null);
@@ -77,14 +118,12 @@ export const AuthProvider = ({ children }) => {
         refresh: authTokens.refresh,
       });
       const { access, role } = response.data;
-      const decodedUser = jwtDecode(access);
+      const decoded = jwtDecode(access);
 
-      setAuthTokens((prev) => ({ ...prev, access, role: role || "" }));
-      setUser({ ...decodedUser, role: role || [] });
-      localStorage.setItem(
-        'authTokens',
-        JSON.stringify({ ...authTokens, access, role: role || "" })
-      );
+      const updatedTokens = { ...authTokens, access, role };
+      setAuthTokens(updatedTokens);
+      setUser({ ...decoded, role });
+      localStorage.setItem('authTokens', JSON.stringify(updatedTokens));
     } catch (error) {
       console.error('Token refresh failed:', error);
       logoutUser();
@@ -98,22 +137,13 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const scheduleRefresh = () => {
-      const decoded = jwtDecode(authTokens.access);
-      const tokenExpirationTime = dayjs.unix(decoded.exp);
-      const timeUntilExpiration = tokenExpirationTime.diff(dayjs(), 'milliseconds');
+    const decoded = jwtDecode(authTokens.access);
+    const expiration = dayjs.unix(decoded.exp);
+    const timeUntilExpiry = expiration.diff(dayjs(), 'milliseconds');
 
-      if (timeUntilExpiration > 0) {
-        return setTimeout(refreshToken, timeUntilExpiration - 60 * 1000); // Refresh 1 min before expiration
-      }
-
-      refreshToken();
-    };
-
-    const refreshTimeout = scheduleRefresh();
+    const timeout = setTimeout(() => refreshToken(), timeUntilExpiry - 60 * 1000);
     setLoading(false);
-
-    return () => clearTimeout(refreshTimeout);
+    return () => clearTimeout(timeout);
   }, [authTokens]);
 
   // Sync with Local Storage Changes
@@ -124,8 +154,8 @@ export const AuthProvider = ({ children }) => {
         setAuthTokens(newTokens);
 
         if (newTokens) {
-          const decodedUser = jwtDecode(newTokens.access);
-          setUser({ ...decodedUser, role: newTokens.role || "" });
+          const decoded = jwtDecode(newTokens.access);
+          setUser({ ...decoded, role: newTokens.role || "" });
         } else {
           setUser(null);
           notify('Session ended. Please log in again.', 'error');
