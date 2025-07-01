@@ -1,0 +1,133 @@
+.sidebar-wrapper {
+  cursor: pointer;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between !important;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 10px;
+}
+.sidebar-header h3{
+    font-weight: var(--font-weight-bold) !important;
+}
+.sidebar-close-icon {
+  cursor: pointer;
+  font-size: var(--font-size-large);
+}
+
+.sidebar-section {
+    font-size: var(--font-size-small);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-section-header {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.sidebar-section-meta {
+  font-size: 12px;
+  padding: 0 0 0.5rem 0;
+}
+
+.sidebar-lectures-wrapper {
+   padding: 0.2rem;
+}
+
+.sidebar-lecture {
+ padding: 0.5rem;
+  transition: background 0.2s ease;
+}
+.sidebar-lecture:hover {
+  background-color: var(--hover-background-color);
+}
+.lecture-top {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.lecture-info {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.custom-checkbox {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #006eff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  background-color: white;
+  margin-right: 6px;
+}
+
+.custom-checkbox.checked {
+  background-color: #006eff;
+  border-color: #006eff;
+}
+
+.custom-checkbox .tick {
+  color: white;
+  font-size: 11px;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+
+
+.lecture-number {
+  font-weight: 500;
+}
+.lecture-title {
+  flex: 1;
+}
+
+.lecture-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 1.4rem;
+  font-size: var(--font-size-small);
+color: var(--text-color);
+}
+
+.lecture-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.lecture-meta .play-icon{
+    font-size: var(--font-size-small);
+    margin-bottom: 1px;
+}
+.resources-btn {
+  border: 1px solid var(--link-color);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  background: transparent;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--link-color);
+  cursor: pointer;
+}
+
+@media (max-width: 980px){
+  .sidebar-header{
+    display: none !important;
+  }
+}

@@ -8,7 +8,6 @@ const UserList = React.lazy(() => import('./components/users/UserList'));
 
 const CourseCategoryList = React.lazy(() => import('./components/courses/categories/CourseCategoryList'));
 const CourseList = React.lazy(() => import('./components/courses/CourseList'));
-const SetPassword = React.lazy(() => import('./views/pages/login/SetPassword'));
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -49,14 +48,6 @@ const routes = [
     path: '/dashboard/course-list', 
     name: 'course list', 
     element: CourseList, 
-    requiredPermissions: [
-      Permissions.VIEW_ROLE,
-    ] 
-  },
-   { 
-    path: '/dashboard/set-password', 
-    name: 'set password', 
-    element: SetPassword, 
     requiredPermissions: [
       Permissions.VIEW_ROLE,
     ] 
