@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1,
+    "title": "Beginner Full Stack Web Development",
+    "sections": [
+      {
+        "id": 1,
+        "title": "Section 1: Introduction",
+        "lectures": [
+          { "id": 1, "title": "Intro to Web Development", "duration": "8min" },
+          { "id": 2, "title": "Join Our Free Student Group", "duration": "1min" },
+          { "id": 3, "title": "What is web development?", "duration": "3min" }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Section 2: Getting Started With HTML",
+        "lectures": [
+          { "id": 4, "title": "HTML Basics", "duration": "5min" },
+          { "id": 5, "title": "Building a Simple HTML Page", "duration": "7min" }
+        ]
+      }
+    ]
+  }
+]

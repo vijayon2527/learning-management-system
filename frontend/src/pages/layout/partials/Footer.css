@@ -1,156 +1,86 @@
 .footer {
-    background-color: var(--footer-background);
-    color: var(--footer-text-color);
-    font-family: 'Poppins', sans-serif;
-    padding: 4rem;
+  background-color: var(--footer-background) !important;
+  color: var(--footer-text-color) !important;
 }
-
-.footer-top,
-.footer-middle {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: space-between;
-    margin-bottom: 3rem;
-}
-
-.footer-top > div {
-    flex: 1 1 22%;
-    min-width: 250px;
-}
-
-.footer-middle {
-    margin: 0 3rem;
-}
-
-.footer-section ul {
-    list-style: none;
-    padding: 0;
-}
-
-.footer-section ul li {
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.footer-section p,
-.footer-section a {
-    color: var(--footer-text-color);
-    line-height: 1.6;
-}
-
 .footer a {
-    color: var(--link-color) !important;
-    text-decoration: underline !important;
-    text-underline-offset: 4px;
+  color: var(--footer-text-color) !important;
+  text-decoration: none;
+}
+.footer .img-wrapper{
+    width: fit-content;
+    background-color: var(--light-background);
+    padding: 0.3rem;
+    margin-bottom: 0.8rem;
+}
+.footer img{
+    height: 50px;
 }
 
-.social-icons {
-    margin-top: 16px;
-    display: flex;
-    gap: 1.2rem;
-    flex-wrap: wrap;
+.footer h3 {
+  color: var(--footer-text-color) !important;
+  margin-bottom: 1rem;
 }
 
-.social-icons svg {
-    font-size: 24px;
+.footer p,
+.footer .text-muted,
+.footer .fw-bold,
+.footer .small {
+  color: var(--footer-text-color) !important;
+}
+.footer p{
+  text-align: left;
+}
+.footer .social-icons{
+  display: flex;
+  justify-content: center;
+  justify-content: flex-start;
+  gap: 2rem;
 }
 
-.footer-bottom {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    margin: 0 3rem;
-    font-size: var(--font-size-small);
+.scroll-to-top {
+  position: fixed;
+  bottom: 50px;
+  right: 20px;
+  background-color: var(--light-background);
+  color: var(--text-color);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: all 0.3s ease-in-out;
 }
 
-.payment-methods {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+.bottom-terms-privacy{
+  display: flex;
+  justify-content: flex-end;
 }
 
-.payment-methods svg {
-    width: 40px;
-    height: 40px;
+@media (max-width: 767px){
+.bottom-terms-privacy{
+    margin-top: 1rem;
+    justify-content: center;
+  }
 }
-
-/* Tablet view (≤1024px) */
-@media (max-width: 1024px) {
-    .footer {
-        padding: 3rem 2rem;
-    }
-
-    .footer-middle,
-    .footer-top {
-        gap: 2rem;
-        justify-content: center;
-    }
-
-    .footer-top > div {
-        flex: 1 1 45%;
-        min-width: 220px;
-    }
-
-    .footer-middle {
-        flex-direction: column;
-        margin: 0 1rem;
-    }
-
-    .footer-bottom {
-        flex-direction: column;
-        gap: 1rem;
-        margin: 0 1.5rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .footer {
-        padding: 2rem 1rem;
-    }
-
-    .footer-top,
-    .footer-middle {
-        flex-direction: column;
-        gap: 2rem;
-        margin: 0;
-    }
-
-    .footer-top > div {
-        flex: 1 1 100%;
-        min-width: 100%;
-    }
-   
-    .footer-bottom {
-        margin: 0;
-        gap: 1.2rem;
-        text-align: center;
-    }
-
-    .social-icons {
-        justify-content: center;
-        gap: 1rem;
-    }
-
-    .social-icons svg {
-        font-size: 20px;
-    }
-
-    .payment-methods {
-        justify-content: center;
-        gap: 0.8rem;
-    }
-
-    .payment-methods svg {
-        width: 36px;
-        height: 36px;
-    }
-}
-
-@media (max-width: 480px){
-    .footer-middle{
-        margin: 0 1rem;
-    }
+@media (max-width: 576px) {
+   .footer .col-6 {
+    width: 100%;
+  }
+  .copy-rights{
+    text-align: start;
+  }
+  .bottom-terms-privacy{
+    justify-content: flex-start;
+    padding: 0;
+  }
+  .scroll-to-top {
+    right: 10px;
+    bottom: 20px;
+    width: 36px;
+    height: 36px;
+  }
 }

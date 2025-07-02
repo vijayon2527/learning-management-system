@@ -9,7 +9,7 @@
 .nav-link, .dropdown-nav-link {
   position: relative;
   text-decoration: none;
-  padding: 1rem 0 !important;
+  padding: 0.8rem 0 !important;
   font-size: var(--font-size-small) !important;
   color: var(--text-color) !important;
 }
@@ -314,4 +314,172 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.nav-desktop-wrapper {
+  width: 100%;
+  padding: 0 2rem;
+  min-height: 55px;
+}
+
+.login-block {
+  display: flex;
+  align-items: center;
+  margin-right: 2rem;
+  gap: 1rem;
+  z-index: 1;
+  margin-bottom: 10px;
+  padding-right: 3rem;
+}
+
+.login-button {
+  border: 1px solid var(--secondary-elements-background);
+  padding: 0.2rem 1rem !important;
+  border-radius: 5px;
+  font-size: var(--font-size-small);
+  color: var(--text-color);
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: var(--border-color);
+}
+
+.avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-wrapper {
+  position: relative;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: var(--light-background);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  z-index: 1000;
+  min-width: 180px;
+}
+
+.profile-dropdown .dropdown-item {
+  padding: 0.5rem 1rem;
+  font-size: var(--font-size-small);
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.profile-dropdown .dropdown-item:hover {
+  background-color: var(--border-color);
+}
+.my-learning-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ml-btn {
+  color: var(--text-color);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+
+.learning-dropdown-menu {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: var(--light-background);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  min-width: 280px;
+  z-index: 1050;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.learning-dropdown-menu.show {
+  display: block;
+}
+
+.learning-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.learning-course-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.learning-thumbnail {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  flex-shrink: 0;
+}
+
+.learning-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.learning-course-title {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color);
+  line-height: 1.4;
+  margin-bottom: 0.3rem;
+}
+
+.progress-bar-bg {
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--purple);
+  width: 80%;
+}
+
+.go-to-learning-wrapper {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.go-to-learning-btn {
+  background: var(--purple);
+  color: var(--light);
+  padding: 0.5rem 1rem;
+  font-size: var(--font-size-small);
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  width: 100%;
+}
+
+.go-to-learning-btn:hover {
+  background: #5b21b6;
 }
