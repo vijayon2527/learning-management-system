@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TrackViewSet, FeatureViewSet, TrackFeatureValueViewSet,CourseViewSet,CategoryViewSet
+from .views import *
 
 router = DefaultRouter()
 router.register(r'tracks', TrackViewSet, basename='track')

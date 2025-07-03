@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Track, Feature, TrackFeatureValue,Category
+from .models import *
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -19,6 +19,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
 
 class CourseSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name",read_only=True)

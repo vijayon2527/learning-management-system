@@ -1,16 +1,17 @@
-
-from rest_framework import viewsets, generics,status
-from .serializers import (
-    TrackSerializer, FeatureSerializer,
-    TrackFeatureValueSerializer, 
-    TrackFeatureValueUpdateSerializer,
-    CourseSerializer,
-    CategorySerializer
-)
-
-from .models import *
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from .models import *
+from .serializers import (
+    CategorySerializer,
+    CourseSerializer,
+    FeatureSerializer,
+    TrackFeatureValueSerializer,
+    TrackFeatureValueUpdateSerializer,
+    TrackSerializer,
+)
+
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
