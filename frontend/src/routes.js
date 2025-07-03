@@ -1,6 +1,8 @@
 // import { element } from 'prop-types'
 import React from 'react'
 import Permissions from './components/common/Roles'
+
+
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const DepartmentList =React.lazy(() => import('./components/users/DepartmentList'))
 const RoleList =React.lazy(() => import('./components/users/RoleList'))
@@ -9,6 +11,9 @@ const UserList = React.lazy(() => import('./components/users/UserList'));
 const CourseCategoryList = React.lazy(() => import('./components/courses/categories/CourseCategoryList'));
 const CourseList = React.lazy(() => import('./components/courses/CourseList'));
 const SetPassword = React.lazy(() => import('./views/pages/login/SetPassword'));
+const FeatureComparison = React.lazy(() => import('./components/courses/FeatureComparison'));
+const CourseDetail = React.lazy(() => import('./components/courses/CourseDetail'
+));
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -57,6 +62,22 @@ const routes = [
     path: '/dashboard/set-password', 
     name: 'set password', 
     element: SetPassword, 
+    requiredPermissions: [
+      Permissions.VIEW_ROLE,
+    ] 
+  },
+  { 
+    path: '/dashboard/course-feature/:courseId/:courseName', 
+    name: 'set password', 
+    element: FeatureComparison, 
+    requiredPermissions: [
+      Permissions.VIEW_ROLE,
+    ] 
+  },
+  { 
+    path:"/dashboard/course-details/:courseId", 
+    name: 'set password', 
+    element: CourseDetail, 
     requiredPermissions: [
       Permissions.VIEW_ROLE,
     ] 

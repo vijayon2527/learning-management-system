@@ -135,6 +135,13 @@ const Header = () => {
                         <div className="d-flex gap-3 align-items-center">
                             <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
                             <BsBag role="button" className="fs-4" onClick={toggleCart} />
+                            <NavLink
+                                to="/login"
+                                className="btn btn-sm"
+                                style={{ backgroundColor: '#ff5722', color: '#fff', border: 'none' }}
+                                >
+                                Login
+                            </NavLink>
                         </div>
 
                     </Container>
