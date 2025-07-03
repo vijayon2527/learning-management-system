@@ -16,5 +16,7 @@ urlpatterns = [
     path('profile/', views.UserProfileView.as_view(), name='user_profile'),
     path('profile_pic/',views.ProfilePictureView.as_view(),name='user_profilepic'),
     path('set-password/', views.SetPasswordView.as_view(), name='set-password'),
+    path('send-otp/', views.SendOtpView.as_view(), name='send-otp'),
+    path('verify-otp/', views.VerifyOtpView.as_view(), name='verify-otp'),
 
 ]

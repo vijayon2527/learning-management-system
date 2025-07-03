@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 
 class UserManager(BaseUserManager):
@@ -338,3 +339,15 @@ class Student(models.Model):
         if self.graduation_year:
             parts.append(f"(Graduating {self.graduation_year})")
         return ' '.join(parts) or _('No education information provided')
+
+
+User = get_user_model()
+
+class Otp(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at

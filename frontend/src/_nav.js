@@ -44,7 +44,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Course Categories',
+    name: 'Categories',
     to: '/dashboard/course-category-list',
     icon:<CIcon icon={cilBook} customClassName="nav-icon" />,
     requiredRoles: [

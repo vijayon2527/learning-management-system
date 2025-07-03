@@ -121,7 +121,7 @@ class Track(BaseModel):
         help_text=_("Detailed description of the track"),
     )
     is_active = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_("Is Active"),
         help_text=_("Indicates whether the track is active"),
     )

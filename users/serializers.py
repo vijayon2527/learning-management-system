@@ -12,7 +12,12 @@ from django.contrib.auth.models import Permission
 from .models import User
 from django.contrib.auth import authenticate
 
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
+class OtpVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
 
 class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -94,21 +99,18 @@ class UserRegisterSerializer(serializers.Serializer):
         department = None
         role = None
 
-        # Get department if provided
         if validated_data.get('department_id'):
             try:
                 department = Department.objects.get(id=validated_data['department_id'])
             except Department.DoesNotExist:
                 raise serializers.ValidationError({"department_id": "Department not found."})
 
-        # Get role if provided
         if validated_data.get('role_id'):
             try:
                 role = Role.objects.get(id=validated_data['role_id'])
             except Role.DoesNotExist:
                 raise serializers.ValidationError({"role_id": "Role not found."})
 
-        # Create user without department/role if they are not provided
         user = User.objects.create_user(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
@@ -116,7 +118,6 @@ class UserRegisterSerializer(serializers.Serializer):
             password=validated_data['password']
         )
 
-        # Assign department and role only if provided
         if department:
             user.department = department
         if role:
