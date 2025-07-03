@@ -1,117 +1,130 @@
  :root {
-    --background-rgb: 255, 255, 255;
-    --light-background: #ffffff;
-    --light-background-rgb: 255, 255, 255;
-    --heading-color: #404040;
-    --text-color: #404040;
-    --text-color-rgb: 64, 64, 64;
-    --text-color-light: #6a6a6a;
-    --text-color-light-rgb: 106, 106, 106;
-    --link-color: #017737;
-    --link-color-rgb: 1, 119, 55;
-    --border-color: #e2e2e2;
-    --border-color-rgb: 226, 226, 226;
+   --light-background: #ffffff;
+   --dark-background: #000000;
+   --heading-color: #404040;
+   --text-color: #404040;
+   --text-color-rgb: 64, 64, 64;
+   --text-color-light: #6a6a6a;
+   --link-color: #017737;
+   --border-color: #e2e2e2;
+   --banner-background-color: #015b77;
 
-    --banner-background-color: #015b77;
+   --button-background: #017737;
+   --button-text-color: #ffffff;
 
-    --button-background: #017737;
-    --button-background-rgb: 1, 119, 55;
-    --button-text-color: #ffffff;
+   --header-background: #ffffff;
+   --header-heading-color: #1c1b1b;
+   --header-light-text-color: #6a6a6a;
+   --header-border-color: #dddddd;
+   --hover-background-color: #ececec;
 
-    --header-background: #ffffff;
-    --header-heading-color: #1c1b1b;
-    --header-light-text-color: #6a6a6a;
-    --header-border-color: #dddddd;
-    --hover-background-color: #f8f9fa;
+   --footer-background: #473f3d;
+   --footer-text-color: #ffffff;
+   --footer-heading-color: #ffffff;
+   --footer-border-color: #635c5a;
 
-    --footer-background: #473f3d;
-    --footer-text-color: #ffffff;
-    --footer-heading-color: #ffffff;
-    --footer-border-color: #635c5a;
+   --navigation-background: #ffffff;
+   --navigation-text-color: #aa6550;
+   --navigation-text-color-light: rgba(170, 101, 80, 0.5);
+   --navigation-border-color: rgba(170, 101, 80, 0.25);
 
-    --navigation-background: #ffffff;
-    --navigation-background-rgb: 255, 255, 255;
-    --navigation-text-color: #aa6550;
-    --navigation-text-color-light: rgba(170, 101, 80, 0.5);
-    --navigation-border-color: rgba(170, 101, 80, 0.25);
+   --newsletter-popup-background: #aa6550;
+   --newsletter-popup-text-color: #ffffff;
 
-    --newsletter-popup-background: #aa6550;
-    --newsletter-popup-text-color: #ffffff;
-    --newsletter-popup-text-color-rgb: 255, 255, 255;
+   --secondary-elements-background: #1c1b1b;
+   --secondary-elements-text-color: #ffffff;
+   --secondary-elements-text-color-light: rgba(255, 255, 255, 0.5);
+   --secondary-elements-border-color: rgba(255, 255, 255, 0.25);
 
-    --secondary-elements-background: #1c1b1b;
-    --secondary-elements-background-rgb: 28, 27, 27;
-    --secondary-elements-text-color: #ffffff;
-    --secondary-elements-text-color-light: rgba(255, 255, 255, 0.5);
-    --secondary-elements-border-color: rgba(255, 255, 255, 0.25);
+   --product-sale-price-color: #aa6550;
+   --product-star-rating: #aa6550;
 
-    --product-sale-price-color: #aa6550;
-    --product-sale-price-color-rgb: 170, 101, 80;
-    --product-star-rating: #aa6550;
+   --blue: #006eff;
+   --indigo: #6610f2;
+   --purple: #6f42c1;
+   --pink: #e83e8c;
+   --red: #dc3545;
+   --orange: #fd7e14;
+   --yellow: #8c701c;
+   --green: #28a745;
+   --teal: #20c997;
+   --cyan: #17a2b8;
+   --white: #ddd;
+   --gray: #6c757d;
+   --gray-dark: #343a40;
+   --primary: #FF6600;
+   --secondary: #F2F1F8;
+   --success: #28a745;
+   --info: #17a2b8;
+   --warning: #ffc107;
+   --danger: #dc3545;
+   --light: #FFFFFF;
+   --dark: #000000;
+   --rating-color: #f4a742;
 
-    --breakpoint-xs: 0;
-    --breakpoint-sm: 576px;
-    --breakpoint-md: 768px;
-    --breakpoint-lg: 992px;
-    --breakpoint-xl: 1200px;
-    --border-radius: 6px;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    --spacing: 16px;
+   --breakpoint-xs: 0;
+   --breakpoint-sm: 576px;
+   --breakpoint-md: 768px;
+   --breakpoint-lg: 992px;
+   --breakpoint-xl: 1200px;
+   --border-radius: 6px;
+   --shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+   --spacing: 16px;
 
-    --heading-font-size: 22px;
-    --heading-font-weight: 400;
+   --heading-font-size: 22px;
+   --heading-font-weight: 400;
 
-    --icon-size: 22px;
+   --icon-size: 22px;
 
-    --font-size-xsmall: 10px;
-    --font-size-small: 14px;
-    --font-size-medium: 16px;
-    --font-size-large: 26px;
-    --font-size-xlarge: 32px;
-    --font-weight-light: 300;
-    --font-weight-regular: 400;
-    --font-weight-bold: 600;
-    --font-weight-bolder: 800;
-    --font-family-sans-serif: "Poppins", sans-serif;
-    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+   --font-size-xsmall: 10px;
+   --font-size-small: 14px;
+   --font-size-medium: 16px;
+   --font-size-large: 26px;
+   --font-size-xlarge: 32px;
+   --font-weight-light: 300;
+   --font-weight-regular: 400;
+   --font-weight-bold: 600;
+   --font-weight-bolder: 800;
+   --font-family-sans-serif: "Poppins", sans-serif;
+   --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
  }
 
  body {
-    font-family: var(--font-family-sans-serif) !important;
+   font-family: var(--font-family-sans-serif) !important;
  }
- 
+
  h2 {
-    color: var(--heading-color) !important;
-    font-size: var(--heading-font-size) !important;
-    font-weight: var(--heading-font-weight) !important;
-    margin-top: 1rem !important;
+   color: var(--heading-color) !important;
+   font-size: var(--heading-font-size) !important;
+   font-weight: var(--heading-font-weight) !important;
+   margin-top: 1rem !important;
  }
 
- h3{
-  font-size: var(--font-size-medium) !important;
-  font-weight: var(--heading-font-weight) !important;
-  color: var(--heading-color) !important;
+ h3 {
+   font-size: var(--font-size-medium) !important;
+   font-weight: var(--heading-font-weight) !important;
+   color: var(--heading-color) !important;
  }
 
- h4{
+ h4 {
    font-size: var(--font-size-small) !important;
    margin-bottom: 1rem !important;
  }
 
- h5{
+ h5 {
    font-size: var(--font-size-small) !important;
    font-weight: var(--font-weight-regular) !important;
    color: var(--text-color) !important;
  }
 
- a{
+ a {
    text-decoration: none !important;
  }
 
- p{
+ p {
    font-size: var(--font-size-medium);
-    line-height: 1.7;
-    margin-bottom: 1rem;
-    color: var(--text-color);
+   line-height: 1.7;
+   margin-bottom: 1rem;
+   color: var(--text-color);
  }

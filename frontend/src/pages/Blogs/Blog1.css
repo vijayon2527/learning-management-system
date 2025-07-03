@@ -22,11 +22,11 @@
 }
 
 .feature-box h2 {
-    color: var( --secondary-elements-text-color) !important;
+  color: var(--secondary-elements-text-color) !important;
 }
 
 .feature-box p {
-  color: var( --secondary-elements-text-color);
+  color: var(--secondary-elements-text-color);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-regular) !important;
   line-height: 1.7;
@@ -60,31 +60,31 @@
 }
 
 .read-more {
-    position: relative;
-    display: inline-block;
-    color: var(--text-color);
-    font-size: var(--font-size-medium);
-    font-weight: var(--font-weight-normal);
-    text-decoration: none;
-    padding-bottom: 1px;
-    transition: color 0.4s ease;
+  position: relative;
+  display: inline-block;
+  color: var(--text-color);
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-normal);
+  text-decoration: none;
+  padding-bottom: 1px;
+  transition: color 0.4s ease;
 }
 
 .read-more::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 1px;
-    width: 100%;
-    background-color: var(--text-color);
-    transform: scaleX(1);
-    transform-origin: left;
-    transition: transform 0.4s ease, background-color 0.4s ease;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  background-color: var(--text-color);
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform 0.4s ease, background-color 0.4s ease;
 }
 
 .read-more:hover::after {
-    transform: scaleX(0);
+  transform: scaleX(0);
 }
 
 .blog1-btn-wrapper {
@@ -104,11 +104,13 @@
   cursor: pointer;
   transition: 0.3s ease;
 }
+
 @media (max-width:1024px) {
-  .feature-box{
+  .feature-box {
     max-width: 100% !important;
   }
-  .blog-card{
+
+  .blog-card {
     max-width: 100%;
   }
 }
@@ -123,16 +125,18 @@
     justify-content: center;
     flex: none;
   }
-  .blog1-wrapper{
+
+  .blog1-wrapper {
     padding: 1rem;
   }
-  .blog1-btn-wrapper{
+
+  .blog1-btn-wrapper {
     margin-top: 2rem;
   }
+
   .feature-box,
   .blog-card {
     width: 100%;
     max-width: 100%;
   }
 }
-

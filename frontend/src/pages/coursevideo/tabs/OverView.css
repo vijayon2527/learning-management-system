@@ -1,0 +1,138 @@
+.course-details {
+    margin: auto;
+    padding: 20px;
+  }
+  
+  .course-title {
+    margin-bottom: 10px;
+  }
+  
+  .course-stats {
+    display: flex;
+    gap: 15px;
+    font-size: var(--font-size-medium);
+    margin-bottom: 10px;
+  }
+  
+  .rating {
+    display: flex;
+    align-items: center;
+  }
+  
+  .star-icon {
+    color: var(--warning);
+    margin-right: 5px;
+  }
+  
+  .course-meta {
+    display: flex;
+    gap: 15px;
+    font-size: var(--font-size-small);
+    color: var(--gray);
+    margin-bottom: 20px;
+  }
+  
+  .reminder {
+    display: flex;
+    flex-direction: column;
+    background: var(--secondary);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--gray);
+    margin-bottom: 20px;
+  }
+  .learning-remainder{
+    display: flex;
+    flex-direction: row;
+  }
+  .reminder-icon {
+    margin-right: 15px;
+    margin-top: 0;
+  }
+  
+  .reminder-text {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  
+  .reminder-buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: 40px;
+  }
+  .btn-outline-warning{
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-small) !important;
+  }
+  .btn-outline-warning:hover {
+    background: rgba(255, 140, 0, 0.1) !important;
+    color: var(--primary) !important;
+  }
+  .btn-light{
+    color: var(--primary) !important;
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-small) !important;
+  }
+  .btn-light:hover {
+    background: rgba(255, 140, 0, 0.1) !important;
+    border: none !important;
+  }
+  
+  .course-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+    font-size: var(--font-size-small);
+    color: var(--gray-dark);
+  }
+
+  @media (max-width: 576px) {
+    .course-details{
+      padding: 5px;
+    }
+    .course-details h2{
+      margin-top: 0;
+    }
+    .course-title {
+      font-size: var(--font-size-medium);
+      line-height: 1.2;
+    }
+  
+    .course-stats {
+      font-size: var(--font-size-xsmall);
+    }
+  
+    .course-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      font-size: var(--font-size-xsmall);
+      gap: 5px;
+    }
+  
+    .learning-remainder {
+      flex-direction: column;
+    }
+  
+    .reminder-icon {
+      margin-bottom: 10px;
+      margin-right: 0;
+    }
+  
+    .reminder-buttons {
+      flex-direction: column;
+      margin-left: 0;
+      margin-top: 15px;
+      width: 100%;
+    }
+  
+    .reminder-buttons .btn {
+      width: 100%;
+    }
+  
+    .course-info {
+      grid-template-columns: 1fr;
+    }
+  }
+  
