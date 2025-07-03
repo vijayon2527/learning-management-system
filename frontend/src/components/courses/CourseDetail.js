@@ -1,4 +1,3 @@
-// src/pages/CourseDetail.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -180,6 +179,7 @@ const CourseDetail = () => {
       toast.error('Failed to update track status');
     }
   };
+  
 
   const deleteTrack = async (id) => {
     try {
@@ -427,7 +427,7 @@ const CourseDetail = () => {
                       <div className="d-flex flex-column align-items-center">
                         <div className="d-flex align-items-center gap-2">
                           <strong>{t.name}</strong>
-                          <CTooltip content="Status">
+                          <CTooltip content="Track Status">
                             <label className="switch">
                               <input
                                 type="checkbox"
@@ -461,7 +461,7 @@ const CourseDetail = () => {
                                 confirmActionWrapper(
                                   () => deleteTrack(t.id),
                                   'Delete Track',
-                                  `Delete track ${t.name}?`,
+                                  `Are you sure you want to delete track ${t.name}?`,
                                   t,
                                 )
                               }
@@ -505,8 +505,9 @@ const CourseDetail = () => {
                       </td>
                     ))}
                     <td>
-                      <div className="d-flex justify-content-center gap-2">
-                        {editingFeatureId === f.id ? (
+                    <div className="d-flex justify-content-center gap-2">
+                      {editingFeatureId === f.id ? (
+                        <CTooltip content="Save">
                           <button
                             className="icon-btn save-btn"
                             onClick={() => {
@@ -516,14 +517,19 @@ const CourseDetail = () => {
                           >
                             Save
                           </button>
-                        ) : (
+                        </CTooltip>
+                      ) : (
+                        <CTooltip content="Edit">
                           <button
                             className="icon-btn edit-btn"
                             onClick={() => setEditingFeatureId(f.id)}
                           >
                             <CIcon icon={cilPen} style={{ height: 18, width: 18 }} />
                           </button>
-                        )}
+                        </CTooltip>
+                      )}
+
+                      <CTooltip content="Delete">
                         <button
                           className="icon-btn delete-btn"
                           onClick={() =>
@@ -537,8 +543,10 @@ const CourseDetail = () => {
                         >
                           <CIcon icon={cilTrash} style={{ height: 18, width: 18 }} />
                         </button>
-                      </div>
-                    </td>
+                      </CTooltip>
+                    </div>
+                  </td>
+
                   </tr>
                 ))}
 

@@ -1,0 +1,126 @@
+.notes-wrapper {
+    max-width: 800px;
+    margin: 20px auto;
+  }
+  
+  .notes-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .notes-input-wrapper input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    font-size: var(--font-size-medium);
+    border: 1px solid var(--gray);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+  }
+  
+  .notes-input-wrapper .plus-icon {
+    position: absolute;
+    right: 12px;
+    color: var(--dark);
+    cursor: pointer;
+    font-size: var(--font-size-small);
+  }
+  
+  .editor-wrapper {
+    margin-top: 15px;
+    position: relative;
+  }
+  
+  .editor-with-counter {
+    position: relative;
+  }
+  
+  .editor-with-counter .word-counter-top {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: var(--font-size-small);
+    color: var(--gray);
+  }
+  
+  .ql-toolbar {
+    border-radius: 6px 6px 0 0;
+  }
+  
+  .ql-container {
+    border-radius: 0 0 6px 6px;
+    min-height: 100px;
+  }
+  
+  .editor-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+  
+  .editor-footer .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .cancel-btn,
+  .save-btn {
+    padding: 8px 16px;
+    font-size: var(--font-size-small);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+  }
+  
+  .cancel-btn {
+    background-color: var(--white);
+    color: var(--gray-dark);
+  }
+  
+  .save-btn {
+    background-color: var(--primary);
+    color: var(--light);
+  }
+  .save-btn:hover{
+    background-color: var(--orange);
+    color: var(--light);
+  }
+  .filter-section {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  
+  .custom-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .custom-dropdown select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 10px 30px 10px 14px;
+    font-size: 15px;
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    background-color: var(--light);
+    color: var(--primary);
+    cursor: pointer;
+    width: 200px;
+  }
+  
+  .dropdown-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--primary);
+  }
+
+  
+  
+  
+  

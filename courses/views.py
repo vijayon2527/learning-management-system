@@ -17,6 +17,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
 
+
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all() 
     serializer_class = CourseSerializer
