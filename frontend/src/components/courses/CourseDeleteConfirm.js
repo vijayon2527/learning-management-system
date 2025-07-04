@@ -1,50 +1,48 @@
-import React from 'react';
-import { CButton } from '@coreui/react';
-import { toast } from 'react-toastify';
-import axiosInstance from '../../utils/axiosInstance';
+import React, { useState } from "react";
+import { CButton, CAlert } from "@coreui/react";
+import { toast } from "react-toastify";
+import axiosInstance from "../../utils/axiosInstance";
 
-const CourseCategoryDeleteConfirm = ({ courseCategory, onClose, removeCourseCategory }) => {
-  // Function to show notifications
-  const notify = (msg) => toast(msg);
+const notifySuccess = (msg) => toast(msg, { type: "success" });
+const notifyError = (msg) => toast(msg, { type: "error" });
 
-  // Handle delete action
+const CourseDeleteConfirm = ({ course, onDeleted, onClose }) => {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+
   const handleDelete = async () => {
+    setDeleting(true);
+    setError("");
     try {
-      // Send delete request to API
-      await axiosInstance.delete(`api/material/materials/${courseCategory.id}/`);
-      notify("Course deleted successfully!");
-
-      // Call the function passed from parent to update the material list
-      removeCourseCategory(courseCategory.id); // Remove the material from the list
-
-      // Close the modal
+      await axiosInstance.delete(`/api/courses/courses/${course.id}/`);
+      notifySuccess("Course deleted successfully!");
+      onDeleted(course.id);
       onClose();
     } catch (err) {
-      console.error("Error deleting Course:", err);
-      notify("Failed to delete Course.");
+      console.error(err);
+      setError("Could not delete this course.");
+      notifyError("Failed to delete course.");
     } finally {
-      console.log('Delete action completed');
+      setDeleting(false);
     }
   };
 
   return (
     <div>
-      {/* Confirmation message */}
+      {error && <CAlert color="danger">{error}</CAlert>}
       <p>
-        Are you sure you want to delete the material <b>"{courseCategory.name}"</b>?
+        Are you sure you want to delete <strong>{course.name}</strong>?
       </p>
-      
-      {/* Action buttons */}
-      <div className='text-end'>
-        <CButton color="danger" onClick={handleDelete} className="me-3">
-          Yes, Delete
-        </CButton>
-        <CButton color="secondary" onClick={onClose}>
+      <div className="d-flex justify-content-end">
+        <CButton color="secondary" onClick={onClose} className="me-2">
           Cancel
+        </CButton>
+        <CButton color="danger" onClick={handleDelete} disabled={deleting}>
+          {deleting ? "Deleting..." : "Delete"}
         </CButton>
       </div>
     </div>
   );
 };
 
-export default CourseCategoryDeleteConfirm;
+export default CourseDeleteConfirm;

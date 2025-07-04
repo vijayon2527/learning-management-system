@@ -1,6 +1,8 @@
 // import { element } from 'prop-types'
 import React from 'react'
 import Permissions from './components/common/Roles'
+import CourseDetail from './components/courses/CourseDetail'
+import CategoryDetail from './components/courses/categories/CourseCategoryDetail'
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const DepartmentList =React.lazy(() => import('./components/users/DepartmentList'))
 const RoleList =React.lazy(() => import('./components/users/RoleList'))
@@ -53,6 +55,22 @@ const routes = [
       Permissions.VIEW_ROLE,
     ] 
   },
+  {
+  path: '/dashboard/course-detail/:id',
+  name: 'Course Detail',
+  element: CourseDetail,
+  requiredPermissions: [
+    Permissions.VIEW_ROLE,
+  ]
+},
+{
+  path: '/dashboard/category-detail/:id',
+  name: 'Category Detail',
+  element: CategoryDetail,
+  requiredPermissions: [
+    Permissions.VIEW_ROLE,
+  ]
+},
    { 
     path: '/dashboard/set-password', 
     name: 'set password', 

@@ -17,6 +17,8 @@ import PageRoutes from './routes/PageRoutes'
 
 import 'aos/dist/aos.css';
 import AOS from 'aos';
+import CourseDetail from './pages/home/CourseDetails'
+import CategoryCourses from './pages/home/CategoryCourses'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -77,10 +79,12 @@ const App = () => {
                 <Register />
               </AuthRoute>
             } />
+            <Route exact path="/courses/:id" name="Page 404" element={<CourseDetail />} />
             <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />
             <Route exact path="/course" name="Courses" element={<Courses />} />
+            <Route exact path="/categories/:id" name="Courses" element={<CategoryCourses />} />
         
             {PageRoutes}
 

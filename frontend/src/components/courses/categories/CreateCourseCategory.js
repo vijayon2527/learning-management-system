@@ -1,320 +1,204 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  CContainer,
   CForm,
   CFormInput,
   CFormSelect,
   CButton,
-  CFormLabel,
-  CRow,
-  CCol,
-  CFormCheck,
-  CFormTextarea,
-  CSpinner,
   CFormFeedback,
-} from '@coreui/react';
-import axiosInstance from '../../../utils/axiosInstance';
-import { toast } from 'react-toastify';
+} from "@coreui/react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import axiosInstance from "../../../utils/axiosInstance";
+import { toast } from "react-toastify";
 
-const notify = (message) => toast(message);
+const notify = (message) => toast(message, { type: "success" });
+const notifyError = (message) => toast(message, { type: "error" });
 
-const CreateCourseCategory = ({ onMaterialCreated, onClose }) => {
-  const [material, setMaterial] = useState({
-    name: '',
-    description: '',
-    category: '',
-    stock_quantity: '',
-    sku: '',
-    unit_price: '',
-    unit_of_measure: '',
-    brand: '',
-    weight: '',
-    hazardous: false,
-    flammable: false,
-    recyclable: true,
-    manufacturing_date: null,
-    expiry_date: null,
-    warranty_period: null,
+const CategoryCreate = ({ onCreated, onClose, categories }) => {
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    parent: "",
   });
-
-  const [categories, setCategory] = useState([]);
-  const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFormValidated, setIsFormValidated] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axiosInstance.get('api/material/categories/');
-        setCategory(response.data);
-      } catch (err) {
-        setError('Failed to fetch categories.');
+    if (!logoFile) {
+      setLogoPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(logoFile);
+    setLogoPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logoFile]);
+
+  const validate = () => {
+    const newErrors = {};
+    if (!form.name.trim()) {
+      newErrors.name = "Name is required.";
+    } else if (form.name.length > 200) {
+      newErrors.name = "Name must be at most 200 characters.";
+    }
+    // Optionally validate logo file type/size here
+    return newErrors;
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Optional: Validate file type (jpeg/png)
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        notifyError("Only JPG or PNG images are allowed.");
+        return;
       }
-    };
-    fetchCategories();
-  }, []);
-
-  const isInteger = (value) => /^\d+$/.test(value);
-
-  const validateFields = () => {
-    const errors = {};
-
-    if (!material.name.trim()) errors.name = 'Name is required.';
-    if (!material.category.trim()) errors.category = 'Category is required.';
-    if (!material.sku.trim()) errors.sku = 'SKU is required.';
-    if (!material.stock_quantity.trim() || !isInteger(material.stock_quantity)) {
-      errors.stock_quantity = 'A valid integer is required for stock quantity.';
+      // Optional: Validate size (e.g., max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        notifyError("Image size should be less than 2MB.");
+        return;
+      }
+      setLogoFile(file);
     }
-    if (!material.unit_price.trim() || !isInteger(material.unit_price)) {
-      errors.unit_price = 'A valid integer is required for unit price.';
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const form = e.currentTarget;
-
-    if (form.checkValidity() === false || !validateFields()) {
-      e.stopPropagation();
-      setIsFormValidated(true); // Fix: Set it to true after checking validity
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
-
-    setIsLoading(true);
+    setErrors({});
+    setSubmitting(true);
 
     try {
-      const response = await axiosInstance.post('api/material/materials/', material);
-      setError('');
-      notify('Material created successfully!');
-      onMaterialCreated(response.data);
-      onClose();
-      setMaterial({
-        name: '',
-        description: '',
-        category: '',
-        stock_quantity: '',
-        sku: '',
-        unit_price: '',
-        unit_of_measure: '',
-        brand: '',
-        weight: '',
-        hazardous: false,
-        flammable: false,
-        recyclable: true,
-        manufacturing_date: null,
-        expiry_date: null,
-        warranty_period: null,
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("description", form.description);
+      formData.append("parent", form.parent || "");
+      if (logoFile) {
+        formData.append("logo", logoFile);
+      }
+
+      const response = await axiosInstance.post("/api/courses/categories/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      setIsFormValidated(true);
-      setFieldErrors({});
+
+      notify("Category created successfully!");
+      onCreated(response.data);
+      onClose();
     } catch (err) {
-      const errorData = err.response?.data;
-      const errorMsg = typeof errorData === 'object' ? Object.values(errorData).flat().join(', ') : 'Failed to create material.';
-      setError(errorMsg);
+      console.error("Error creating category:", err);
+      if (err.response && err.response.data) {
+        const backendErrors = {};
+        if (err.response.data.name) {
+          backendErrors.name = err.response.data.name.join(" ");
+        }
+        if (err.response.data.parent) {
+          backendErrors.parent = err.response.data.parent.join(" ");
+        }
+        if (err.response.data.logo) {
+          backendErrors.logo = err.response.data.logo.join(" ");
+        }
+        setErrors(backendErrors);
+        notifyError("Please correct the errors in the form.");
+      } else {
+        notifyError("An unexpected error occurred.");
+      }
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <CContainer>
-            <CForm onSubmit={handleSubmit} noValidate validated={isFormValidated}>
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>
-                Material Category <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormSelect
-                  value={material.category}
-                  onChange={(e) => setMaterial({ ...material, category: e.target.value })}
-                  invalid={isFormValidated && !material.category.trim()}
-                  feedback="please select a valid category"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </CFormSelect>
-                <CFormFeedback invalid>{fieldErrors.category}</CFormFeedback>
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>
-                Material Name <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormInput
-                  placeholder="Material Name"
-                  value={material.name}
-                  onChange={(e) => setMaterial({ ...material, name: e.target.value })}
-                  invalid={isFormValidated && !material.name.trim()}
-                  feedback="please enter a valid name"
-                  required
-                />
-                <CFormFeedback invalid>{fieldErrors.name}</CFormFeedback>
-              </CCol>
-            </CRow>
+    <CForm onSubmit={handleSubmit} noValidate>
+      <CFormInput
+        label="Name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        required
+        invalid={!!errors.name}
+        feedback={errors.name}
+        className="mb-3"
+      />
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>Material Description</CFormLabel>
-                <CFormTextarea
-                  placeholder="Enter a description"
-                  value={material.description}
-                  onChange={(e) => setMaterial({ ...material, description: e.target.value })}
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>
-                  Material Request Id(MRI) <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormInput
-                  placeholder="Material Request Id"
-                  value={material.sku}
-                  onChange={(e) => setMaterial({ ...material, sku: e.target.value })}
-                  invalid={isFormValidated && !material.sku.trim()}
-                  feedback="please enter a valid Material Request Id"
-                  required
-                />
-                <CFormFeedback invalid>{fieldErrors.sku}</CFormFeedback>
-              </CCol>
-            </CRow>
+      <label className="form-label">Description</label>
+      <ReactQuill
+        theme="snow"
+        value={form.description}
+        onChange={(content) => setForm({ ...form, description: content })}
+        className="mb-3"
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link", "image"],
+            ["clean"],
+          ],
+        }}
+      />
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>
-                Stock Quantity <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormInput
-                  placeholder="Stock Quantity"
-                  value={material.stock_quantity}
-                  onChange={(e) => setMaterial({ ...material, stock_quantity: e.target.value })}
-                  invalid={isFormValidated && !material.stock_quantity.trim()}
-                  feedback="please enter a valid stock quantity"
-                  required
-                />
-                <CFormFeedback invalid>{fieldErrors.stock_quantity}</CFormFeedback>
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>
-                Unit Price <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormInput
-                  placeholder="Unit Price"
-                  value={material.unit_price}
-                  onChange={(e) => setMaterial({ ...material, unit_price: e.target.value })}
-                  invalid={isFormValidated && !material.unit_price.trim()}
-                  feedback="please eneter a valid unit price"
-                  required
-                />
-                <CFormFeedback invalid>{fieldErrors.unit_price}</CFormFeedback>
-              </CCol>
-            </CRow>
+      <CFormSelect
+        label="Parent Category"
+        value={form.parent}
+        onChange={(e) => setForm({ ...form, parent: e.target.value })}
+        invalid={!!errors.parent}
+        feedback={errors.parent}
+        className="mb-3"
+      >
+        <option value="">-- None --</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.name}
+          </option>
+        ))}
+      </CFormSelect>
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>
-                Unit of Measure(UOM) <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-                </CFormLabel>
-                <CFormInput
-                  placeholder="Unit of Measure"
-                  value={material.unit_of_measure}
-                  onChange={(e) => setMaterial({ ...material, unit_of_measure: e.target.value })}
-                  invalid={isFormValidated && !material.unit_of_measure.trim()}
-                  feedback="please enter a valid unit of measure"
-                  required
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Brand</CFormLabel>
-                <CFormInput
-                  placeholder="Brand"
-                  value={material.brand}
-                  onChange={(e) => setMaterial({ ...material, brand: e.target.value })}
-                />
-              </CCol>
-            </CRow>
+      <CFormInput
+        type="file"
+        label="Logo (JPG or PNG, max 2MB)"
+        onChange={handleLogoChange}
+        invalid={!!errors.logo}
+        feedback={errors.logo}
+        accept="image/png, image/jpeg"
+        className="mb-3"
+      />
+      {logoPreview && (
+        <div
+          style={{
+            marginBottom: "1rem",
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            overflow: "hidden",
+            boxShadow: "0 0 8px rgba(0,0,0,0.1)",
+            border: "1px solid #ccc",
+          }}
+        >
+          <img
+            src={logoPreview}
+            alt="Logo Preview"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      )}
 
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>Weight</CFormLabel>
-                <CFormInput
-                  placeholder="Weight"
-                  value={material.weight}
-                  onChange={(e) => setMaterial({ ...material, weight: e.target.value })}
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Warranty Period</CFormLabel>
-                <CFormInput
-                  placeholder="Warranty Period"
-                  value={material.warranty_period || ''}
-                  onChange={(e) => setMaterial({ ...material, warranty_period: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel>Manufacturing Date</CFormLabel>
-                <CFormInput
-                  type="date"
-                  value={material.manufacturing_date || ''}
-                  onChange={(e) => setMaterial({ ...material, manufacturing_date: e.target.value })}
-                />
-              </CCol>
-              <CCol md={6}>
-                <CFormLabel>Expiry Date</CFormLabel>
-                <CFormInput
-                  type="date"
-                  value={material.expiry_date || ''}
-                  onChange={(e) => setMaterial({ ...material, expiry_date: e.target.value })}
-                />
-              </CCol>
-            </CRow>
-
-            <CRow className="mb-3">
-              <CCol md={4}>
-                <CFormCheck
-                  id="flammableCheck"
-                  label="Flammable"
-                  checked={material.flammable}
-                  onChange={(e) => setMaterial({ ...material, flammable: e.target.checked })}
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormCheck
-                  id="recyclableCheck"
-                  label="Recyclable"
-                  checked={material.recyclable}
-                  onChange={(e) => setMaterial({ ...material, recyclable: e.target.checked })}
-                />
-              </CCol>
-              <CCol md={4}>
-                <CFormCheck
-                  id="hazardousCheck"
-                  label="Hazardous"
-                  checked={material.hazardous}
-                  onChange={(e) => setMaterial({ ...material, hazardous: e.target.checked })}
-                />
-              </CCol>
-            </CRow>
-
-            <CButton type="submit" color="info" className="w-100" disabled={isLoading}>
-              {isLoading ? <CSpinner size="sm" /> : 'Create Material'}
-            </CButton>
-          </CForm>
-    </CContainer>
+      <div className="d-flex justify-content-end">
+        <CButton type="button" color="secondary" onClick={onClose} className="me-2">
+          Cancel
+        </CButton>
+        <CButton type="submit" color="primary" disabled={submitting}>
+          {submitting ? "Creating..." : "Create"}
+        </CButton>
+      </div>
+    </CForm>
   );
 };
 
-export default CreateCourseCategory;
-
-
-
+export default CategoryCreate;
