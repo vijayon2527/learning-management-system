@@ -1,99 +1,204 @@
 import React, { useEffect, useState } from "react";
-import { CContainer, CAlert, CSpinner } from "@coreui/react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  CCard,
+  CCardBody,
+  CRow,
+  CCol,
+  CSpinner,
+  CButton,
+  CTooltip,
+} from "@coreui/react";
+import CIcon from "@coreui/icons-react";
+import { cilArrowLeft } from "@coreui/icons";
 import axiosInstance from "../../../utils/axiosInstance";
-import { useParams } from "react-router-dom";
 
-const RoleDetail = ({material}) => {
+const stripHtmlTags = (html) => {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+};
+
+const CategoryDetail = () => {
   const { id } = useParams();
-  const [newMaterial, setNewMaterial] = useState(null);
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMaterial = async () => {
+    const fetchCategory = async () => {
       try {
-        const response = await axiosInstance.get(
-          `/api/material/materials/${material.id}/`  // Ensure leading slash
-        );
-        if (response.data) {
-          setNewMaterial(response.data);
-        } else {
-          setError("No material found.");
-        }
+        const res = await axiosInstance.get(`/api/courses/categories/${id}/`);
+        setCategory(res.data);
       } catch (err) {
-        console.error("Error fetching material details:", err);
-        setError("Failed to fetch material details.");
+        console.error("Error fetching category:", err);
+        setError("Could not load category.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMaterial();
+    fetchCategory();
   }, [id]);
 
-  return (
-    <CContainer>
-      {loading ? (
-        <div className="text-center">
-          <CSpinner color="primary" />
-          Loading material details...
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center p-4">
+        <CSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-danger text-center p-4">
+        {error}
+        <div className="mt-3">
+          <CButton color="secondary" onClick={() => navigate(-1)}>
+            Back
+          </CButton>
         </div>
-      ) : error ? (
-        <CAlert color="danger">{error}</CAlert>
-      ) : (
-        newMaterial ? (
-          <div>
-            <h6>Name: {newMaterial.material .name || "No name available"}</h6>
-            <p>
-              <strong>Description:</strong> {newMaterial.material.description || "No description available"}
-            </p>
-            <p>
-              <strong>Category:</strong>{" "}
-              {newMaterial.category ? newMaterial.material.category_detail?.name : "No category assigned"}
-            </p>
-            <p>
-              <strong>Stock Quantity:</strong> {newMaterial.material.stock_quantity || "No stock quantity available"}
-            </p>
-            <p>
-              <strong>Unit Price:</strong> {newMaterial.material.unit_price || "No unit price available"}
-            </p>
-            <p>
-              <strong>Unit of Measure:</strong> {newMaterial.material.unit_of_measure || "No unit of measure available"}
-            </p>
-            <p>
-              <strong>Material Request Id:</strong> {newMaterial.material.sku || "No sku available"}
-            </p>
-            <p>
-              <strong>Brand:</strong> {newMaterial.material.brand || "No Brand available"}
-            </p>
-            <p>
-              <strong>Weight:</strong> {newMaterial.material.weight || "No Weight available"}
-            </p>
-            <p>
-              <strong>Warranty Period:</strong> {newMaterial.material.warrenty_period || "No Warranty Period available"}
-            </p>
-            <p>
-              <strong>Manufacturing Date:</strong> {newMaterial.material.manufacturing_date || "No Manufacturing Date available"}
-            </p>
-            <p>
-              <strong>Expiry Date:</strong> {newMaterial.material.expiry_date || "No Expiry Date available"}
-            </p>
-            <p>
-              <strong>Flammable:</strong> {newMaterial.material.flammable || "No Flammable available"}
-            </p>
-            <p>
-              <strong>Recyclable:</strong> {newMaterial.material.recyclable !== undefined ? (newMaterial.material.recyclable ? "true" : "false") : "No recyclable information available"}
-            </p>
-            <p>
-              <strong>Hazardous:</strong> {newMaterial.material.hazardous || "No Hazardous available"}
-            </p>
-          </div>
-        ) : (
-          <CAlert color="warning">No material data to display.</CAlert>
-        )
-      )}
-    </CContainer>
+      </div>
+    );
+  }
+
+  if (!category) return null;
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4 px-1">
+        <h2 className="mb-1">Category Details</h2>
+        <CTooltip content="Go back">
+          <CButton
+            color="light"
+            className="text-dark border border-secondary"
+            onClick={() => navigate("/dashboard/course-category-list")}
+            style={{
+              fontWeight: 600,
+              borderRadius: "2rem",
+              padding: "0.45rem 1.2rem",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}
+          >
+            <CIcon icon={cilArrowLeft} className="me-2" />
+            Back
+          </CButton>
+        </CTooltip>
+      </div>
+
+      {/* Category Info Card */}
+      <CCard className="mb-4">
+        <CCardBody className="p-3">
+          <CRow className="align-items-center g-4">
+            <CCol md={4} className="d-flex flex-column align-items-center">
+              <CTooltip content="Category logo">
+                {category.logo ? (
+                  <img
+                    src={category.logo}
+                    alt="Logo"
+                    style={{
+                      width: 180,
+                      height: 180,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      boxShadow:
+                        "0 4px 12px rgba(0,0,0,0.15), 0 0 0 4px #fff",
+                      border: "2px solid #ddd",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 180,
+                      height: 180,
+                      borderRadius: "50%",
+                      border: "2px dashed #bbb",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#aaa",
+                      fontStyle: "italic",
+                      backgroundColor: "#f8f8f8",
+                    }}
+                  >
+                    {category.name?.split(" ").slice(0, 3).join(" ") || "Category"}
+                  </div>
+                )}
+              </CTooltip>
+            </CCol>
+
+            <CCol md={8}>
+              <h1
+                className="mb-4"
+                style={{
+                  fontWeight: 700,
+                  color: "#2c3e50",
+                  borderBottom: "3px solid #0d6efd",
+                  paddingBottom: 6,
+                  letterSpacing: 1,
+                }}
+              >
+                {category.name}
+              </h1>
+
+              <CRow className="g-3">
+                <CCol sm={6}>
+                  <div className="p-3 border rounded bg-light">
+                    <strong>📁 Category</strong>
+                    <p className="mb-0 text-muted">{category.name}</p>
+                  </div>
+                </CCol>
+                <CCol sm={6}>
+                  <div className="p-3 border rounded bg-light">
+                    <strong>🗂️ Parent Category</strong>
+                    <p className="mb-0 text-muted">{category.parent_name || "-"}</p>
+                  </div>
+                </CCol>
+                <CCol sm={6}>
+                  <div className="p-3 border rounded bg-light">
+                    <strong>⚙️ Status</strong>
+                    <p
+                      className="mb-0"
+                      style={{
+                        color: category.is_active ? "#198754" : "#6c757d",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {category.is_active ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                </CCol>
+                <CCol sm={6}>
+                  <div className="p-3 border rounded bg-light">
+                    <strong>📅 Created At</strong>
+                    <p className="mb-0 text-muted">
+                      {category.created_at
+                        ? new Date(category.created_at).toLocaleString()
+                        : "-"}
+                    </p>
+                  </div>
+                </CCol>
+              </CRow>
+
+              <div className="mt-4 p-3 border rounded bg-light">
+                <strong>📝 Description</strong>
+                <p
+                  className="mb-0"
+                  style={{ color: "#555", whiteSpace: "pre-wrap" }}
+                >
+                  {stripHtmlTags(category.description)}
+                </p>
+              </div>
+            </CCol>
+          </CRow>
+        </CCardBody>
+      </CCard>
+    </div>
   );
 };
 
-export default RoleDetail;
+export default CategoryDetail;

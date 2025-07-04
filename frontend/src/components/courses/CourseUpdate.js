@@ -64,7 +64,7 @@ const CourseUpdate = ({ course, onUpdated, onClose, categories }) => {
       }
 
       const response = await axiosInstance.put(
-        `/api/courses/${course.id}/`,
+        `/api/courses/courses/${course.id}/`,
         formData,
         {
           headers: {
@@ -157,7 +157,7 @@ const CourseUpdate = ({ course, onUpdated, onClose, categories }) => {
         <input
           type="file"
           accept="image/*"
-          className={form-control `${errors.logo ? "is-invalid" : ""}`}
+          className={`form-control ${errors.logo ? "is-invalid" : ""}`}
           onChange={(e) => setLogo(e.target.files[0])}
         />
         {errors.logo && (

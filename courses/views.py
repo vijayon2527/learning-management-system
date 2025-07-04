@@ -1,4 +1,9 @@
-
+from rest_framework import viewsets
+from .serializers import CategorySerializer, CourseSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import *
 from rest_framework import viewsets, generics,status
 from .serializers import (
     TrackSerializer, FeatureSerializer,
@@ -8,9 +13,6 @@ from .serializers import (
     CategorySerializer
 )
 
-from .models import *
-from rest_framework.decorators import action
-from rest_framework.response import Response
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -19,15 +21,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all() 
+    queryset = Course.objects.all().order_by("name")
     serializer_class = CourseSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["category"]
 
-    @action(detail=True, methods=["patch"], url_path="toggle_active")
-    def toggle_active(self, request, pk=None):
-        course = self.get_object()
-        course.is_active = not course.is_active
-        course.save()
-        return Response({"id": course.id, "is_active": course.is_active})
 
 
 class TrackViewSet(viewsets.ModelViewSet):  

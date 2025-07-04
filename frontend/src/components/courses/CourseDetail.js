@@ -60,7 +60,7 @@ const CourseDetail = () => {
 
   /* ───────────────────────── Fetching ───────────────────────── */
   useEffect(() => {
-  axiosInstance.get(`/api/courses/${courseId}/`).then((res) => {
+  axiosInstance.get(`/api/courses/courses/${courseId}/`).then((res) => {
     setCourseName(res.data.name);
   });
 }, []);
@@ -71,14 +71,14 @@ const CourseDetail = () => {
     const fetchAll = async () => {
       try {
         // Course
-        const courseRes = await axiosInstance.get(`/api/courses/${courseId}/`);
+        const courseRes = await axiosInstance.get(`/api/courses/courses/${courseId}/`);
         setCourse(courseRes.data);
 
         // Tracks, features, values
         const [tRes, fRes, vRes] = await Promise.all([
-          axiosInstance.get(`/api/tracks/?course_id=${courseId}`),
-          axiosInstance.get(`/api/features/?course_id=${courseId}`),
-          axiosInstance.get(`/api/feature-values/?course_id=${courseId}`),
+          axiosInstance.get(`/api/courses/tracks/?course_id=${courseId}`),
+          axiosInstance.get(`/api/courses/features/?course_id=${courseId}`),
+          axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`),
         ]);
         setTracks(tRes.data);
         setFeatures(fRes.data);
@@ -137,14 +137,14 @@ const CourseDetail = () => {
           const id = getValueId(track.id, featureId);
           const value = getValue(track.id, featureId);
           if (id) {
-            return axiosInstance.put(`/api/feature-values/${id}/`, {
+            return axiosInstance.put(`/api/courses/feature-values/${id}/`, {
               id,
               track: track.id,
               feature: featureId,
               value,
             });
           }
-          return axiosInstance.post(`/api/feature-values/`, {
+          return axiosInstance.post(`/api/courses/feature-values/`, {
             track: track.id,
             feature: featureId,
             value,
@@ -153,7 +153,7 @@ const CourseDetail = () => {
       );
       toast.success('Feature values saved!');
       // refetch to stay in sync
-      const v = await axiosInstance.get(`/api/feature-values/?course_id=${courseId}`);
+      const v = await axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`);
       setFeatureValues(v.data);
     } catch {
       toast.error('Failed to save values');
@@ -171,8 +171,8 @@ const CourseDetail = () => {
 
   const toggleTrackStatus = async (trackId, current) => {
     try {
-      await axiosInstance.patch(`/api/tracks/${trackId}/`, { is_active: !current });
-      const res = await axiosInstance.get(`/api/tracks/?course_id=${courseId}`);
+      await axiosInstance.patch(`/api/courses/tracks/${trackId}/`, { is_active: !current });
+      const res = await axiosInstance.get(`/api/courses/tracks/?course_id=${courseId}`);
       setTracks(res.data);
       toast.success(!current ? 'Track activated' : 'Track deactivated');
     } catch {
@@ -183,7 +183,7 @@ const CourseDetail = () => {
 
   const deleteTrack = async (id) => {
     try {
-      await axiosInstance.delete(`/api/tracks/${id}/`);
+      await axiosInstance.delete(`/api/courses/tracks/${id}/`);
       fetchTracks(); // defined below
       toast.success('Track deleted');
     } catch {
@@ -193,7 +193,7 @@ const CourseDetail = () => {
 
   const deleteFeature = async (id) => {
     try {
-      await axiosInstance.delete(`/api/features/${id}/`);
+      await axiosInstance.delete(`/api/courses/features/${id}/`);
       fetchFeatures(); // defined below
       fetchFeatureValues();
       toast.success('Feature deleted');
@@ -204,12 +204,12 @@ const CourseDetail = () => {
 
   /* quick re‑fetch helpers */
   const fetchTracks = async () =>
-    setTracks((await axiosInstance.get(`/api/tracks/?course_id=${courseId}`)).data);
+    setTracks((await axiosInstance.get(`/api/courses/tracks/?course_id=${courseId}`)).data);
   const fetchFeatures = async () =>
-    setFeatures((await axiosInstance.get(`/api/features/?course_id=${courseId}`)).data);
+    setFeatures((await axiosInstance.get(`/api/courses/features/?course_id=${courseId}`)).data);
   const fetchFeatureValues = async () =>
     setFeatureValues(
-      (await axiosInstance.get(`/api/feature-values/?course_id=${courseId}`)).data,
+      (await axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`)).data,
     );
 
   /* ───────────────────── Add feature with validation ────────── */
@@ -236,7 +236,7 @@ const CourseDetail = () => {
 
     setErrors({});
     try {
-      const res = await axiosInstance.post(`/api/features/`, {
+      const res = await axiosInstance.post(`/api/courses/features/`, {
         name: newFeature,
         order: features.length,
         course: courseId,
@@ -244,7 +244,7 @@ const CourseDetail = () => {
       const featureId = res.data.id;
 
       const createPromises = Object.entries(newFeatureValues).map(([trackId, value]) =>
-        axiosInstance.post(`/api/feature-values/`, { track: parseInt(trackId), feature: featureId, value })
+        axiosInstance.post(`/api/courses/feature-values/`, { track: parseInt(trackId), feature: featureId, value })
       );
       await Promise.all(createPromises);
 
