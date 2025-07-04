@@ -54,6 +54,13 @@ class Category(BaseModel):
         verbose_name=_("Description"),
         help_text=_("Optional description of the category"),
     )
+    logo = models.ImageField(
+    upload_to='category_logos/',
+    null=True,
+    blank=True,
+    verbose_name=_("Logo"),
+    help_text=_("Optional logo image for this category"),
+    )
 
     class Meta:
         verbose_name = _("Category")
@@ -148,7 +155,13 @@ class Course(BaseModel):
         verbose_name=_("Enrolled Students"),
         help_text=_("Number of students enrolled in the course"),
     )
-
+    logo = models.ImageField(
+        upload_to='course_logos/',
+        null=True,
+        blank=True,
+        verbose_name=_("Logo"),
+        help_text=_("Optional logo image for this course"),
+    )
     class Meta:
         verbose_name = _("Course")
         verbose_name_plural = _("Courses")

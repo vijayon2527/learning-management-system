@@ -145,7 +145,7 @@ const CourseCreate = ({ onCreated, onClose, categories }) => {
         <input
           type="file"
           accept="image/*"
-          className={form-control `${errors.logo ? "is-invalid" : ""}`}
+          className={`form-control ${errors.logo ? "is-invalid" : ""}`}
           onChange={(e) => setLogo(e.target.files[0])}
         />
         {errors.logo && (
