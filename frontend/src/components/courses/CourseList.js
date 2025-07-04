@@ -1,174 +1,154 @@
-import React, { useEffect, useState } from "react";
-import MaterialUpdate from "./CourseUpdate";
-import MaterialDeleteConfirm from "./CourseDeleteConfirm";
-import AGPModal from "../common/AGPModal";
-import CreateCourseCategory from "./CreateCourse";
-import MaterialDetail from "./CourseDetail";
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../../utils/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 import {
   CContainer,
-  CTooltip,
   CTable,
   CTableHead,
-  CTableBody,
   CTableRow,
   CTableHeaderCell,
+  CTableBody,
   CTableDataCell,
   CSpinner,
-  CButton,
-} from "@coreui/react";
-import CIcon from "@coreui/icons-react";
-import { cilUserPlus, cilPen, cilTrash } from "@coreui/icons";
-import axiosInstance from "../../utils/axiosInstance";
-import PermissionWrapper from "../common/RoleWrapper";
-import Permissions from "../common/Roles";
+  CTooltip,
+  CButton
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilPen, cilTrash } from '@coreui/icons';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CourseList = () => {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [modalAction, setModalAction] = useState(null);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      try {
-        const response = await axiosInstance.get("/api/course/categories/");
-        setCategories(response.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+    fetchCourses();
   }, []);
 
-  const handleCategoryCreated = (newCategory) => {
-    setCategories((prev) => [newCategory, ...prev]);
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get('/api/courses/');
+      setCourses(res.data);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      toast.error('Failed to fetch courses');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCategoryUpdated = (updatedCategory) => {
-    setCategories((prev) =>
-      prev.map((category) => (category.id === updatedCategory.id ? updatedCategory : category))
-    );
+  const handleToggleStatus = async (courseId) => {
+    try {
+      const res = await axiosInstance.patch(`/api/courses/${courseId}/toggle_active/`);
+      const updatedCourse = res.data;
+
+      // Update local state
+      setCourses((prevCourses) =>
+        prevCourses.map((course) =>
+          course.id === updatedCourse.id
+            ? { ...course, is_active: updatedCourse.is_active }
+            : course
+        )
+      );
+
+      toast.success(`Course ${updatedCourse.is_active ? 'activated' : 'deactivated'} successfully!`);
+    } catch (error) {
+      console.error('Failed to toggle course status:', error);
+      toast.error('Failed to update course status');
+    }
   };
 
-  const handleCategoryDeleted = (categoryId) => {
-    setCategories((prev) => prev.filter((category) => category.id !== categoryId));
+  const handleViewClick = (id, name) => {
+    navigate(`/dashboard/feature-comparison/${id}/${encodeURIComponent(name)}`);
   };
+return (
+  <CContainer fluid className="p-2 bg-light">
+    <ToastContainer position="top-right" autoClose={3000} />
 
-  const openModal = (action, category = null) => {
-    setModalAction(action);
-    setSelectedCategory(category);
-  };
-
-  const closeModal = () => {
-    setModalAction(null);
-    setSelectedCategory(null);
-  };
-
-  return (
-    <CContainer fluid className="p-3 bg-light">
-      <PermissionWrapper requiredPermission={Permissions.ADD_COURSE_CATEGORY}>
-        <CTooltip content="Add a Course" placement="top">
-          <CButton color="primary" onClick={() => openModal("create")} className="mb-3 float-end">
-            <CIcon icon={cilUserPlus} />
-          </CButton>
-        </CTooltip>
-      </PermissionWrapper>
+    {/* Heading with Add Course button */}
+    <div className="d-flex justify-content-between align-items-center mb-3">
+      <h2 className="mb-0">Course List</h2>
       
-      {loading ? (
-        <div className="d-flex justify-content-center p-4">
-          <CSpinner color="primary" />
-        </div>
-      ) : (
-        <CTable borderColor="dark">
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>#</CTableHeaderCell>
-              <CTableHeaderCell>Name</CTableHeaderCell>
-              <CTableHeaderCell>Parent</CTableHeaderCell>
-              <CTableHeaderCell>Created At</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {categories.map((category, index) => (
-              <CTableRow key={category.id}>
-                <CTableDataCell>{index + 1}</CTableDataCell>
-                <PermissionWrapper requiredPermission={Permissions.VIEW_COURSE_CATEGORY}>
-                  <CTableDataCell>
-                    <a
-                      href="#"
-                      onClick={() => openModal("detail", category)}
-                      className="text-primary text-decoration-none"
-                    >
-                      {category.name}
-                    </a>
-                  </CTableDataCell>
-                </PermissionWrapper>
-                <CTableDataCell>{category.parent || "No Parent"}</CTableDataCell>
-                <CTableDataCell>
-                  {category.created_at ? new Date(category.created_at).toLocaleString() : "-"}
-                </CTableDataCell>
-                <CTableDataCell>
-                  <PermissionWrapper requiredPermission={Permissions.CHANGE_COURSE_CATEGORY}>
-                    <CIcon
-                      icon={cilPen}
-                      onClick={() => openModal("update", category)}
-                      className="text-primary cursor-pointer me-2"
-                      title="Update"
-                    />
-                  </PermissionWrapper>
-                  <PermissionWrapper requiredPermission={Permissions.DELETE_COURSE_CATEGORY}>
-                    <CIcon
-                      icon={cilTrash}
-                      onClick={() => openModal("delete", category)}
-                      className="text-danger cursor-pointer"
-                      title="Delete"
-                    />
-                  </PermissionWrapper>
-                </CTableDataCell>
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
-      )}
+      <CTooltip content="Create new course" placement="left">
+        <CButton
+          color="primary"
+          onClick={() => (true)}  // Replace with actual handler
+          style={{ fontWeight: 600 }}
+        >
+          + Add Course
+        </CButton>
+      </CTooltip>
+    </div>
 
-      <AGPModal
-        isOpen={!!modalAction}
-        onClose={closeModal}
-        title={{
-          create: "Create Course Category",
-          update: "Update Course Category",
-          delete: "Delete Course Category",
-          detail: "Course Category Details",
-        }[modalAction]}
-        size={["create", "update", "detail"].includes(modalAction) ? "lg" : ""}
-      >
-        {modalAction === "create" && (
-          <CreateCourseCategory onMaterialCreated={handleCategoryCreated} onClose={closeModal} categories={categories} />
-        )}
-        {modalAction === "update" && (
-          <MaterialUpdate
-            materialId={selectedCategory?.id}
-            onClose={closeModal}
-            onMaterialUpdated={handleCategoryUpdated}
-            categories={categories}
-          />
-        )}
-        {modalAction === "detail" && <MaterialDetail material={selectedCategory} onClose={closeModal} />}
-        {modalAction === "delete" && (
-          <MaterialDeleteConfirm
-            courseCategory={selectedCategory}
-            onClose={closeModal}
-            removeCourseCategory={handleCategoryDeleted}
-          />
-        )}
-      </AGPModal>
-    </CContainer>
-  );
+
+    {loading ? (
+      <div className="d-flex justify-content-center p-4">
+        <CSpinner color="primary" />
+      </div>
+    ) : (
+      <CTable striped hover responsive>
+        <CTableHead>
+          <CTableRow>
+            <CTableHeaderCell>#</CTableHeaderCell>
+            <CTableHeaderCell>Name</CTableHeaderCell>
+            <CTableHeaderCell>Summary</CTableHeaderCell>
+            <CTableHeaderCell>Category</CTableHeaderCell>
+            <CTableHeaderCell>Status</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
+          </CTableRow>
+        </CTableHead>
+        <CTableBody>
+          {courses.map((course, index) => (
+            <CTableRow key={course.id}>
+              <CTableDataCell>{index + 1}</CTableDataCell>
+              <CTableDataCell>
+                <a
+                  href="#"
+                  onClick={() => navigate(`/dashboard/course-details/${course.id}`)}
+                  style={{ color: '#007bff', textDecoration: 'none' }}
+                >
+                  {course.name}
+                </a>
+              </CTableDataCell>
+              <CTableDataCell>{course.summary}</CTableDataCell>
+              <CTableDataCell>{course.category_name || 'N/A'}</CTableDataCell>
+              <CTableDataCell>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={course.is_active}
+                    onChange={() => handleToggleStatus(course.id, course.is_active)}
+                  />
+                  <span className="slider round"></span>
+                </label>
+              </CTableDataCell>
+              <CTableDataCell>
+                <CTooltip content="Edit Course">
+                  <CIcon
+                    icon={cilPen}
+                    style={{ color: 'blue', cursor: 'pointer', marginRight: '10px' }}
+                    onClick={() => alert('Edit functionality coming soon')}
+                  />
+                </CTooltip>
+                <CTooltip content="Delete Course">
+                  <CIcon
+                    icon={cilTrash}
+                    style={{ color: 'red', cursor: 'pointer' }}
+                    onClick={() => alert('Delete confirmation coming soon')}
+                  />
+                </CTooltip>
+              </CTableDataCell>
+            </CTableRow>
+          ))}
+        </CTableBody>
+      </CTable>
+    )}
+  </CContainer>
+);
+
 };
 
 export default CourseList;

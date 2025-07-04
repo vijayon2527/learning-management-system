@@ -142,8 +142,15 @@ const Header = () => {
                             <img src="assets/images/AGP-LOGO.png" alt="Logo" height="50" />
                         </div>
                         <div className="d-flex gap-3 align-items-center">
-                            <BsSearch role="button" className="nav-icon" title="Search" onClick={toggleSearch} />
-                            <BsBag role="button" className="fs-4" title="Cart" onClick={toggleCart} />
+                            <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
+                            <BsBag role="button" className="fs-4" onClick={toggleCart} />
+                            <NavLink
+                                to="/login"
+                                className="btn btn-sm"
+                                style={{ backgroundColor: '#ff5722', color: '#fff', border: 'none' }}
+                                >
+                                Login
+                            </NavLink>
                         </div>
                     </Container>
 

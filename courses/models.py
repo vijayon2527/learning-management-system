@@ -206,6 +206,11 @@ class Track(BaseModel):
         verbose_name=_("Description"),
         help_text=_("Detailed description of the track"),
     )
+    is_active = models.BooleanField(
+        default=False,
+        verbose_name=_("Is Active"),
+        help_text=_("Indicates whether the track is active"),
+    )
 
     def __str__(self):
         return f"{self.name} - {self.course.name}"
