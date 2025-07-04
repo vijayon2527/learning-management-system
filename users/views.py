@@ -10,16 +10,32 @@ from django.contrib.auth import get_user_model
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from django.conf import settings
+from django.contrib.auth import authenticate
 from decouple import config
 import requests
 import logging
 
-from .models import User
+from .models import *
 from .serializers import (
     AGPTokenObtainPairSerializer,
     AGPTokenRefreshSerializer,
+    OtpVerifySerializer
 )
 
+
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+from decouple import config
+import requests
+import logging
+import random
+from django.utils import timezone
+from datetime import timedelta
+
+from .utils import send_otp_email
 
 logger = logging.getLogger(__name__)
 
@@ -123,3 +139,62 @@ class SetPasswordView(APIView):
         return Response({"message": "Password set successfully"}, status=status.HTTP_200_OK)
 
 
+    
+    
+
+
+class SendOtpView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if not email or not password:
+            return Response({"error": "Email and password are required."}, status=400)
+
+        user = authenticate(email=email, password=password)
+
+        if not user:
+            return Response({"error": "Invalid email or password."}, status=401)
+
+        # ✅ If authenticated, send OTP
+        otp_code = str(random.randint(100000, 999999))
+        expires_at = timezone.now() + timedelta(minutes=5)
+
+        Otp.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
+        send_otp_email(email, otp_code)
+
+        response_data = {"message": "OTP sent to your email."}
+
+        if settings.DEBUG:
+            response_data["otp"] = otp_code  # 👈 Include OTP in dev only
+
+        return Response(response_data, status=200)
+
+class VerifyOtpView(APIView):
+    def post(self, request):
+        serializer = OtpVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            otp = serializer.validated_data['otp']
+            try:
+                user = User.objects.get(email=email)
+                latest_otp = Otp.objects.filter(user=user).order_by('-created_at').first()
+
+                if not latest_otp:
+                    return Response({"error": "No OTP found."}, status=400)
+                if latest_otp.is_expired():
+                    return Response({"error": "OTP has expired."}, status=400)
+                if latest_otp.otp_code != otp:
+                    return Response({"error": "Invalid OTP."}, status=400)
+
+                latest_otp.delete()
+
+                user.is_active = True
+                user.save()
+
+                return Response({"message": "OTP verified. You may now login."}, status=200)
+
+            except User.DoesNotExist:
+                return Response({"error": "User not found."}, status=404)
+
+        return Response(serializer.errors, status=400)

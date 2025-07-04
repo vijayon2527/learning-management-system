@@ -6,6 +6,12 @@ from django.conf import settings
 from .models import User
 from django.contrib.auth import authenticate
 
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class OtpVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
 
 class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

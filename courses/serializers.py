@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Category, Course
+from .models import Course, Track, Feature, TrackFeatureValue,Category
+
 
 class CategorySerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(source="parent.name", read_only=True)
@@ -37,3 +38,30 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+        
+class TrackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track
+        fields = '__all__' 
+
+
+class FeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ['id', 'name', 'order', 'course']
+
+
+class TrackFeatureValueSerializer(serializers.ModelSerializer):
+    track = TrackSerializer()
+    feature = FeatureSerializer()
+
+    class Meta:
+        model = TrackFeatureValue
+        fields = ['id', 'track', 'feature', 'value']
+
+
+class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrackFeatureValue
+        fields = ['id', 'track', 'feature', 'value']

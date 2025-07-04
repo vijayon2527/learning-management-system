@@ -7,5 +7,7 @@ urlpatterns = [
     path('token/refresh/', views.AGPTokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('set-password/', views.SetPasswordView.as_view(), name='set-password'),
+    path('send-otp/', views.SendOtpView.as_view(), name='send-otp'),
+    path('verify-otp/', views.VerifyOtpView.as_view(), name='verify-otp'),
 
 ]

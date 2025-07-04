@@ -1,19 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import {
   CButton,
-  CCard,
-  CCardBody,
-  CCol,
   CContainer,
   CForm,
   CFormInput,
-  CFormLabel,
-  CRow,
-  CSpinner,
+  CFormSelect,
+  CFormLabel
 } from "@coreui/react";
-import { toast } from 'react-toastify';
-
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
     first_name: "",
@@ -24,12 +18,12 @@ const RegistrationForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [validated, setValidated] = useState(false);
 
-   const notify = (msg, type = 'success') => {
-      type === 'error' ? toast.error(msg) : toast.success(msg);
-    };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,137 +61,116 @@ const RegistrationForm = () => {
 
     try {
       await axiosInstance.post("api/users/register/", formData);
+      setSuccessMessage("Registration successful!");
       setFormData({
         first_name: "",
         last_name: "",
         email: "",
         password: "",
         confirm_password: "",
+        department_id: "",
+        role_id: "",
       });
+      setRoles([]);
       setLoading(false);
-      notify("Registration successful!");
     } catch (error) {
-      if (error.response?.data) {
-        setErrors(error.response.data);
+      if (error.response && error.response.data) {
+        if (error.response.data.non_field_errors) {
+          setErrors({ email: error.response.data.non_field_errors[0] });
+        } else {
+          setErrors(error.response.data);
+        }
       } else {
-        setErrors({ general: "An unexpected error occurred." });
+        setErrors({
+          general: "An unexpected error occurred. Please try again later.",
+        });
       }
       setLoading(false);
     }
   };
 
-  const getFieldStatus = (field) =>
-    errors[field] ? "is-invalid" : formData[field] ? "is-valid" : "";
+  const getFieldStatus = (fieldName) => {
+    return errors[fieldName] ? "is-invalid" : formData[fieldName] ? "is-valid" : "";
+  };
 
   return (
-    <CContainer className="d-flex justify-content-center align-items-center vh-100">
-        <CRow className="w-100 justify-content-center">
-          <CCol xs={12} md={6} lg={5}>
-            <CCard className="p-4 shadow" style={{ borderRadius: '1rem' }}>
-              <CCardBody>
-              <h2 className="text-center mb-4">Register</h2>
-              <CForm onSubmit={handleSubmit} noValidate validated={validated}>
-                <CFormLabel>
-                  First Name <span className="text-danger">*</span>
-                </CFormLabel>
-                <CFormInput
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  placeholder="First Name"
-                  className={`form-control-lg ${getFieldStatus("first_name")}`}
-                />
-                {errors.first_name && (
-                  <div className="text-danger mb-2">{errors.first_name}</div>
-                )}
-
-                <CFormLabel>
-                  Last Name <span className="text-danger">*</span>
-                </CFormLabel>
-                <CFormInput
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  placeholder="Last Name"
-                  className={`form-control-lg ${getFieldStatus("last_name")}`}
-                />
-                {errors.last_name && (
-                  <div className="text-danger mb-2">{errors.last_name}</div>
-                )}
-
-                <CFormLabel>
-                  Email <span className="text-danger">*</span>
-                </CFormLabel>
-                <CFormInput
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email"
-                  className={`form-control-lg ${getFieldStatus("email")}`}
-                />
-                {errors.email && (
-                  <div className="text-danger mb-2">{errors.email}</div>
-                )}
-
-                <CFormLabel>
-                  Password <span className="text-danger">*</span>
-                </CFormLabel>
-                <CFormInput
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Password"
-                  className={`form-control-lg ${getFieldStatus("password")}`}
-                />
-                {errors.password && (
-                  <div className="text-danger mb-2">{errors.password}</div>
-                )}
-                
-                <CFormLabel>
-                  Confirm Password <span className="text-danger">*</span>
-                </CFormLabel>
-                <CFormInput
-                  type="password"
-                  name="confirm_password"
-                  value={formData.confirm_password}
-                  onChange={handleInputChange}
-                  placeholder="Confirm Password"
-                  className={`form-control-lg ${getFieldStatus("confirm_password")}`}
-                />
-                {errors.confirm_password && (
-                  <div className="text-danger mb-3">{errors.confirm_password}</div>
-                )}
-
-                {errors.general && (
-                  <div className="text-danger text-center mb-3">
-                    {errors.general}
-                  </div>
-                )}
-
-                {/* ✅ Added margin-top to create space before the button */}
-                <CButton
-                  type="submit"
-                  color="primary"
-                  className="w-100 mt-3"
-                  disabled={loading}
-                >
-                  {loading ? <CSpinner size="sm" /> : "Register"}
-                </CButton>
-
-                {/* ✅ Added login redirect link */}
-                <div className="text-center mt-3">
-                  <span>Already have an account? </span>
-                  <a href="/login" className="text-primary fw-bold">Login</a>
-                </div>
-              </CForm>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+    <CContainer>
+      <CForm onSubmit={handleSubmit} noValidate validated={validated}>
+          <CFormLabel>
+            First Name <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
+          </CFormLabel>
+          <CFormInput
+            type="text"
+            name="first_name"
+            value={formData.first_name}
+            placeholder="First Name"
+            onChange={handleInputChange}
+            required
+            className={`no-border form-control-lg ${getFieldStatus("first_name")}`} // Remove border
+            feedbackInvalid={errors.first_name}
+          />
+          <CFormLabel>
+            Last Name <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
+          </CFormLabel>
+          <CFormInput
+            type="text"
+            name="last_name"
+            value={formData.last_name}
+            placeholder="Last Name"
+            onChange={handleInputChange}
+            required
+            className={`no-border form-control-lg ${getFieldStatus("last_name")}`} // Remove border
+            feedbackInvalid={errors.last_name}
+          />
+          <CFormLabel>
+            Email(User Name) <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
+          </CFormLabel>
+          <CFormInput
+            type="email"
+            name="email"
+            value={formData.email}
+            placeholder="Enter Your Email "
+            onChange={handleInputChange}
+            required
+            className={`no-border form-control-lg ${getFieldStatus("email")}`} // Remove border
+            feedbackInvalid={errors.email}
+          />
+          <CFormLabel>
+            Password <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
+          </CFormLabel>
+          <CFormInput
+            type="password"
+            name="password"
+            value={formData.password}
+            placeholder="Password"
+            onChange={handleInputChange}
+            required
+            className={`no-border form-control-lg ${getFieldStatus("password")}`} // Remove border
+            feedbackInvalid={errors.password}
+          />
+          <CFormLabel>
+            Confirm Password <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
+          </CFormLabel>
+          <CFormInput
+            type="password"
+            name="confirm_password"
+            value={formData.confirm_password}
+            placeholder="Confirm Password"
+            onChange={handleInputChange}
+            required
+            className={`no-border form-control-lg ${getFieldStatus("confirm_password")}`} // Remove border
+            feedbackInvalid={errors.confirm_password}
+          />
+        <CButton type="submit" color="primary" className="w-100" disabled={loading}>
+          {loading ? "Submitting..." : "Register"}
+        </CButton>
+      </CForm>
     </CContainer>
   );
 };
 
 export default RegistrationForm;
+
+
+
+

@@ -1,0 +1,236 @@
+.course-video-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--secondary-elements-background);
+  color: var(--secondary-elements-text-color);
+  padding: 0.8rem 2rem;
+  border-bottom: 0.1rem solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.cvh-left {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cvh-logo-text {
+  display: flex;
+  align-items: center;
+  
+  border-right: 1px solid var(--border-color);
+  padding-right: 1rem;
+}
+.cvh-logo-name {
+  display: block;
+  font-size: var(--heading-font-size);
+  font-weight: var(--font-weight-bold);
+}
+
+.cvh-logo-back {
+  display: none;
+}
+.breadcrumb-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.breadcrumb-first {
+  display: inline;
+}
+
+.breadcrumb-ellipsis {
+  display: none;
+}
+
+.breadcrumb-separator {
+  margin: 0 4px;
+}
+
+.cvh-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cvh-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.cvh-action:hover {
+  color: var(--text-color-light);
+}
+
+.cvh-action.share {
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--border-radius);
+}
+
+.cvh-action.share:hover {
+  color: var(--secondary-elements-text-color);
+  background-color: var(--text-color-light);
+}
+
+/* Profile Dropdown */
+.profile-wrapper {
+  position: relative;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 135%;
+  right: 0;
+  background-color: var(--light-background);
+  border: 0.1rem solid var(--border-color);
+  width: 210px;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem;
+  gap: 0.6rem;
+  font-size: var(--font-size-small);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-background-color);
+  color: var(--text-color);
+}
+
+.dropdown-item.top {
+  border-bottom: 1px solid var(--border-color);
+
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100 !important;
+}
+
+.profile-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.cvh-hamburger {
+  display: none;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .cvh-hamburger {
+    display: block;
+    cursor: pointer;
+  }
+
+  .desktop-actions {
+    display: none;
+  }
+
+  .mobile-menu-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 250px;
+    background-color: var(--light-background);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    animation: slideIn 0.3s ease forwards;
+  }
+
+  .mobile-drawer-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+  }
+
+  .drawer-close-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: var(--font-size-medium);
+    cursor: pointer;
+    color: #1c1b1b;
+  }
+  .modal-overlay{
+    z-index: 1020;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+    }
+
+    to {
+      transform: translateX(0%);
+    }
+  }
+}
+
+@media (max-width: 710px) {
+  .cvh-logo-name {
+    display: none;
+  }
+
+  .cvh-logo-back {
+    display: block;
+    cursor: pointer;
+  }
+   .breadcrumb-first {
+    display: none;
+  }
+
+  .breadcrumb-path::before {
+    content: ". . .";
+    color: var(--secondary-elements-text-color);
+    padding-bottom: 10px;
+  }
+}
+

@@ -1,40 +1,97 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
 import {
-  CButton,
-  CCard,
-  CCardBody,
-  CCol,
-  CContainer,
-  CForm,
-  CFormInput,
-  CInputGroup,
-  CInputGroupText,
-  CRow,
-  CSpinner,
+  CButton, CCard, CCardBody, CCol, CContainer, CForm,
+  CFormInput, CFormSelect, CInputGroup, CInputGroupText, CRow, CSpinner
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
 import AuthContext from '../../../components/context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
+import axiosInstance from '../../../utils/axiosInstance';
+import OTPInput from 'react-otp-input';
 
 const Login = () => {
   const { loginUser } = useContext(AuthContext);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    setErrors({ ...errors, [name]: '' });
+  };
+
+  const handleOtpSubmit = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post('/api/users/verify-otp/', {
+        email: formData.email,
+        otp,
+      });
+
+      if (res.status === 200) {
+        await loginUser(formData);
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setErrors({ general: 'Invalid OTP.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {};
+
+    if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+
+    if (!formData.password) newErrors.password = 'Password is required';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length) return;
+
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post('/api/users/send-otp/', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      setOtpSent(true);
+
+      if (res.data.otp) {
+        setTimeout(() => {
+          setOtp(res.data.otp); // triggers OTP auto-submit via useEffect
+        }, 2000);
+      }
+    } catch (err) {
+      setErrors({ general: err.response?.data?.error || 'OTP send failed.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto submit OTP
+  useEffect(() => {
+    if (otp.length === 6) {
+      handleOtpSubmit();
+    }
+  }, [otp]);
+
+  // GitHub code exchange and Facebook SDK init
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
 
     const handleGitHubExchange = async (code) => {
       try {
         await loginUser({ provider: 'github', code });
-        // Clean up URL
         window.history.replaceState(null, '', window.location.pathname);
         navigate('/dashboard');
       } catch (error) {
@@ -43,10 +100,7 @@ const Login = () => {
       }
     };
 
-    if (code) {
-      handleGitHubExchange(code);
-    }
-
+    if (code) handleGitHubExchange(code);
     loadFacebookSDK();
   }, [loginUser, navigate]);
 
@@ -96,61 +150,29 @@ const Login = () => {
     window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
-    try {
-      await loginUser(formData);
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Login error:', err.response?.data || err.message);
-      setErrors({ general: err.response?.data?.message || 'Login failed. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <CContainer className="d-flex justify-content-center align-items-center vh-100">
+    <CContainer className="d-flex justify-content-center align-items-center vh-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
       <CRow>
         <CCol md={12}>
           <CCard className="p-4 shadow-sm rounded-4">
             <CCardBody>
               <h1 className="text-center mb-4">Login</h1>
-              <CForm onSubmit={handleSubmit}>
+              <CForm onSubmit={otpSent ? (e) => e.preventDefault() : handleSubmit}>
                 <CInputGroup className="mb-3">
-                  <CInputGroupText>
-                    <CIcon icon={cilUser} />
-                  </CInputGroupText>
+                  <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
                   <CFormInput
                     placeholder="Email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     className={errors.email ? 'is-invalid' : ''}
+                    disabled={otpSent}
                   />
                 </CInputGroup>
                 {errors.email && <div className="text-danger">{errors.email}</div>}
 
                 <CInputGroup className="mb-3">
-                  <CInputGroupText>
-                    <CIcon icon={cilLockLocked} />
-                  </CInputGroupText>
+                  <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
                   <CFormInput
                     type="password"
                     placeholder="Password"
@@ -158,13 +180,55 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     className={errors.password ? 'is-invalid' : ''}
+                    disabled={otpSent}
                   />
                 </CInputGroup>
                 {errors.password && <div className="text-danger">{errors.password}</div>}
-                {errors.general && <div className="text-danger mb-2">{errors.general}</div>}
 
-                <CButton type="submit" color="primary" className="w-100 mb-3" disabled={loading}>
-                  {loading ? <CSpinner size="sm" /> : 'Login'}
+                {otpSent && (
+                  <div className="mb-4 text-center">
+                    <h5>🔐 Enter the 6-digit OTP</h5>
+                    <OTPInput
+                      value={otp}
+                      onChange={setOtp}
+                      numInputs={6}
+                      inputStyle={{
+                        width: '2.5rem',
+                        height: '2.5rem',
+                        margin: '0 0.3rem',
+                        fontSize: '1.2rem',
+                        borderRadius: 4,
+                        border: '1px solid #ccc',
+                      }}
+                      renderInput={(props) => <input {...props} />}
+                    />
+                    {errors.general && <div className="text-danger mt-2">{errors.general}</div>}
+
+                    <div className="mt-2">
+                      <small>Didn't receive the code?</small>{' '}
+                      <button
+                        className="btn btn-link p-0"
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                      >
+                        Resend OTP
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {errors.general && !otpSent && (
+                  <div className="text-danger mb-2">{errors.general}</div>
+                )}
+
+                <CButton
+                  type="submit"
+                  color="primary"
+                  className="w-100 mb-3"
+                  disabled={loading || (otpSent && otp.length < 6)}
+                >
+                  {loading ? <CSpinner size="sm" /> : otpSent ? 'Verifying OTP...' : 'Login'}
                 </CButton>
               </CForm>
 
@@ -173,7 +237,7 @@ const Login = () => {
               </div>
 
               <div className="d-grid gap-2">
-                <div className="d-grid gap-2 mb-2">
+                <div className="mb-2">
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={() => console.log('Google login failed')}

@@ -20,6 +20,8 @@ import AOS from 'aos';
 import CourseDetail from './pages/home/CourseDetails'
 import CategoryCourses from './pages/home/CategoryCourses'
 
+import './style.css'
+
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 
