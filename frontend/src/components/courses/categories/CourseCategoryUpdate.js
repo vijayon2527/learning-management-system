@@ -1,320 +1,214 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
-  CContainer,
   CForm,
   CFormInput,
   CFormSelect,
   CButton,
-  CRow,
-  CCol,
-  CFormCheck,
-  CFormLabel,
-  CFormTextarea,
+  CFormFeedback,
 } from "@coreui/react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import axiosInstance from "../../../utils/axiosInstance";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
-const notify = (message) => toast(message);
+const notify = (message) => toast(message, { type: "success" });
+const notifyError = (message) => toast(message, { type: "error" });
 
-const CourseCategoryUpdate = ({ materialId, onClose }) => {
-  const { id } = useParams();  // Use the id from URL params
-  const [material, setMaterial] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [validated, setValidated] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
+const CategoryUpdate = ({ category, onUpdated, onClose, categories }) => {
+  const [form, setForm] = useState({
+    name: category.name || "",
+    description: category.description || "",
+    parent: category.parent || "",
+  });
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(category.logo || null); // existing logo url if any
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
+  // Update preview when logoFile changes
   useEffect(() => {
-    // Fetch data only when materialId or id is available
-    const fetchData = async () => {
-      try {
-        // Fetching material details based on the materialId prop or id from URL
-        const materialResponse = await axiosInstance.get(`api/material/materials/${materialId || id}/`);
-        const categoryResponse = await axiosInstance.get("api/material/categories/");
+    if (!logoFile) {
+      setLogoPreview(category.logo || null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(logoFile);
+    setLogoPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logoFile, category.logo]);
 
-        if (materialResponse.data.material) {
-          setMaterial(materialResponse.data.material);
-        } else {
-          setError("Material not found.");
-        }
+  const validate = () => {
+    const newErrors = {};
+    if (!form.name.trim()) {
+      newErrors.name = "Name is required.";
+    } else if (form.name.length > 200) {
+      newErrors.name = "Name must be at most 200 characters.";
+    }
+    // Optionally add logo validation here
+    return newErrors;
+  };
 
-        if (categoryResponse.data) {
-          setCategories(categoryResponse.data);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to fetch material details.");
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        notifyError("Only JPG or PNG images are allowed.");
+        return;
       }
-    };
-
-    fetchData();
-  }, [materialId, id]); // Ensure to fetch when materialId or id changes
-
-  const validateFields = () => {
-    const errors = {};
-
-    if (!material.stock_quantity || !/^\d+$/.test(material.stock_quantity)) {
-      errors.stock_quantity = "A valid integer is required for stock quantity.";
+      if (file.size > 2 * 1024 * 1024) {
+        notifyError("Image size should be less than 2MB.");
+        return;
+      }
+      setLogoFile(file);
     }
-    if (!material.unit_price || isNaN(Number(material.unit_price))) {
-      errors.unit_price = "A valid number is required for unit price.";
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const form = e.currentTarget;
 
-    if (form.checkValidity() === false || !validateFields()) {
-      e.stopPropagation();
-      setValidated(true);
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
+    setErrors({});
+    setSubmitting(true);
 
     try {
-      // Send the correct category_detail with the request
-      const updatedMaterial = {
-        ...material,
-        category_detail: {
-          ...material.category_detail, 
-          id: material.category_detail?.id // Make sure category detail is updated
-        }
-      };
-
-      await axiosInstance.patch(`api/material/materials/${materialId || id}/`, updatedMaterial);
-      setMessage("Material updated successfully!");
-      setError("");
-      setFieldErrors({}); // Clear field errors after success
-      if (onClose) {
-        onClose(); // Close the modal if onClose prop is passed
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("description", form.description);
+      formData.append("parent", form.parent || "");
+      if (logoFile) {
+        formData.append("logo", logoFile);
       }
-      notify("Material updated successfully!"); // Display notification
+
+      const response = await axiosInstance.put(
+        `/api/courses/categories/${category.id}/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      notify("Category updated successfully!");
+      onUpdated(response.data);
+      onClose();
     } catch (err) {
-      console.error(err);
-      setError("Failed to update material.");
-      setMessage("");
+      console.error("Error updating category:", err);
+      if (err.response && err.response.data) {
+        const backendErrors = {};
+        if (err.response.data.name) {
+          backendErrors.name = err.response.data.name.join(" ");
+        }
+        if (err.response.data.parent) {
+          backendErrors.parent = err.response.data.parent.join(" ");
+        }
+        if (err.response.data.logo) {
+          backendErrors.logo = err.response.data.logo.join(" ");
+        }
+        setErrors(backendErrors);
+        notifyError("Please correct the errors in the form.");
+      } else {
+        notifyError("An unexpected error occurred.");
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (type === "checkbox") {
-      setMaterial((prev) => ({ ...prev, [name]: checked }));
-    } else if (name === "category_id") {
-      // When category is changed, update the category_detail properly
-      const selectedCategory = categories.find(category => category.id === value);
-      setMaterial((prev) => ({
-        ...prev,
-        category_detail: { id: value, name: selectedCategory ? selectedCategory.name : "" },
-      }));
-    } else {
-      setMaterial((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  if (!material) {
-    return <div>Loading...</div>;
-  }
 
   return (
-    <CContainer>
-  <CForm onSubmit={handleSubmit} noValidate validated={validated}>
-    {/* Category and Name - side by side */}
-    <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormLabel>
-          Material Category <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormSelect
-          name="category_id"
-          value={material.category_detail?.id || ""}
-          onChange={handleChange}
-          invalid={validated && !material.category_detail?.id}
-          feedback="Please select a valid category"
-          required
-        >
-          <option value="">Select a category</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
+    <CForm onSubmit={handleSubmit} noValidate>
+      <CFormInput
+        label="Name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        required
+        invalid={!!errors.name}
+        feedback={errors.name}
+        className="mb-3"
+      />
+
+      <label className="form-label">Description</label>
+      <ReactQuill
+        theme="snow"
+        value={form.description}
+        onChange={(content) => setForm({ ...form, description: content })}
+        className="mb-3"
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link", "image"],
+            ["clean"],
+          ],
+        }}
+      />
+
+      <CFormSelect
+        label="Parent Category"
+        value={form.parent}
+        onChange={(e) => setForm({ ...form, parent: e.target.value })}
+        invalid={!!errors.parent}
+        feedback={errors.parent}
+        className="mb-3"
+      >
+        <option value="">-- None --</option>
+        {categories
+          .filter((c) => c.id !== category.id)
+          .map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
             </option>
           ))}
-        </CFormSelect>
-      </CCol>
-      <CCol md={6}>
-        <CFormLabel>
-          Material Name <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormInput
-          name="name"
-          value={material.name || ""}
-          onChange={handleChange}
-          invalid={validated && !material.name}
-          feedback="Please enter a valid name"
-          required
-        />
-      </CCol>
-    </CRow>
-    <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormLabel>
-          Description
-        </CFormLabel>
-        <CFormTextarea
-          name="description"
-          value={material.description || ""}
-          onChange={handleChange}
-          required
-        />
-      </CCol>
-      <CCol md={6}>
-        <CFormLabel>
-          Stock Quantity <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormInput
-          name="stock_quantity"
-          value={material.stock_quantity || ""}
-          onChange={handleChange}
-          invalid={validated && (fieldErrors.stock_quantity || !material.stock_quantity)}
-          feedback="Please enter a valid stock quantity"
-          required
-        />
-      </CCol>
-    </CRow>
-    <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormLabel>
-          Unit Price <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormInput
-          name="unit_price"
-          value={material.unit_price || ""}
-          onChange={handleChange}
-          invalid={validated && (fieldErrors.unit_price || !material.unit_price)}
-          feedback="Please enter a valid unit price"
-          required
-        />
-      </CCol>
-      <CCol md={6}>
-        <CFormLabel>
-          Unit Of Measure(UOM) <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormInput
-          name="unit_of_measure"
-          value={material.unit_of_measure || ""}
-          onChange={handleChange}
-          invalid={validated && !material.unit_of_measure}
-          feedback="Please enter a valid unit of measure"
-          required
-        />
-      </CCol>
-    </CRow>
-      <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormLabel>
-          Material Requested Id <span style={{ color: "red", fontSize: "1.5rem" }}>*</span>
-        </CFormLabel>
-        <CFormInput
-          name="sku"
-          value={material.sku || ""}
-          onChange={handleChange}
-          invalid={validated && !material.sku}
-          feedback="Please enter a valid Material Request Id"
-          required
-        />
-      </CCol>
-      <CCol md={6}>
-        <CFormInput
-          name="brand"
-          label="Brand"
-          value={material.brand || ""}
-          onChange={handleChange}
-        />
-      </CCol>
-    </CRow>
+      </CFormSelect>
 
-    {/* Weight and Manufacturing Date - side by side */}
-    <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormInput
-          name="weight"
-          label="Weight"
-          value={material.weight || ""}
-          onChange={handleChange}
-        />
-      </CCol>
-      <CCol md={6}>
-        <CFormInput
-          name="manufacturing_date"
-          type="date"
-          label="Manufacturing Date"
-          value={material.manufacturing_date || ""}
-          onChange={handleChange}
-        />
-      </CCol>
-    </CRow>
+      <CFormInput
+        type="file"
+        label="Logo (JPG or PNG, max 2MB)"
+        onChange={handleLogoChange}
+        invalid={!!errors.logo}
+        feedback={errors.logo}
+        accept="image/png, image/jpeg"
+        className="mb-3"
+      />
+      {logoPreview && (
+        <div
+          style={{
+            marginBottom: "1rem",
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            overflow: "hidden",
+            boxShadow: "0 0 8px rgba(0,0,0,0.1)",
+            border: "1px solid #ccc",
+          }}
+        >
+          <img
+            src={logoPreview}
+            alt="Logo Preview"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      )}
 
-    {/* Expiry Date and Warranty Period - side by side */}
-    <CRow className="mb-3">
-      <CCol md={6}>
-        <CFormInput
-          name="expiry_date"
-          type="date"
-          label="Expiry Date"
-          value={material.expiry_date || ""}
-          onChange={handleChange}
-        />
-      </CCol>
-      <CCol md={6}>
-        <CFormInput
-          name="warranty_period"
-          label="Warranty Period"
-          value={material.warranty_period || ""}
-          onChange={handleChange}
-        />
-      </CCol>
-    </CRow>
-
-    {/* Flammable, Recyclable, and Hazardous checkboxes - side by side */}
-    <CRow className="mb-3">
-      <CCol md={4}>
-        <CFormCheck
-          name="flammable"
-          label="Flammable"
-          checked={material.flammable || false}
-          onChange={handleChange}
-        />
-      </CCol>
-      <CCol md={4}>
-        <CFormCheck
-          name="recyclable"
-          label="Recyclable"
-          checked={material.recyclable || false}
-          onChange={handleChange}
-        />
-      </CCol>
-      <CCol md={4}>
-        <CFormCheck
-          name="hazardous"
-          label="Hazardous"
-          checked={material.hazardous || false}
-          onChange={handleChange}
-        />
-      </CCol>
-    </CRow>
-
-    {/* Submit Button */}
-    <CButton type="submit" color="info" className="mt-3 w-100">
-      Update Material
-    </CButton>
-  </CForm>
-</CContainer>
+      <div className="d-flex justify-content-end">
+        <CButton
+          type="button"
+          color="secondary"
+          onClick={onClose}
+          className="me-2"
+        >
+          Cancel
+        </CButton>
+        <CButton type="submit" color="primary" disabled={submitting}>
+          {submitting ? "Updating..." : "Update"}
+        </CButton>
+      </div>
+    </CForm>
   );
 };
 
-export default CourseCategoryUpdate;
+export default CategoryUpdate;

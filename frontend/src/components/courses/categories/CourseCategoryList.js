@@ -1,38 +1,40 @@
-import React, { useEffect, useState } from "react";
-import CourseCategoryDeleteConfirm from "./CourseCategoryDeleteConfirm";
-import MaterialUpdate from "./CourseCategoryUpdate";
-import AGPModal from "../../common/AGPModal";
-import CreateCourseCategory from "./CreateCourseCategory";
-import MaterialDetail from "./CourseCategoryDetail";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   CContainer,
-  CTooltip,
   CTable,
   CTableHead,
-  CTableBody,
   CTableRow,
   CTableHeaderCell,
+  CTableBody,
   CTableDataCell,
-  CSpinner,
+  CTooltip,
   CButton,
+  CSpinner,
+  CFormInput,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import { cilUserPlus, cilPen, cilTrash } from "@coreui/icons";
+import { cilPen, cilTrash, cilFolder } from "@coreui/icons";
 import axiosInstance from "../../../utils/axiosInstance";
-import PermissionWrapper from "../../common/RoleWrapper";
-import Permissions from "../../common/Roles";
+import AGPModal from "../../common/AGPModal";
+import CategoryCreate from "./CreateCourseCategory";
+import CategoryUpdate from "./CourseCategoryUpdate";
+import CategoryDeleteConfirm from "./CourseCategoryDeleteConfirm";
+import { useNavigate } from "react-router-dom";
 
-const CourseCategoryList = () => {
+const CategoryList = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [modalAction, setModalAction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [filterText, setFilterText] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        const response = await axiosInstance.get("/api/course/categories/");
+        const response = await axiosInstance.get("/api/courses/categories/");
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -40,23 +42,19 @@ const CourseCategoryList = () => {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  const handleCategoryCreated = (newCategory) => {
+  const handleCategoryCreated = (newCategory) =>
     setCategories((prev) => [newCategory, ...prev]);
-  };
 
-  const handleCategoryUpdated = (updatedCategory) => {
+  const handleCategoryUpdated = (updatedCategory) =>
     setCategories((prev) =>
-      prev.map((category) => (category.id === updatedCategory.id ? updatedCategory : category))
+      prev.map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
     );
-  };
 
-  const handleCategoryDeleted = (categoryId) => {
-    setCategories((prev) => prev.filter((category) => category.id !== categoryId));
-  };
+  const handleCategoryDeleted = (categoryId) =>
+    setCategories((prev) => prev.filter((cat) => cat.id !== categoryId));
 
   const openModal = (action, category = null) => {
     setModalAction(action);
@@ -68,67 +66,165 @@ const CourseCategoryList = () => {
     setSelectedCategory(null);
   };
 
+  const filteredCategories = useMemo(() => {
+    return categories.filter(
+      (cat) =>
+        cat.name.toLowerCase().includes(filterText.toLowerCase()) ||
+        (cat.description &&
+          cat.description.toLowerCase().includes(filterText.toLowerCase())) ||
+        (cat.parent_name &&
+          cat.parent_name.toLowerCase().includes(filterText.toLowerCase()))
+    );
+  }, [categories, filterText]);
+
   return (
     <CContainer fluid className="p-3 bg-light">
-      <PermissionWrapper requiredPermission={Permissions.ADD_COURSE_CATEGORY}>
-        <CTooltip content="Add Course Category" placement="top">
-          <CButton color="primary" onClick={() => openModal("create")} className="mb-3 float-end">
-            <CIcon icon={cilUserPlus} />
-          </CButton>
-        </CTooltip>
-      </PermissionWrapper>
-      
+      {/* Header and search */}
+      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h4 className="fw-bold m-0">Categories</h4>
+        <div className="d-flex align-items-center gap-3">
+          <CFormInput
+            size="sm"
+            placeholder="Search by name, description or parent"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            style={{ maxWidth: "250px" }}
+          />
+          <CTooltip content="Add New Category">
+            <CButton color="primary" onClick={() => openModal("create")}>
+              <CIcon icon={cilFolder} className="me-2" />
+            </CButton>
+          </CTooltip>
+        </div>
+      </div>
+
       {loading ? (
         <div className="d-flex justify-content-center p-4">
-          <CSpinner color="primary" />
+          <CSpinner />
         </div>
       ) : (
-        <CTable borderColor="dark">
+        <CTable striped hover responsive className="shadow-sm bg-white rounded">
           <CTableHead>
             <CTableRow>
-              <CTableHeaderCell>#</CTableHeaderCell>
-              <CTableHeaderCell>Name</CTableHeaderCell>
-              <CTableHeaderCell>Parent</CTableHeaderCell>
-              <CTableHeaderCell>Created At</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
+              <CTableHeaderCell scope="col" style={{ width: "40px" }}>
+                #
+              </CTableHeaderCell>
+              <CTableHeaderCell scope="col">Name</CTableHeaderCell>
+              <CTableHeaderCell scope="col" style={{ width: "70px" }}>
+                Logo
+              </CTableHeaderCell>
+              <CTableHeaderCell scope="col">Description</CTableHeaderCell>
+              <CTableHeaderCell scope="col" style={{ width: "120px" }}>
+                Parent
+              </CTableHeaderCell>
+              <CTableHeaderCell scope="col" style={{ width: "180px" }}>
+                Created At
+              </CTableHeaderCell>
+              <CTableHeaderCell
+                scope="col"
+                className="text-center"
+                style={{ width: "110px" }}
+              >
+                Actions
+              </CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {categories.map((category, index) => (
-              <CTableRow key={category.id}>
-                <CTableDataCell>{index + 1}</CTableDataCell>
-                <PermissionWrapper requiredPermission={Permissions.VIEW_COURSE_CATEGORY}>
-                  <CTableDataCell>
-                    <a
-                      href="#"
-                      onClick={() => openModal("detail", category)}
-                      className="text-primary text-decoration-none"
-                    >
-                      {category.name}
-                    </a>
-                  </CTableDataCell>
-                </PermissionWrapper>
-                <CTableDataCell>{category.parent || "No Parent"}</CTableDataCell>
+            {filteredCategories.map((cat, idx) => (
+              <CTableRow key={cat.id} verticalAlign="middle">
+                <CTableDataCell>{idx + 1}</CTableDataCell>
                 <CTableDataCell>
-                  {category.created_at ? new Date(category.created_at).toLocaleString() : "-"}
+                  <a
+                    href="#!"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/dashboard/category-detail/${cat.id}`);
+                    }}
+                    className="fw-semibold link-primary text-decoration-none"
+                  >
+                    {cat.name}
+                  </a>
                 </CTableDataCell>
                 <CTableDataCell>
-                  <PermissionWrapper requiredPermission={Permissions.CHANGE_COURSE_CATEGORY}>
-                    <CIcon
-                      icon={cilPen}
-                      onClick={() => openModal("update", category)}
-                      className="text-primary cursor-pointer me-2"
-                      title="Update"
+                  {cat.logo ? (
+                    <img
+                      src={cat.logo}
+                      alt={cat.name}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "1px solid #ddd",
+                      }}
                     />
-                  </PermissionWrapper>
-                  <PermissionWrapper requiredPermission={Permissions.DELETE_COURSE_CATEGORY}>
-                    <CIcon
-                      icon={cilTrash}
-                      onClick={() => openModal("delete", category)}
-                      className="text-danger cursor-pointer"
-                      title="Delete"
-                    />
-                  </PermissionWrapper>
+                  ) : (
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        backgroundColor: "#eee",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        color: "#aaa",
+                        border: "1px solid #ddd",
+                      }}
+                    >
+                      N/A
+                    </div>
+                  )}
+                </CTableDataCell>
+
+                <CTableDataCell>
+                  <div
+                    style={{ whiteSpace: "normal" }}
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        cat.description ||
+                        "<span class='text-muted'>No Description</span>",
+                    }}
+                  />
+                </CTableDataCell>
+
+                <CTableDataCell>{cat.parent_name || "–"}</CTableDataCell>
+
+                <CTableDataCell>
+                  {cat.created_at
+                    ? new Date(cat.created_at).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "–"}
+                </CTableDataCell>
+
+                <CTableDataCell
+                  className="text-center"
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  <CTooltip content="Edit">
+                    <button
+                      className="icon-btn edit-btn"
+                      onClick={() => openModal("update", cat)}
+                      style={{ marginRight: 8 }}
+                    >
+                      <CIcon icon={cilPen} style={{ height: 18, width: 18 }} />
+                    </button>
+                  </CTooltip>
+
+                  <CTooltip content="Delete">
+                    <button
+                      className="icon-btn delete-btn"
+                      onClick={() => openModal("delete", cat)}
+                    >
+                      <CIcon icon={cilTrash} style={{ height: 18, width: 18 }} />
+                    </button>
+                  </CTooltip>
                 </CTableDataCell>
               </CTableRow>
             ))}
@@ -140,30 +236,32 @@ const CourseCategoryList = () => {
         isOpen={!!modalAction}
         onClose={closeModal}
         title={{
-          create: "Create Course Category",
-          update: "Update Course Category",
-          delete: "Delete Course Category",
-          detail: "Course Category Details",
+          create: "Create Category",
+          update: "Update Category",
+          delete: "Delete Category",
         }[modalAction]}
-        size={["create", "update", "detail"].includes(modalAction) ? "lg" : ""}
+        size={["create", "update"].includes(modalAction) ? "lg" : ""}
       >
         {modalAction === "create" && (
-          <CreateCourseCategory onMaterialCreated={handleCategoryCreated} onClose={closeModal} categories={categories} />
-        )}
-        {modalAction === "update" && (
-          <MaterialUpdate
-            materialId={selectedCategory?.id}
+          <CategoryCreate
+            onCreated={handleCategoryCreated}
             onClose={closeModal}
-            onMaterialUpdated={handleCategoryUpdated}
             categories={categories}
           />
         )}
-        {modalAction === "detail" && <MaterialDetail material={selectedCategory} onClose={closeModal} />}
-        {modalAction === "delete" && (
-          <CourseCategoryDeleteConfirm
-            courseCategory={selectedCategory}
+        {modalAction === "update" && (
+          <CategoryUpdate
+            category={selectedCategory}
+            onUpdated={handleCategoryUpdated}
             onClose={closeModal}
-            removeCourseCategory={handleCategoryDeleted}
+            categories={categories}
+          />
+        )}
+        {modalAction === "delete" && (
+          <CategoryDeleteConfirm
+            category={selectedCategory}
+            onDeleted={handleCategoryDeleted}
+            onClose={closeModal}
           />
         )}
       </AGPModal>
@@ -171,4 +269,4 @@ const CourseCategoryList = () => {
   );
 };
 
-export default CourseCategoryList;
+export default CategoryList;

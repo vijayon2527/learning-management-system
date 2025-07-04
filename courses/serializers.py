@@ -22,10 +22,22 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source="category.name",read_only=True)
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    logo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = Course
-        fields = ['id', 'name', 'summary','category_name','category','created_at']
+        fields = [
+            "id",
+            "name",
+            "summary",
+            "logo",         
+            "category",
+            "category_name",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
 
         
 class TrackSerializer(serializers.ModelSerializer):

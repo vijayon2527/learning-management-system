@@ -36,7 +36,7 @@ const CreateTrack = ({ courseId, onClose, onTrackAdded }) => {
     }
 
     try {
-      await axiosInstance.post(`/api/tracks/`, {
+      await axiosInstance.post(`/api/courses/tracks/`, {
         ...trackData,
         course: courseId,
         is_active: false,

@@ -16,7 +16,7 @@ const UpdateTrack = ({ trackId, onClose, onTrackUpdated }) => {
     const fetchTrack = async () => {
       setLoading(true);
       try {
-        const res = await axiosInstance.get(`/api/tracks/${trackId}/`);
+        const res = await axiosInstance.get(`/api/courses/tracks/${trackId}/`);
         setTrackData(res.data);
       } catch (error) {
         toast.error('Failed to load track details.');
@@ -52,7 +52,7 @@ const UpdateTrack = ({ trackId, onClose, onTrackUpdated }) => {
 
     setSaving(true);
     try {
-      await axiosInstance.put(`/api/tracks/${trackId}/`, trackData);
+      await axiosInstance.put(`/api/courses/tracks/${trackId}/`, trackData);
       toast.success('Track updated successfully!');
       onTrackUpdated();
       onClose();
