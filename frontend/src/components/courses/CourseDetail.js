@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate,Link } from 'react-router-dom';
 import {
   CContainer,
   CCard,
@@ -240,7 +240,7 @@ const CourseDetail = () => {
 
   
   try {
-    const { data } = await axiosInstance.post('/api/features/', {
+    const { data } = await axiosInstance.post('/api/courses/features/', {
       name: newFeature.trim(),
       order: features.length,
       course: courseId,
@@ -248,7 +248,7 @@ const CourseDetail = () => {
 
     await Promise.all(
       Object.entries(newFeatureValues).map(([trackId, v]) =>
-        axiosInstance.post('/api/feature-values/', {
+        axiosInstance.post('/api/courses/feature-values/', {
           track: Number(trackId),
           feature: data.id,
           value: v.trim(),
@@ -391,7 +391,12 @@ const CourseDetail = () => {
                     <th key={t.id}>
                       <div className="d-flex flex-column align-items-center">
                         <div className="d-flex align-items-center gap-2">
-                          <strong>{t.name}</strong>
+                          <Link
+                              to={`/dashboard/track-section-list/${t.id}`}
+                              className="fw-semibold text-primary text-decoration-none"
+                            >
+                              {t.name}
+                            </Link>
                           <CTooltip content="Track Status">
                             <label className="switch">
                               <input

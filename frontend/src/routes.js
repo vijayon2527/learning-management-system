@@ -3,6 +3,7 @@ import React from 'react'
 import Permissions from './components/common/Roles'
 import CourseDetail from './components/courses/CourseDetail'
 import CategoryDetail from './components/courses/categories/CourseCategoryDetail'
+import SectionDetail from './components/courses/SectionDetail'
 
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
@@ -13,6 +14,8 @@ const UserList = React.lazy(() => import('./components/users/UserList'));
 const CourseCategoryList = React.lazy(() => import('./components/courses/categories/CourseCategoryList'));
 const CourseList = React.lazy(() => import('./components/courses/CourseList'));
 const SetPassword = React.lazy(() => import('./views/pages/login/SetPassword'));
+const CreateTrackSection = React.lazy(() => import( './components/courses/CreateTrackSection'));
+const TrackSectionsList = React.lazy(() => import( './components/courses/TrackSectionsList'));
 
 
 const routes = [
@@ -87,6 +90,30 @@ const routes = [
     path:"/dashboard/course-details/:courseId", 
     name: 'set password', 
     element: CourseDetail, 
+    requiredPermissions: [
+      Permissions.VIEW_ROLE,
+    ] 
+  },
+  { 
+    path:"/dashboard/track-section/:trackId", 
+    name: 'set password', 
+    element: CreateTrackSection, 
+    requiredPermissions: [
+      Permissions.VIEW_ROLE,
+    ] 
+  },
+  { 
+    path:"/dashboard/track-section-list/:trackId", 
+    name: 'set password', 
+    element: TrackSectionsList, 
+    requiredPermissions: [
+      Permissions.VIEW_ROLE,
+    ] 
+  },
+  { 
+    path:"/dashboard/section/:sectionId", 
+    name: 'set password', 
+    element: SectionDetail, 
     requiredPermissions: [
       Permissions.VIEW_ROLE,
     ] 

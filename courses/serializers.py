@@ -65,3 +65,32 @@ class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrackFeatureValue
         fields = ['id', 'track', 'feature', 'value']
+
+
+
+from rest_framework import serializers
+from courses.models import Section          # adjust import path to your project
+
+
+class SectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Section
+        fields = '__all__'
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate(self, attrs):
+        media_type = attrs.get("media_type", getattr(self.instance, "media_type", None))
+        file = attrs.get("file", getattr(self.instance, "file", None))
+        url = attrs.get("external_url", getattr(self.instance, "external_url", None))
+
+        if media_type in ("video", "image", "file") and not file:
+            raise serializers.ValidationError(
+                {"file": "File upload is required for the selected media type."}
+            )
+
+        if media_type == "link" and not url:
+            raise serializers.ValidationError(
+                {"external_url": "External URL is required for link type."}
+            )
+
+        return attrs

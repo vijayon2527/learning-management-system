@@ -1,4 +1,4 @@
-from rest_framework import generics, status, viewsets
+from rest_framework import generics, status, viewsets,permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,6 +11,7 @@ from .serializers import (
     TrackFeatureValueSerializer,
     TrackFeatureValueUpdateSerializer,
     TrackSerializer,
+    SectionSerializer
 )
 
 
@@ -70,3 +71,21 @@ class TrackFeatureValueViewSet(viewsets.ModelViewSet):
         if course_id:
             return self.queryset.filter(track__course_id=course_id)
         return self.queryset
+
+
+
+
+class SectionViewSet(viewsets.ModelViewSet):
+    queryset           = Section.objects.all().select_related("track")
+    serializer_class   = SectionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends    = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields      = ["title", "overview"]
+    ordering           = ["track", "created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        track_id = self.request.query_params.get("track")
+        if track_id:
+            qs = qs.filter(track_id=track_id)
+        return qs

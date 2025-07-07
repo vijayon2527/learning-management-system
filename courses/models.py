@@ -225,3 +225,43 @@ class TrackFeatureValue(models.Model):
         indexes = [
             models.Index(fields=["track", "feature"], name="track_feature_idx"),
         ]
+
+
+
+class Section(models.Model):
+    class MediaType(models.TextChoices):
+        VIDEO = "video", _("Video")
+        IMAGE = "image", _("Image")
+        FILE  = "file",  _("File/PDF")
+        LINK  = "link",  _("External Link")
+
+    track = models.ForeignKey(
+        Track,
+        on_delete=models.CASCADE,
+        related_name="sections",
+        verbose_name=_("Track"),
+    )
+    title     = models.CharField(max_length=200, verbose_name=_("Title"))
+    overview  = models.TextField(blank=True, verbose_name=_("Overview"))
+    media_type = models.CharField(
+        max_length=10,
+        choices=MediaType.choices,
+        blank=True,
+        verbose_name=_("Media Type"),
+        help_text=_("Leave blank for text‑only sections"),
+    )
+    file         = models.FileField(upload_to="sections/files/",     blank=True, null=True)
+    external_url = models.URLField(blank=True, null=True)
+    thumbnail    = models.ImageField(upload_to="sections/thumbs/",   blank=True, null=True)
+    is_active    = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Section")
+        verbose_name_plural = _("Sections")
+        ordering = ["track", "created_at"]
+
+    def __str__(self):
+        return f"{self.title} → {self.track}"
