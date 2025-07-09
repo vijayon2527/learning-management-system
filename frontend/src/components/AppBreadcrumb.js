@@ -1,49 +1,73 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
-
+import { useLocation, Link } from 'react-router-dom'
+import { CBreadcrumb, CBreadcrumbItem } from '@coreui/react'
 import routes from '../routes'
 
-import { CBreadcrumb, CBreadcrumbItem } from '@coreui/react'
-
 const AppBreadcrumb = () => {
-  const currentLocation = useLocation().pathname
+  const location = useLocation()
+  const currentPath = location.pathname
 
+  // Match route path with dynamic support (e.g., :slug, :trackId)
   const getRouteName = (pathname, routes) => {
-    const currentRoute = routes.find((route) => route.path === pathname)
-    return currentRoute ? currentRoute.name : false
-  }
+    const pathParts = pathname.split('/').filter(Boolean)
 
-  const getBreadcrumbs = (location) => {
-    const breadcrumbs = []
-    location.split('/').reduce((prev, curr, index, array) => {
-      const currentPathname = `${prev}/${curr}`
-      const routeName = getRouteName(currentPathname, routes)
-      routeName &&
-        breadcrumbs.push({
-          pathname: currentPathname,
-          name: routeName,
-          active: index + 1 === array.length ? true : false,
+    return (
+      routes.find((route) => {
+        const routeParts = route.path.split('/').filter(Boolean)
+        if (routeParts.length !== pathParts.length) return false
+
+        return routeParts.every((part, i) => {
+          return part.startsWith(':') || part === pathParts[i]
         })
-      return currentPathname
-    })
-    return breadcrumbs
+      })?.name || null
+    )
   }
 
-  const breadcrumbs = getBreadcrumbs(currentLocation)
+ const getBreadcrumbs = (pathname) => {
+  const breadcrumbs = []
+  const pathArray = pathname.split('/').filter(Boolean)
+
+  let currentPath = ''
+  pathArray.forEach((part, idx) => {
+    currentPath += `/${part}`
+    const name = getRouteName(currentPath, routes)
+
+    if (name) {
+      breadcrumbs.push({
+        name,
+        pathname: currentPath,
+        active: idx === pathArray.length - 1,
+      })
+    }
+  })
+
+  // Inject "Course List" breadcrumb manually if deeper paths match
+  if (pathname.includes('/dashboard/course-details/') && !breadcrumbs.find(b => b.name === 'Course List')) {
+    breadcrumbs.unshift({
+      name: 'Course List',
+      pathname: '/dashboard/course-list',
+      active: false,
+    })
+  }
+
+  return breadcrumbs
+}
+
+
+  const breadcrumbs = getBreadcrumbs(currentPath)
 
   return (
     <CBreadcrumb className="my-0">
-      <CBreadcrumbItem href="/">Home</CBreadcrumbItem>
-      {breadcrumbs.map((breadcrumb, index) => {
-        return (
-          <CBreadcrumbItem
-            {...(breadcrumb.active ? { active: true } : { href: breadcrumb.pathname })}
-            key={index}
-          >
-            {breadcrumb.name}
-          </CBreadcrumbItem>
-        )
-      })}
+      {/* <CBreadcrumbItem href="/">Home</CBreadcrumbItem> */}
+      {breadcrumbs.map((item, idx) => (
+        <CBreadcrumbItem
+          key={idx}
+          {...(item.active ? { active: true } : {})}
+          {...(!item.active ? { href: item.pathname } : {})}
+        >
+          {item.name}
+        </CBreadcrumbItem>
+      ))}
     </CBreadcrumb>
   )
 }

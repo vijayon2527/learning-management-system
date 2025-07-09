@@ -95,7 +95,7 @@ const CourseList = () => {
     setUpdatingStatusId(course.id);
     try {
       const updated = { ...course, is_active: !course.is_active };
-      await axiosInstance.patch(`api/courses/courses/${course.id}/`, {
+      await axiosInstance.patch(`api/courses/courses/${course.slug}/`, {
         is_active: updated.is_active,
       });
       handleUpdated(updated);
@@ -125,7 +125,7 @@ const CourseList = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h4 className="fw-bold m-0"></h4>
+        <h2 className="mb-o">Course List</h2>
         <div className="d-flex align-items-center gap-3">
           <CFormInput
             size="sm"
@@ -167,7 +167,7 @@ const CourseList = () => {
                 {/* clickable name */}
                 <CTableDataCell>
                   <span
-                    onClick={() => navigate(`/dashboard/course-details/${c.id}`)}
+                    onClick={() => navigate(`/dashboard/course-details/${c.slug}`)}
                     style={{
                       color: '#0d6efd',
                       cursor: 'pointer',
@@ -214,7 +214,7 @@ const CourseList = () => {
                 <CTableDataCell>{c.category_name || '–'}</CTableDataCell>
 
                 <CTableDataCell className="text-center">
-                  {updatingStatusId === c.id ? (
+                  {updatingStatusId === c.slug ? (
                     <CSpinner size="sm" />
                   ) : (
                     <label className="switch">

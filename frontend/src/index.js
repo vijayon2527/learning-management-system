@@ -4,12 +4,12 @@ import { Provider } from 'react-redux'
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App'
 import store from './store'
-import 'animate.css';
 
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 

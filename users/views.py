@@ -1,38 +1,29 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
-from google.auth.transport import requests as google_requests
-from django.contrib.auth.hashers import make_password
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from django.conf import settings
-from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 from decouple import config
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 import requests
-import logging
+
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 
 from .models import *
 from .serializers import (
     AGPTokenObtainPairSerializer,
     AGPTokenRefreshSerializer,
-    OtpVerifySerializer
+    OtpVerifySerializer,
 )
 
-
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
-from google.auth.transport import requests
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
-from decouple import config
-import requests
 import logging
 import random
-from django.utils import timezone
 from datetime import timedelta
 
 from .utils import send_otp_email
@@ -169,6 +160,7 @@ class SendOtpView(APIView):
             response_data["otp"] = otp_code  # 👈 Include OTP in dev only
 
         return Response(response_data, status=200)
+
 
 class VerifyOtpView(APIView):
     def post(self, request):

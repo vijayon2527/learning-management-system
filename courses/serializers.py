@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Track, Feature, TrackFeatureValue,Category
+from .models import *
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -27,17 +27,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = [
-            "id",
-            "name",
-            "summary",
-            "logo",         
-            "category",
-            "category_name",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
+        fields = '__all__'
 
         
 class TrackSerializer(serializers.ModelSerializer):
@@ -65,3 +55,43 @@ class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrackFeatureValue
         fields = ['id', 'track', 'feature', 'value']
+
+
+class SectionSerializer(serializers.ModelSerializer):
+    track_name = serializers.CharField(source="track.name", read_only=True)
+    course_name = serializers.CharField(source="track.course.name", read_only=True)
+
+    class Meta:
+        model = Section
+        fields = (
+            "id", "track", "name", "description",
+            "is_locked", "unlock_criteria", "order",
+            "estimated_duration", "created_at", "updated_at",
+            "track_name", "course_name","is_active",  
+        )
+        read_only_fields = (
+            "id", "order", "estimated_duration",
+            "created_at", "updated_at", "track_name", "course_name",
+        )
+
+
+class LectureSerializer(serializers.ModelSerializer):
+    section_name = serializers.CharField(source="section.name", read_only=True)
+    track_name   = serializers.CharField(source="section.track.name", read_only=True)
+    course_name  = serializers.CharField(source="section.track.course.name", read_only=True)
+
+    class Meta:
+        model  = Lecture
+        fields = (
+            "id", "section",                 # FK
+            "section_name", "track_name", "course_name",
+            "name", "video", "order", "duration",
+            "is_preview", "release_date",
+            "is_locked", "unlock_criteria",
+            "created_at", "updated_at",
+        )
+        read_only_fields = (
+            "id", "order", "duration",       # order is auto; duration can be set later
+            "created_at", "updated_at",
+            "section_name", "track_name", "course_name",
+        )

@@ -158,7 +158,8 @@ const Login = () => {
             <CCardBody>
               <h1 className="text-center mb-4">Login</h1>
               <CForm onSubmit={otpSent ? (e) => e.preventDefault() : handleSubmit}>
-                <CInputGroup className="mb-3">
+                <div className="mb-3">
+                <CInputGroup>
                   <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
                   <CFormInput
                     placeholder="Email"
@@ -169,9 +170,11 @@ const Login = () => {
                     disabled={otpSent}
                   />
                 </CInputGroup>
-                {errors.email && <div className="text-danger">{errors.email}</div>}
+                {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
+                </div>
 
-                <CInputGroup className="mb-3">
+                <div className="mb-3">
+                <CInputGroup>
                   <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
                   <CFormInput
                     type="password"
@@ -183,7 +186,8 @@ const Login = () => {
                     disabled={otpSent}
                   />
                 </CInputGroup>
-                {errors.password && <div className="text-danger">{errors.password}</div>}
+                {errors.password && <div className="text-danger small mt-1">{errors.password}</div>}
+                </div>
 
                 {otpSent && (
                   <div className="mb-4 text-center">
