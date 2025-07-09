@@ -14,7 +14,7 @@ const CourseDeleteConfirm = ({ course, onDeleted, onClose }) => {
     setDeleting(true);
     setError("");
     try {
-      await axiosInstance.delete(`/api/courses/courses/${course.id}/`);
+      await axiosInstance.delete(`/api/courses/courses/${course.slug}/`);
       notifySuccess("Course deleted successfully!");
       onDeleted(course.id);
       onClose();

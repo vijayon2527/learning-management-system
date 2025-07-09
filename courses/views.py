@@ -11,7 +11,8 @@ from .serializers import (
     TrackFeatureValueSerializer,
     TrackFeatureValueUpdateSerializer,
     TrackSerializer,
-    SectionSerializer
+    SectionSerializer,
+    LectureSerializer
 )
 
 
@@ -26,62 +27,67 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["category"]
+    lookup_field = 'slug'
 
 
 
-class TrackViewSet(viewsets.ModelViewSet):  
-    queryset = Track.objects.all().order_by('created_at') 
-    serializer_class = TrackSerializer
+class TrackViewSet(viewsets.ModelViewSet):
+    serializer_class   = TrackSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Track.objects.select_related("course").order_by("created_at")
+        course_id = self.request.query_params.get("course_id")
+        return qs.filter(course_id=course_id) if course_id else qs
 
     def partial_update(self, request, *args, **kwargs):
-        """
-        This allows PATCH method to update is_active or any partial field.
-        """
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def toggle_active(self, request, pk=None):
-        track = self.get_object()
-        track.is_active = not track.is_active
-        track.save()
-        return Response({"id": track.id, "is_active": track.is_active})
+        return super().partial_update(request, *args, **kwargs)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
-    queryset = Feature.objects.all()
-    serializer_class = FeatureSerializer
+    serializer_class   = FeatureSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Feature.objects.select_related("course").order_by("order")
+        course_id = self.request.query_params.get("course_id")
+        return qs.filter(course_id=course_id) if course_id else qs
 
 
 class TrackFeatureValueViewSet(viewsets.ModelViewSet):
-    queryset = TrackFeatureValue.objects.all()
-
-    def get_serializer_class(self):
-        if self.request.method in ['PUT', 'PATCH', 'POST']:
-            return TrackFeatureValueUpdateSerializer
-        return TrackFeatureValueSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends    = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields   = {
+        "track__course_id": ["exact"],
+        "track_id":         ["exact"],
+        "feature_id":       ["exact"],
+    }
+    search_fields      = ["value"]
 
     def get_queryset(self):
+        qs = (
+            TrackFeatureValue.objects
+            .select_related("track", "feature", "track__course", "feature__course")
+            .order_by("id")
+        )
         course_id = self.request.query_params.get("course_id")
-        if course_id:
-            return self.queryset.filter(track__course_id=course_id)
-        return self.queryset
+        return qs.filter(track__course_id=course_id) if course_id else qs
 
-
+    def get_serializer_class(self):
+        return (
+            TrackFeatureValueUpdateSerializer
+            if self.request.method in ("POST", "PUT", "PATCH")
+            else TrackFeatureValueSerializer
+        )
 
 
 class SectionViewSet(viewsets.ModelViewSet):
-    queryset           = Section.objects.all().select_related("track")
-    serializer_class   = SectionSerializer
+    queryset = Section.objects.select_related("track", "track__course")
+    serializer_class = SectionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends    = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields      = ["title", "overview"]
-    ordering           = ["track", "created_at"]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "description"]
+    ordering = ["track", "created_at"]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -89,3 +95,43 @@ class SectionViewSet(viewsets.ModelViewSet):
         if track_id:
             qs = qs.filter(track_id=track_id)
         return qs
+
+
+class LectureViewSet(viewsets.ModelViewSet):
+    queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
+    serializer_class = LectureSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name"]
+    ordering = ["section", "order"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        section_id = self.request.query_params.get("section")
+        if section_id:
+            qs = qs.filter(section_id=section_id)
+        return qs
+
+    @action(detail=False, methods=["post"], url_path="reorder")
+    def reorder(self, request):
+        order_data = request.data.get("order", [])
+
+        if not isinstance(order_data, list):
+            return Response({"error": "Invalid order format"}, status=400)
+
+        try:
+            with transaction.atomic():
+                # Step 1: temporarily move order values out of conflict range
+                temp_offset = 1000  # ensure it's higher than any current order
+
+                for idx, item in enumerate(order_data):
+                    Lecture.objects.filter(id=item["id"]).update(order=temp_offset + idx)
+
+                # Step 2: apply correct final order
+                for item in order_data:
+                    Lecture.objects.filter(id=item["id"]).update(order=item["order"])
+
+            return Response({"message": "Order updated successfully"}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)

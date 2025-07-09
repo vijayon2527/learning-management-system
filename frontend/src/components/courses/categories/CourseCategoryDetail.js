@@ -68,21 +68,15 @@ const CategoryDetail = () => {
   if (!category) return null;
 
   return (
-    <div>
+    <div className="p-2 bg-light">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4 px-1">
+      <div className="d-flex justify-content-between align-items-center mb-2 px-1">
         <h2 className="mb-1">Category Details</h2>
         <CTooltip content="Go back">
           <CButton
             color="light"
             className="text-dark border border-secondary"
-            onClick={() => navigate("/dashboard/course-category-list")}
-            style={{
-              fontWeight: 600,
-              borderRadius: "2rem",
-              padding: "0.45rem 1.2rem",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-            }}
+            onClick={() => navigate('/dashboard/course-list')}
           >
             <CIcon icon={cilArrowLeft} className="me-2" />
             Back

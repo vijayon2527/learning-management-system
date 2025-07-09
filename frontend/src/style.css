@@ -451,4 +451,19 @@ input:checked + .slider:before {
   font-weight: bold !important;
 }
 
+.lecture-row {
+  transition: all 0.2s ease;
+}
+
+.draggable-row {
+  cursor: grab;
+  user-select: none;
+}
+.draggable-row:active {
+  cursor: grabbing;
+}
+.custom-video-modal .modal-dialog {
+  max-width: 900px !important;
+  width: 90%;
+}
 

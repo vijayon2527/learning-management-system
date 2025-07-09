@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   CContainer,
@@ -10,6 +10,7 @@ import {
   CTableDataCell,
   CTooltip,
   CButton,
+  CFormInput,
   CSpinner,
   CModal,
   CModalHeader,
@@ -17,48 +18,44 @@ import {
   CModalFooter,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilTrash, cilPen, cilLibraryAdd, cilArrowLeft } from '@coreui/icons';
-import axiosInstance from '../../utils/axiosInstance';
-import { toast, ToastContainer } from 'react-toastify';
+import { cilPen, cilTrash, cilLibraryAdd, cilArrowLeft } from '@coreui/icons';
 
+import axiosInstance from '../../utils/axiosInstance';
 import CreateTrackSection from './CreateTrackSection';
 import SectionUpdate from './SectionUpdate';
 import SectionDeleteConfirm from './SectionDeleteConfirm';
 
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-/* ------------------------------------------------------------------ */
-/* helpers */
-
-const stripHtml = (html, len = 100) => {
+/* ───────────────────── helpers ───────────────────── */
+const plainText = (html = '') => {
   const div = document.createElement('div');
-  div.innerHTML = html || '';
-  const text = div.textContent || div.innerText || '';
-  return text.length > len ? `${text.slice(0, len)}…` : text;
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
 };
+const truncate = (txt, n = 150) =>
+  txt.length > n ? `${txt.slice(0, n)}…` : txt;
 
-/* ------------------------------------------------------------------ */
-
-const SectionList = () => {
-  const { trackId } = useParams();
+/* ───────────────────── component ─────────────────── */
+export default function SectionList() {
+  const { trackId,slug } = useParams();
   const navigate = useNavigate();
 
   /* state ----------------------------------------------------------- */
   const [sections, setSections] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [trackName, setTrackName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('');
 
   /* CRUD modal state */
   const [showCreate, setShowCreate] = useState(false);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
-
-  /* status‑toggle modal state */
-  const [confirmStatusSection, setConfirmStatusSection] = useState(null);
+  const [confirmStatus, setConfirmStatus] = useState(null);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
-  /* fetch ----------------------------------------------------------- */
-  const fetchSections = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const [secRes, trackRes] = await Promise.all([
@@ -75,14 +72,19 @@ const SectionList = () => {
   };
 
   useEffect(() => {
-    fetchSections();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchData();
   }, [trackId]);
 
-  /* status toggle --------------------------------------------------- */
-  const requestStatusChange = (section) => setConfirmStatusSection(section);
+  const filtered = useMemo(() => {
+    const q = filter.toLowerCase();
+    return sections.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        plainText(s.description).toLowerCase().includes(q)
+    );
+  }, [sections, filter]);
 
-  const handleToggleStatus = async (section) => {
+  const toggleStatus = async (section) => {
     setUpdatingStatusId(section.id);
     try {
       await axiosInstance.patch(`/api/courses/sections/${section.id}/`, {
@@ -91,12 +93,12 @@ const SectionList = () => {
       toast.success(
         `Section ${section.is_active ? 'deactivated' : 'activated'} successfully`
       );
-      fetchSections();
+      fetchData();
     } catch {
       toast.error('Failed to update status');
     } finally {
       setUpdatingStatusId(null);
-      setConfirmStatusSection(null);
+      setConfirmStatus(null);
     }
   };
 
@@ -106,19 +108,13 @@ const SectionList = () => {
     <>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Back button -------------------------------------------------- */}
-      <div className="d-flex justify-content-end p-2 border-bottom">
+      <div className="d-flex justify-content-end p-2 border-bottom bg-white">
         <CTooltip content="Go back">
           <CButton
             color="light"
             className="text-dark border border-secondary"
-            onClick={() => navigate(-1)}
-            style={{
-              fontWeight: 600,
-              borderRadius: '2rem',
-              padding: '0.45rem 1.2rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            }}
+            onClick={() => navigate(`/dashboard/course-details/${slug}`)
+}
           >
             <CIcon icon={cilArrowLeft} className="me-2" />
             Back
@@ -128,20 +124,33 @@ const SectionList = () => {
 
       {/* main content ------------------------------------------------- */}
       <CContainer fluid className="p-3 bg-light">
-        {/* header */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3 className="m-0">
-            Sections: <strong>{trackName}</strong>
-          </h3>
-          <CButton size="sm" color="primary" onClick={() => setShowCreate(true)}>
-            <CIcon icon={cilLibraryAdd} className="me-2" />
-            Add Section
-          </CButton>
+        {/* heading + toolbar */}
+        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h2 className=" m-0 d-flex align-items-center gap-2">
+            <span className="">Sections List</span>
+            <span className="">— {trackName}</span>
+          </h2>
+
+
+          <div className="d-flex align-items-center gap-3">
+            <CFormInput
+              size="sm"
+              placeholder="Start typing to search.."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ maxWidth: 300 }}
+            />
+            <CTooltip content="Add Section">
+              <CButton size="sm" color="primary" onClick={() => setShowCreate(true)}>
+                <CIcon icon={cilLibraryAdd} />
+              </CButton>
+            </CTooltip>
+          </div>
         </div>
 
         {/* table */}
         {loading ? (
-          <div className="text-center py-5">
+          <div className="d-flex justify-content-center p-4">
             <CSpinner />
           </div>
         ) : (
@@ -150,51 +159,44 @@ const SectionList = () => {
               <CTableRow>
                 <CTableHeaderCell>#</CTableHeaderCell>
                 <CTableHeaderCell>Title</CTableHeaderCell>
-                <CTableHeaderCell>Overview</CTableHeaderCell>
-                <CTableHeaderCell>Media</CTableHeaderCell>
+                <CTableHeaderCell>Description</CTableHeaderCell>
                 <CTableHeaderCell className="text-center">Status</CTableHeaderCell>
                 <CTableHeaderCell className="text-center">Actions</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {sections.map((s, idx) => (
+              {filtered.map((s, idx) => (
                 <CTableRow key={s.id} verticalAlign="middle">
-                  {/* index */}
                   <CTableDataCell>{idx + 1}</CTableDataCell>
-
-                  {/* clickable title */}
                   <CTableDataCell>
                     <span
-                      style={{ color: '#0d6efd', cursor: 'pointer' }}
-                      onClick={() => navigate(`/dashboard/section/${s.id}`)}
+                      className="text-primary"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(
+                        `/dashboard/course-details/${slug}/track-section-list/${trackId}/section-lectures/${s.id}`
+                      )}
                     >
-                      {s.title}
+                      {s.name}
                     </span>
                   </CTableDataCell>
 
-                  {/* overview */}
-                  <CTableDataCell>{stripHtml(s.overview)}</CTableDataCell>
-
-                  {/* media type */}
-                  <CTableDataCell>{s.media_type || 'text'}</CTableDataCell>
-
-                  {/* status toggle */}
+                  <CTableDataCell>{truncate(plainText(s.description))}</CTableDataCell>
                   <CTableDataCell className="text-center">
                     {updatingStatusId === s.id ? (
                       <CSpinner size="sm" />
                     ) : (
-                      <label className="switch">
-                        <input
-                          type="checkbox"
-                          checked={s.is_active}
-                          onChange={() => requestStatusChange(s)}
-                        />
-                        <span className="slider round" />
-                      </label>
+                      <CTooltip content={s.is_active ? 'Active' : 'Inactive'}>
+                        <label className="switch">
+                          <input
+                            type="checkbox"
+                            checked={s.is_active}
+                            onChange={() => setConfirmStatus(s)}
+                          />
+                          <span className="slider round" />
+                        </label>
+                      </CTooltip>
                     )}
                   </CTableDataCell>
-
-                  {/* action buttons */}
                   <CTableDataCell className="text-center">
                     <div className="d-flex justify-content-center gap-2">
                       <CTooltip content="Edit">
@@ -202,10 +204,7 @@ const SectionList = () => {
                           className="icon-btn edit-btn"
                           onClick={() => setEditId(s.id)}
                         >
-                          <CIcon
-                            icon={cilPen}
-                            style={{ color: '#000', height: 18, width: 18 }}
-                          />
+                          <CIcon icon={cilPen} />
                         </button>
                       </CTooltip>
                       <CTooltip content="Delete">
@@ -213,10 +212,7 @@ const SectionList = () => {
                           className="icon-btn delete-btn"
                           onClick={() => setDeleteId(s.id)}
                         >
-                          <CIcon
-                            icon={cilTrash}
-                            style={{ color: '#000', height: 18, width: 18 }}
-                          />
+                          <CIcon icon={cilTrash} />
                         </button>
                       </CTooltip>
                     </div>
@@ -227,90 +223,64 @@ const SectionList = () => {
           </CTable>
         )}
 
-      {/* ---------- Create Section Modal ---------- */}
-          <CModal
-            visible={showCreate}
-            onClose={() => setShowCreate(false)}
-            size="lg"
-            scrollable
-          >
-            <CModalHeader onClose={() => setShowCreate(false)}>
-              Create Section
-            </CModalHeader>
-            <CModalBody>
-              <CreateTrackSection
-                onClose={() => setShowCreate(false)}
-                onSectionAdded={fetchSections}
-              />
-            </CModalBody>
-          </CModal>
-
-          {/* ---------- Update Section Modal ---------- */}
-          <CModal
-            visible={!!editId}
-            onClose={() => setEditId(null)}
-            size="lg"
-            scrollable
-          >
-            <CModalHeader onClose={() => setEditId(null)}>
-              Update Section
-            </CModalHeader>
-            <CModalBody>
-              {editId && (
-                <SectionUpdate
-                  sectionId={editId}
-                  onClose={() => setEditId(null)}
-                  onUpdated={fetchSections}
-                />
-              )}
-            </CModalBody>
-          </CModal>
-
-          {/* ---------- Delete Section Modal ---------- */}
-          {deleteId && (
-            <SectionDeleteConfirm
-              section={sections.find((s) => s.id === deleteId)}
-              visible
-              onClose={() => setDeleteId(null)}
-              onDeleted={fetchSections}
+        {/* create modal */}
+        <CModal visible={showCreate} onClose={() => setShowCreate(false)} size="lg" scrollable>
+          <CModalHeader onClose={() => setShowCreate(false)}>Create Section</CModalHeader>
+          <CModalBody>
+            <CreateTrackSection
+              onClose={() => setShowCreate(false)}
+              onSectionAdded={fetchData}
             />
-          )}
+          </CModalBody>
+        </CModal>
 
+        {/* update modal */}
+        <CModal visible={!!editId} onClose={() => setEditId(null)} size="lg" scrollable>
+          <CModalHeader onClose={() => setEditId(null)}>Update Section</CModalHeader>
+          <CModalBody>
+            {editId && (
+              <SectionUpdate
+                sectionId={editId}
+                onClose={() => setEditId(null)}
+                onUpdated={fetchData}
+              />
+            )}
+          </CModalBody>
+        </CModal>
 
-        {/* Status‑confirm modal */}
-        <CModal
-          visible={!!confirmStatusSection}
-          onClose={() => setConfirmStatusSection(null)}
-        >
-          <CModalHeader onClose={() => setConfirmStatusSection(null)}>
+        {/* delete modal */}
+        {deleteId && (
+          <SectionDeleteConfirm
+            section={sections.find((s) => s.id === deleteId)}
+            visible
+            onClose={() => setDeleteId(null)}
+            onDeleted={fetchData}
+          />
+        )}
+
+        {/* status confirm modal */}
+        <CModal visible={!!confirmStatus} onClose={() => setConfirmStatus(null)}>
+          <CModalHeader onClose={() => setConfirmStatus(null)}>
             Confirm Status Change
           </CModalHeader>
           <CModalBody>
             Are you sure you want to{' '}
-            <strong>
-              {confirmStatusSection?.is_active ? 'deactivate' : 'activate'}
-            </strong>{' '}
-            the section <strong>{confirmStatusSection?.title}</strong>?
+            <strong>{confirmStatus?.is_active ? 'deactivate' : 'activate'}</strong>{' '}
+            section <strong>{confirmStatus?.name}</strong>?
           </CModalBody>
           <CModalFooter>
-            <CButton
-              color="secondary"
-              variant="outline"
-              onClick={() => setConfirmStatusSection(null)}
-            >
+            <CButton color="secondary" variant="outline" onClick={() => setConfirmStatus(null)}>
               Cancel
             </CButton>
             <CButton
-              color={confirmStatusSection?.is_active ? 'danger' : 'success'}
-              onClick={() => handleToggleStatus(confirmStatusSection)}
+              color={confirmStatus?.is_active ? 'danger' : 'success'}
+              onClick={() => toggleStatus(confirmStatus)}
             >
-              Yes, {confirmStatusSection?.is_active ? 'Deactivate' : 'Activate'}
+              Yes, {confirmStatus?.is_active ? 'Deactivate' : 'Activate'}
             </CButton>
           </CModalFooter>
         </CModal>
       </CContainer>
     </>
   );
-};
-
-export default SectionList;
+}

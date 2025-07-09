@@ -12,16 +12,16 @@ from django.dispatch import receiver
 from django.db.models import Count
 from users.models import User
 from agplms.utils.functions import generate_unique_slug
-
+from django.db.models.signals import m2m_changed
 
 def course_thumbnail_path(instance, filename):
-    return f"course_thumbnails/{instance.slug}/{filename}"
+    return f"course/course_thumbnails/{instance.slug}/{filename}"
 
 def promo_video_path(instance, filename):
-    return f"promotional_videos/{instance.slug}/{filename}"
+    return f"course/promotional_videos/{instance.slug}/{filename}"
 
 def lecture_video_path(instance, filename):
-    return f"lecture_videos/{instance.section.track.course.slug}/{filename}"
+    return f"lecture/lecture_videos/{instance.section.track.course.slug}/{filename}"
 
 
 
@@ -191,23 +191,14 @@ class Course(BaseModel):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug or (self.pk and self.name != Course.objects.get(pk=self.pk).name):
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if not self.slug or (self.pk and self.name != Course.objects.get(pk=self.pk).name):
+                self.slug = slugify(self.name)
+            super().save(*args, **kwargs)
 
-        total = self.calculate_total_duration()
-        if total != self.estimated_duration:
-            self.estimated_duration = total
-            super().save(update_fields=["estimated_duration"])
 
     def calculate_total_duration(self):
-        return (
-            Section.objects
-            .filter(track__course=self)
-            .aggregate(total=Sum("estimated_duration"))
-            .get("total")
-            or timedelta(0)
-        )
+        return self.sections.aggregate(total=Sum("estimated_duration"))["total"] or timedelta(0)
 
 
 class Track(BaseModel):
@@ -404,11 +395,19 @@ class Section(BaseModel):
     def save(self, *args, **kwargs):
         with transaction.atomic():
             if not self.order:
-                max_order = self.track.sections.aggregate(Max("order"))["order__max"] or 0
+                max_order = (self.track.sections.aggregate(Max("order"))["order__max"] or 0
+                )
                 self.order = max_order + 1
-            if self.lectures.exists():
-                self.estimated_duration = self.calculate_duration()
+            is_new = self.pk is None
             super().save(*args, **kwargs)
+
+            if is_new and self.lectures.exists():
+                self.estimated_duration = (
+                    self.lectures.aggregate(total=Sum("duration"))["total"]
+                    or timedelta(0)
+                )
+
+                super().save(update_fields=["estimated_duration"])
 
     def calculate_duration(self):
         return self.lectures.aggregate(total=Sum("duration"))["total"] or timedelta(0)
@@ -490,18 +489,14 @@ class Lecture(BaseModel):
     def __str__(self):
         return f"{self.section.name} - {self.name}"
 
-    def clean(self):
-        for prereq in self.prerequisites.all():
-            if prereq.section.course != self.section.course:
-                raise ValidationError(_("Prerequisites must belong to the same course."))
-
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            self.clean()
             if not self.order:
-                max_order = self.section.lectures.aggregate(Max("order"))["order__max"] or 0
+                max_order = (
+                    self.section.lectures.aggregate(Max("order"))["order__max"] or 0
+                )
                 self.order = max_order + 1
-            super().save(*args, **kwargs)
+            super().save(*args, **kwargs)   # M2M saved afterwards by admin or DRF
 
     def is_accessible(self, user):
         if self.is_preview or not self.is_locked:
@@ -511,11 +506,33 @@ class Lecture(BaseModel):
         if self.release_date and timezone.now() < self.release_date:
             return False
         if self.unlock_criteria.get("type") == "sequential":
-            for prereq in self.prerequisites.all():
-                if not LectureCompletion.objects.filter(user=user, lecture=prereq).exists():
-                    return False
-        return Enrollment.objects.filter(user=user, course=self.section.course).exists()
+            incomplete = LectureCompletion.objects.filter(
+                user=user, lecture__in=self.prerequisites.all()
+            ).count() < self.prerequisites.count()
+            if incomplete:
+                return False
+        return Enrollment.objects.filter(
+            user=user, course=self.section.track.course
+        ).exists()
 
+
+@receiver(m2m_changed, sender=Lecture.prerequisites.through)
+def validate_prerequisites(sender, instance, action, pk_set, **kwargs):
+    if action not in ("pre_add", "pre_set") or not pk_set:
+        return
+
+    course_id = instance.section.track.course_id
+    wrong_ids = (
+        Lecture.objects
+        .filter(pk__in=pk_set)
+        .exclude(section__track__course_id=course_id)
+        .values_list("id", flat=True)
+    )
+    if wrong_ids:
+        raise ValidationError(
+            _("Prerequisites must belong to the same course as this lecture.")
+        )
+    
 
 class Enrollment(models.Model):
     user = models.ForeignKey(

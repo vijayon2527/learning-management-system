@@ -11,13 +11,6 @@ import {
 import axiosInstance from '../../utils/axiosInstance';
 import { toast } from 'react-toastify';
 
-/**
- * Props:
- *  - section : section object to delete
- *  - visible : boolean
- *  - onClose : cancel/close
- *  - onDeleted: callback to refresh list
- */
 const SectionDeleteConfirm = ({ section, visible, onClose, onDeleted }) => {
   const [busy, setBusy] = useState(false);
 
@@ -25,7 +18,7 @@ const SectionDeleteConfirm = ({ section, visible, onClose, onDeleted }) => {
     setBusy(true);
     try {
       await axiosInstance.delete(`/api/courses/sections/${section.id}/`);
-      toast.success('Section deleted');
+      toast.success('Section deleted successfully');
       onDeleted();
       onClose();
     } catch {
@@ -39,10 +32,10 @@ const SectionDeleteConfirm = ({ section, visible, onClose, onDeleted }) => {
     <CModal visible={visible} onClose={onClose}>
       <CModalHeader onClose={onClose}>Delete Section</CModalHeader>
       <CModalBody>
-        Are you sure you want to delete <strong>{section.title}</strong>?
+        Are you sure you want to delete <strong>{section.name}</strong>?
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" variant="outline" onClick={onClose}>
+        <CButton color="secondary" variant="" onClick={onClose}>
           Cancel
         </CButton>
         <CButton color="danger" onClick={handleDelete} disabled={busy}>

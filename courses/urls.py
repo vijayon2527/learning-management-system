@@ -9,6 +9,7 @@ router.register(r'feature-values', TrackFeatureValueViewSet, basename='feature-v
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'courses', CourseViewSet, basename='course')
 router.register(r"sections", SectionViewSet, basename="section")
+router.register(r"lectures",  LectureViewSet,  basename="lecture")
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -27,17 +27,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = [
-            "id",
-            "name",
-            "summary",
-            "logo",         
-            "category",
-            "category_name",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
+        fields = '__all__'
 
         
 class TrackSerializer(serializers.ModelSerializer):
@@ -67,30 +57,41 @@ class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'track', 'feature', 'value']
 
 
-
-from rest_framework import serializers
-from courses.models import Section          # adjust import path to your project
-
-
 class SectionSerializer(serializers.ModelSerializer):
+    track_name = serializers.CharField(source="track.name", read_only=True)
+    course_name = serializers.CharField(source="track.course.name", read_only=True)
+
     class Meta:
-        model  = Section
-        fields = '__all__'
-        read_only_fields = ("id", "created_at", "updated_at")
+        model = Section
+        fields = (
+            "id", "track", "name", "description",
+            "is_locked", "unlock_criteria", "order",
+            "estimated_duration", "created_at", "updated_at",
+            "track_name", "course_name","is_active",  
+        )
+        read_only_fields = (
+            "id", "order", "estimated_duration",
+            "created_at", "updated_at", "track_name", "course_name",
+        )
 
-    def validate(self, attrs):
-        media_type = attrs.get("media_type", getattr(self.instance, "media_type", None))
-        file = attrs.get("file", getattr(self.instance, "file", None))
-        url = attrs.get("external_url", getattr(self.instance, "external_url", None))
 
-        if media_type in ("video", "image", "file") and not file:
-            raise serializers.ValidationError(
-                {"file": "File upload is required for the selected media type."}
-            )
+class LectureSerializer(serializers.ModelSerializer):
+    section_name = serializers.CharField(source="section.name", read_only=True)
+    track_name   = serializers.CharField(source="section.track.name", read_only=True)
+    course_name  = serializers.CharField(source="section.track.course.name", read_only=True)
 
-        if media_type == "link" and not url:
-            raise serializers.ValidationError(
-                {"external_url": "External URL is required for link type."}
-            )
-
-        return attrs
+    class Meta:
+        model  = Lecture
+        fields = (
+            "id", "section",                 # FK
+            "section_name", "track_name", "course_name",
+            "name", "video", "order", "duration",
+            "is_preview", "release_date",
+            "is_locked", "unlock_criteria",
+            "created_at", "updated_at",
+        )
+        read_only_fields = (
+            "id", "order", "duration",       # order is auto; duration can be set later
+            "created_at", "updated_at",
+            "section_name", "track_name", "course_name",
+        )

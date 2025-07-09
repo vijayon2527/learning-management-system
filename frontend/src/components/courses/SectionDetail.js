@@ -1,299 +1,386 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import update from 'immutability-helper';
+
 import {
-  CContainer,
-  CCard,
-  CCardBody,
-  CRow,
-  CCol,
-  CSpinner,
-  CButton,
-  CTooltip,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
+  CContainer, CCard, CCardBody, CButton, CTooltip, CSpinner,
+  CCollapse, CModal, CModalHeader, CModalBody,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilArrowLeft } from '@coreui/icons';
-import axiosInstance from '../../utils/axiosInstance';
+import {
+  cilArrowLeft, cilPlus, cilChevronBottom, cilChevronTop, cilPen, cilTrash,
+} from '@coreui/icons';
 import { toast } from 'react-toastify';
+import CreateLecture from './Lectures/LectureCreate';
+import LectureDeleteConfirm from './Lectures/LectureDeleteConfirm';
+import LectureUpdate from './Lectures/LectureUpdate';
+import axiosInstance from '../../utils/axiosInstance';
 
-import SectionUpdate from './SectionUpdate';
-import SectionDeleteConfirm from './SectionDeleteConfirm';
+const ItemType = 'LECTURE';
 
-/* utils */
 const stripHtml = (html = '') => html.replace(/<[^>]+>/g, '').trim();
 
-/* ─────────────────────────────── */
-/* Video modal with double‑tap     */
-const VideoModal = ({ visible, onClose, src, title, track }) => {
-  const videoRef = useRef();
 
-  const skip = (sec) => {
-    if (videoRef.current) videoRef.current.currentTime += sec;
-  };
+const DraggableRow = ({ lecture, index, moveLecture, children }) => {
+  const ref = useRef(null);
+
+  const [, drop] = useDrop({
+    accept: ItemType,
+    hover(item, monitor) {
+      if (!ref.current) return;
+
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) return;
+
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
+
+      moveLecture(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemType,
+    item: { type: ItemType, index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  drag(drop(ref));
 
   return (
-    <CModal visible={visible} onClose={onClose} size="xl" scrollable>
-      <CModalHeader onClose={onClose}>
-        <CModalTitle>🎬 {title}</CModalTitle>
-      </CModalHeader>
-
-      <CModalBody>
-        {/* Video wrapper with invisible left / right zones */}
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxHeight: 400,
-            marginBottom: '1rem',
-          }}
-        >
-          <video
-            ref={videoRef}
-            src={src}
-            controls
-            style={{ width: '100%', borderRadius: 8 }}
-          />
-
-          {/* Left half – rewind 10 s */}
-          <div
-            onDoubleClick={() => skip(-10)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '50%',
-              height: '100%',
-              cursor: 'pointer',
-            }}
-          />
-
-          {/* Right half – forward 10 s */}
-          <div
-            onDoubleClick={() => skip(10)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: '50%',
-              height: '100%',
-              cursor: 'pointer',
-            }}
-          />
-        </div>
-
-        {/* Info */}
-        <div className="text-center">
-          <h5 className="fw-bold mb-1">{title}</h5>
-          <div className="text-muted">📚 Track: {track || 'N/A'}</div>
-          <div className="text-muted small mt-1">
-            Double‑tap left to rewind 10 s, right to forward 10 s
-          </div>
-        </div>
-      </CModalBody>
-    </CModal>
+    <div
+      ref={ref}
+      style={{
+        opacity: isDragging ? 0 : 1,
+        transform: isDragging ? 'scale(1.01)' : 'scale(1)',
+        transition: 'transform 0.25s ease, box-shadow 0.2s',
+        boxShadow: isDragging ? '0 12px 24px rgba(0,0,0,0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
+        zIndex: isDragging ? 1000 : 'auto',
+        position: isDragging ? 'relative' : 'static',
+        background: 'white',
+        borderRadius: '12px',
+        border: '1px solid #dee2e6',
+        marginBottom: '8px',
+      }}
+    >
+      {children}
+    </div>
   );
 };
 
-/* ─────────────────────────────── */
-/* SectionDetail                   */
+
+const Info = ({ label, value, badge }) => (
+  <div>
+    <span className="text-muted small">{label}</span>
+    <div className={`fw-semibold ${badge ? `text-${badge}` : ''}`}>{value}</div>
+  </div>
+);
+
 const SectionDetail = () => {
   const { sectionId } = useParams();
   const navigate = useNavigate();
 
   const [section, setSection] = useState(null);
+  const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [delOpen, setDelOpen] = useState(false);
-  const [videoOpen, setVideoOpen] = useState(false);
+  const [showLectures, setShowLectures] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState(null);
+  const [selectedLecture, setSelectedLecture] = useState(null);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState('');
+  const [isOrderChanged, setIsOrderChanged] = useState(false);
 
-  /* fetch section */
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const { data } = await axiosInstance.get(
-          `/api/courses/sections/${sectionId}/`
-        );
-        setSection(data);
-      } catch {
-        toast.error('Failed to load section');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [sectionId]);
 
-  /* media preview */
-  const preview = (s) => {
-    if (!s) return '—';
-
-    if (s.media_type === 'video')
-      return (
-        <div
-          style={{
-            backgroundColor: '#000',
-            padding: '1rem',
-            borderRadius: 8,
-            cursor: 'pointer',
-          }}
-          onClick={() => setVideoOpen(true)}
-        >
-          <video
-            src={s.file || s.external_url}
-            style={{ width: '100%', maxWidth: 340, height: 200 }}
-            muted
-          />
-        </div>
-      );
-
-    if (s.media_type === 'image')
-      return (
-        <img
-          src={s.file || s.external_url || s.thumbnail}
-          alt="preview"
-          style={{
-            width: '100%',
-            maxWidth: 300,
-            height: 300,
-            borderRadius: '50%',
-            objectFit: 'cover',
-            border: '3px solid #fff',
-            boxShadow: '0 4px 12px rgba(0,0,0,.15)',
-          }}
-        />
-      );
-
-    if (s.media_type === 'file')
-      return (
-        <a href={s.file} target="_blank" rel="noreferrer">
-          Download attached file
-        </a>
-      );
-
-    if (s.media_type === 'link')
-      return (
-        <a href={s.external_url} target="_blank" rel="noreferrer">
-          Open external link
-        </a>
-      );
-
-    return 'No preview';
+  const openModal = (action, lecture = null) => {
+    setModalAction(action);
+    setSelectedLecture(lecture);
   };
 
-  /* render */
+  const showVideo = (url, lecture) => {
+  setCurrentVideoUrl(url);
+  setSelectedLecture(lecture); // Set selected lecture
+  setVideoModalOpen(true);
+};
+
+
+
+  const closeModal = () => {
+    setModalAction(null);
+    setSelectedLecture(null);
+  };
+
+  
+
+
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const sectionRes = await axiosInstance.get(`/api/courses/sections/${sectionId}/`);
+      const lecturesRes = await axiosInstance.get(`/api/courses/lectures/?section=${sectionId}`);
+      setSection(sectionRes.data);
+      setLectures(lecturesRes.data);
+    } catch {
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, [sectionId]);
+
+  const moveLecture = (fromIndex, toIndex) => {
+  const updatedLectures = [...lectures];
+  const [movedItem] = updatedLectures.splice(fromIndex, 1);
+  updatedLectures.splice(toIndex, 0, movedItem);
+  setLectures(updatedLectures);
+  setIsOrderChanged(true); // 🔥 Trigger button visibility
+};
+
+
+  const saveOrder = async () => {
+    try {
+      await axiosInstance.post('/api/courses/lectures/reorder/', {
+        order: lectures.map((lec, index) => ({ id: lec.id, order: index + 1 })),
+      });
+      toast.success('Lecture order saved successfully!');
+    } catch {
+      toast.error('Failed to save order');
+    }
+  };
+
+  const fmtDuration = (iso) => {
+    if (!iso) return '—';
+    const [h, m, s] = iso.split(':').map(Number);
+    return `${h ? h + ' hr ' : ''}${m} min ${Math.round(s)}s`;
+  };
+
   return (
-    <CContainer fluid className="p-3 bg-light">
-      {/* header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Section Details</h2>
+    <DndProvider backend={HTML5Backend}>
+      <div className="d-flex justify-content-end p-2 border-bottom bg-white">
         <CTooltip content="Go back">
-          <CButton
-            color="light"
-            className="text-dark border border-secondary"
-            onClick={() => navigate(-1)}
-          >
-            <CIcon icon={cilArrowLeft} className="me-2" />
-            Back
+          <CButton color="light" className="text-dark border border-secondary" onClick={() => navigate(-1)}>
+            <CIcon icon={cilArrowLeft} className="me-2" /> Back
           </CButton>
         </CTooltip>
       </div>
 
-      {loading ? (
-        <div className="text-center py-5">
-          <CSpinner />
+      <CContainer fluid className="p-3 bg-light">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          {section && <h2 className="m-0">Section – <span className="text-muted">{section.name}</span></h2>}
+          <CTooltip content="Add a new lecture">
+            <CButton color="primary" onClick={() => setModalOpen(true)}>
+              <CIcon icon={cilPlus} className="me-1" /> Add Lecture
+            </CButton>
+          </CTooltip>
         </div>
-      ) : section ? (
-        <CCard className="shadow-sm mb-4">
-          <CCardBody>
-            <CRow className="g-4">
-              <CCol md={4} className="d-flex justify-content-center">
-                {preview(section)}
-              </CCol>
 
-              <CCol md={8}>
-                <h3 className="fw-bold mb-3">{section.title}</h3>
-
-                <CRow className="g-3">
-                  {[
-                    ['ID', section.id],
-                    ['Track', section.track_name || '—'],
-                    ['Media Type', section.media_type],
-                    [
-                      'Status',
-                      section.is_active ? (
-                        <span style={{ color: '#198754' }}>Active</span>
-                      ) : (
-                        <span style={{ color: '#6c757d' }}>Inactive</span>
-                      ),
-                    ],
-                  ].map(([label, value]) => (
-                    <CCol sm={6} key={label}>
-                      <div className="p-3 border rounded bg-light">
-                        <strong>{label}</strong>
-                        <p className="mb-0 text-muted">{value}</p>
-                      </div>
-                    </CCol>
-                  ))}
-                </CRow>
-
-                <div className="mt-4 p-3 border rounded bg-light">
-                  <strong>Overview</strong>
-                  <p
-                    className="mb-0"
-                    style={{ whiteSpace: 'pre-wrap', color: '#555' }}
-                    dangerouslySetInnerHTML={{
-                      __html: stripHtml(section.overview),
-                    }}
-                  />
+        {loading ? (
+          <div className="text-center py-5"><CSpinner /></div>
+        ) : section ? (
+          <>
+            <CCard className="shadow-sm mb-3">
+              <CCardBody className="py-2 px-3">
+                <div className="d-flex flex-wrap align-items-start" style={{ gap: '2rem' }}>
+                  <Info label="📚 Track" value={section.track_name} />
+                  <Info label="🎓 Course" value={section.course_name} />
+                  <Info label="⚙️ Status" value={section.is_locked ? 'Locked' : 'Unlocked'} badge={section.is_locked ? 'danger' : 'success'} />
+                  <Info label="📅 Created" value= {new Date(section.created_at).toLocaleDateString('en-GB')} />
                 </div>
-              </CCol>
-            </CRow>
-          </CCardBody>
-        </CCard>
-      ) : (
-        <div className="py-5 text-center">Section not found.</div>
-      )}
+                {section.description && (
+                  <div className="mt-4">
+                    <span className="text-muted small">Description</span>
+                    <div className="p-2 mt-1 bg-light rounded" style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem' }}>
+                      {stripHtml(section.description)}
+                    </div>
+                  </div>
+                )}
+              </CCardBody>
+            </CCard>
 
-      {/* Update */}
-      {editOpen && (
-        <SectionUpdate
-          sectionId={sectionId}
-          onClose={() => setEditOpen(false)}
-          onUpdated={() => {
-            setEditOpen(false);
-            /* refresh */
-            axiosInstance
-              .get(`/api/courses/sections/${sectionId}/`)
-              .then((res) => setSection(res.data));
-          }}
-        />
-      )}
+            <CCard className="shadow-sm">
+              <div className="d-flex justify-content-between align-items-center p-3" style={{ cursor: 'pointer' }} onClick={() => setShowLectures(!showLectures)}>
+                <h3 className="mb-0 fw-bold">Lectures <span className="badge bg-secondary">{lectures.length}</span></h3>
+                <CIcon icon={showLectures ? cilChevronTop : cilChevronBottom} size="lg" />
+              </div>
 
-      {/* Delete */}
-      {delOpen && (
-        <SectionDeleteConfirm
-          section={section}
-          visible
-          onClose={() => setDelOpen(false)}
-          onDeleted={() => navigate(-1)}
-        />
-      )}
+              <CCollapse visible={showLectures}>
+                <CCardBody>
+                  {lectures.length === 0 ? (
+                    <p className="text-muted text-center mb-0">No lectures available.</p>
+                  ) : (
+                    <>
+                      <div className="d-none d-md-block">
+                        <div className="d-flex fw-bold border-bottom p-2 bg-light">
+                          <div style={{ width: '5%' }}>#</div>
+                          <div style={{ width: '30%' }}>Name</div>
+                          <div style={{ width: '8%' }}>Preview</div>
+                          <div style={{ width: '10%' }}>Locked</div>
+                          <div style={{ width: '12%' }}>Release</div>
+                          <div style={{ width: '10%' }}>Duration</div>
+                          <div style={{ width: '10%' }}>Video</div>
+                          <div style={{ width: '15%' }} className="text-center">Actions</div>
+                        </div>
 
-      {/* Video */}
-      {section?.media_type === 'video' && (
-        <VideoModal
-          visible={videoOpen}
-          onClose={() => setVideoOpen(false)}
-          src={section.file || section.external_url}
-          title={section.title}
-          track={section.track_name}
-        />
-      )}
-    </CContainer>
+                        {lectures.map((lec, idx) => (
+                          <DraggableRow key={lec.id} index={idx} lecture={lec} moveLecture={moveLecture}>
+                          <div
+                          className={`lecture-row d-flex border align-items-center p-3 rounded shadow-sm mb-2 ${idx % 2 === 0 ? 'bg-light' : 'bg-white'}`}
+                          style={{ width: '100%' }}
+                        >
+                          <div style={{ width: '5%' }}>{idx + 1}</div>
+                          <div style={{ width: '30%' }}>{lec.name}</div>
+                          <div style={{ width: '8%' }}>{lec.is_preview ? '✅' : '❌'}</div>
+                          <div style={{ width: '10%' }}>
+                            <span className={`badge ${lec.is_locked ? 'bg-danger' : 'bg-success'}`}>
+                              {lec.is_locked ? 'Locked' : 'Unlocked'}
+                            </span>
+                          </div>
+                          <div style={{ width: '12%' }}>
+                            {lec.release_date ? new Date(lec.release_date).toLocaleDateString() : '—'}
+                          </div>
+                          <div style={{ width: '10%' }}>{fmtDuration(lec.duration)}</div>
+                          <div style={{ width: '10%' }}>
+                            {lec.video ? (
+                              <button
+                                className="btn btn-sm btn-link text-primary p-0"
+                                onClick={() => showVideo(lec.video, lec)}
+                              >
+                                View
+                              </button>
+                            ) : '—'}
+                          </div>
+                          <div style={{ width: '15%' }} className="d-flex justify-content-center gap-2">
+                            <CTooltip content="Edit" placement="top">
+                              <button className="icon-btn edit-btn" onClick={() => openModal('update', lec)}>
+                                <CIcon icon={cilPen} />
+                              </button>
+                            </CTooltip>
+                            <CTooltip content="Delete" placement="top">
+                              <button className="icon-btn delete-btn" onClick={() => openModal('delete', lec)}>
+                                <CIcon icon={cilTrash} />
+                              </button>
+                            </CTooltip>
+                          </div>
+                        </div>
+
+                        </DraggableRow>
+
+                        ))}
+                      </div>
+                     {isOrderChanged && (
+                      <div className="text-end mt-3">
+                        <CButton color="success" size="sm" onClick={saveOrder}>
+                          Save Order
+                        </CButton>
+                      </div>
+                    )}
+                    </>
+                  )}
+                </CCardBody>
+              </CCollapse>
+            </CCard>
+
+            <CreateLecture visible={modalOpen} sectionId={sectionId} onClose={() => setModalOpen(false)} onCreated={fetchAll} />
+
+            <CModal visible={!!modalAction} onClose={closeModal}>
+              <CModalHeader onClose={closeModal}>
+                {modalAction === 'delete' ? 'Delete Lecture' : 'Update Lecture'}
+              </CModalHeader>
+              <CModalBody>
+                {modalAction === 'delete' && selectedLecture && (
+                  <LectureDeleteConfirm lecture={selectedLecture} onDeleted={fetchAll} onClose={closeModal} />
+                )}
+                {modalAction === 'update' && selectedLecture && (
+                  <LectureUpdate lecture={selectedLecture} onUpdated={fetchAll} onClose={closeModal} />
+                )}
+              </CModalBody>
+            </CModal>
+           <CModal
+              visible={videoModalOpen}
+              onClose={() => setVideoModalOpen(false)}
+              backdrop="static"
+              className="custom-video-modal"
+            >
+              <CModalHeader
+                onClose={() => setVideoModalOpen(false)}
+                className=""
+              >
+                {selectedLecture?.name || 'Lecture Title'}
+              </CModalHeader>
+
+              <CModalBody
+                className="d-flex flex-column justify-content-center align-items-center"
+                style={{ paddingBottom: '2rem' }}
+              >
+                {/* VIDEO PLAYER */}
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '960px',
+                    height: '450px',
+                    background: '#000',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '2px solid #3b82f6',
+                    boxShadow: '0 0 12px rgba(59, 130, 246, 0.6)',
+                  }}
+                >
+                  {currentVideoUrl.endsWith('.mp4') ? (
+                    <video controls style={{ width: '100%', height: '100%' }}>
+                      <source src={currentVideoUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <iframe
+                      src={currentVideoUrl}
+                      title="Lecture Video"
+                      allowFullScreen
+                      frameBorder="0"
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  )}
+                </div>
+
+                {/* TITLE BELOW */}
+                <div
+                  className="text-start mt-4 w-100 px-3"
+                  style={{ maxWidth: '900px', color: '#e5e5e5' }}
+                >
+                  <h2 className="fw-bold mb-3" style={{ fontSize: '1.75rem' }}>
+                    {selectedLecture?.name || 'Lecture Title'}
+                  </h2>
+                  <p className="mb-0">
+                    <strong></strong> {section?.name || '—'} &nbsp;|&nbsp;
+                    <strong></strong> {section?.track_name || '—'} &nbsp;|&nbsp;
+                    <strong></strong> {section?.course_name || '—'}
+                  </p>
+                </div>
+              </CModalBody>
+            </CModal>
+
+              </>
+        ) : (
+          <div className="py-5 text-center">Section not found.</div>
+        )}
+      </CContainer>
+    </DndProvider>
   );
 };
 
