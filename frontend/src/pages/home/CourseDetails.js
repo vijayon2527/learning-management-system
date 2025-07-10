@@ -17,7 +17,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 const CourseDetail = () => {
-  const { id } = useParams();
+  const { id ,slug} = useParams();
 
   const [course, setCourse] = useState(null);
   const [tracks, setTracks] = useState([]);
@@ -35,10 +35,10 @@ const CourseDetail = () => {
       try {
         const [courseRes, tracksRes, featuresRes, featureValuesRes] =
           await Promise.all([
-            axiosInstance.get(`/api/courses/courses/${id}/`),
-            axiosInstance.get(`/api/courses/tracks/?course=${id}`),
-            axiosInstance.get(`/api/courses/features/?course=${id}`),
-            axiosInstance.get(`/api/courses/feature-values/?course=${id}`),
+            axiosInstance.get(`/api/courses/courses/${slug}/`),
+            axiosInstance.get(`/api/courses/tracks/?course=${slug}}`),
+            axiosInstance.get(`/api/courses/features/?course=${slug}`),
+            axiosInstance.get(`/api/courses/feature-values/?course=${slug}`),
           ]);
         setCourse(courseRes.data);
         setTracks(tracksRes.data);

@@ -51,7 +51,7 @@ const UpcomingTrainings = () => {
             className="training-card"
             data-aos="fade-up"
             data-aos-delay={index * 150}
-            onClick={() => navigate(`/courses/${item.id}`)}
+            onClick={() => navigate(`/courses/${item.slug}`)}
             style={{ cursor: "pointer" }}
           >
             <div className="image-wrapper">

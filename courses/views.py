@@ -33,7 +33,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class TrackViewSet(viewsets.ModelViewSet):
     serializer_class   = TrackSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = Track.objects.select_related("course").order_by("created_at")
@@ -46,7 +46,7 @@ class TrackViewSet(viewsets.ModelViewSet):
 
 class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class   = FeatureSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = Feature.objects.select_related("course").order_by("order")
@@ -55,7 +55,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
 
 
 class TrackFeatureValueViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends    = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields   = {
         "track__course_id": ["exact"],
