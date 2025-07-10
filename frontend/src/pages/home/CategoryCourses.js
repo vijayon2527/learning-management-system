@@ -12,6 +12,15 @@ const CategoryCourses = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Updated cleaner function
+  const stripHtmlTags = (html) => {
+    if (!html) return "";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    const text = div.textContent || div.innerText || "";
+    return text.replace(/<\/?[^>]+(>|$)/g, "").trim();
+  };
+
   useEffect(() => {
     const fetchCategoryAndCourses = async () => {
       setLoading(true);
@@ -127,7 +136,9 @@ const CategoryCourses = () => {
 
                     {/* Course Name and Info */}
                     <div style={{ padding: "1rem", flexGrow: 1 }}>
-                      <h4 style={{ fontSize: "1rem", margin: "0 0 0.5rem" }}>{course.name}</h4>
+                      <h4 style={{ fontSize: "1rem", margin: "0 0 0.5rem" }}>
+                        {course.name}
+                      </h4>
                       <p
                         style={{
                           fontSize: "0.85rem",
@@ -135,7 +146,7 @@ const CategoryCourses = () => {
                           marginBottom: "1rem",
                         }}
                       >
-                        {truncate(course.description, 100) || "No description available."}
+                        {truncate(stripHtmlTags(course.summary), 100) || "No description available."}
                       </p>
                     </div>
 
