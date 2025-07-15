@@ -29,7 +29,23 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = '__all__'
 
-        
+class CourseReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = CourseReview
+        fields = [
+            "id",
+            "course",
+            "track",
+            "user",
+            "user_name",
+            "rating",
+            "comment",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user_name"]
+
 class TrackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Track
@@ -79,19 +95,41 @@ class LectureSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source="section.name", read_only=True)
     track_name   = serializers.CharField(source="section.track.name", read_only=True)
     course_name  = serializers.CharField(source="section.track.course.name", read_only=True)
+    video_url    = serializers.SerializerMethodField()
 
     class Meta:
-        model  = Lecture
+        model = Lecture
         fields = (
-            "id", "section",                 # FK
-            "section_name", "track_name", "course_name",
-            "name", "video", "order", "duration",
-            "is_preview", "release_date",
-            "is_locked", "unlock_criteria",
-            "created_at", "updated_at",
+            "id",
+            "section",
+            "section_name",
+            "track_name",
+            "course_name",
+            "name",
+            "video",        
+            "video_url",     
+            "order",
+            "duration",
+            "is_preview",
+            "release_date",
+            "is_locked",
+            "unlock_criteria",
+            "created_at",
+            "updated_at",
         )
         read_only_fields = (
-            "id", "order", "duration",       # order is auto; duration can be set later
-            "created_at", "updated_at",
-            "section_name", "track_name", "course_name",
+            "id",
+            "order",
+            "duration",
+            "created_at",
+            "updated_at",
+            "section_name",
+            "track_name",
+            "course_name",
         )
+
+    def get_video_url(self, obj):
+        request = self.context.get("request")
+        if obj.video and hasattr(obj.video, 'url'):
+            return request.build_absolute_uri(obj.video.url)
+        return None

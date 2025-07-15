@@ -200,6 +200,55 @@ class Course(BaseModel):
     def calculate_total_duration(self):
         return self.sections.aggregate(total=Sum("estimated_duration"))["total"] or timedelta(0)
 
+class CourseReview(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name=_("Course"),
+        help_text=_("Course that this review is for"),
+    )
+    track = models.ForeignKey(
+        "Track",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviews",
+        verbose_name=_("Track"),
+        help_text=_("Optional track this review relates to"),
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    rating = models.PositiveSmallIntegerField(
+        default=5,
+        verbose_name=_("Rating"),
+        help_text=_("Rating given by the user (1-5 stars)"),
+    )
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Comment"),
+        help_text=_("Optional review comment"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Created At"),
+    )
+
+    class Meta:
+        verbose_name = _("Course Review")
+        verbose_name_plural = _("Course Reviews")
+        indexes = [
+            models.Index(fields=["course"], name="review_course_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username if self.user else 'Anonymous'} review on {self.course.name}"
+
 
 class Track(BaseModel):
     course = models.ForeignKey(

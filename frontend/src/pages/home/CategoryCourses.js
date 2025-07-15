@@ -94,9 +94,9 @@ const CategoryCourses = () => {
               >
                 {courses.map((course) => (
                   <div
-                    key={course.id}
+                    key={course.slug}
                     style={cardStyle}
-                    onClick={() => navigate(`/courses/${course.id}`)}
+                    onClick={() => navigate(`/courses/${course.slug}`)}
                     onMouseEnter={(e) => {
                       Object.assign(e.currentTarget.style, cardHoverStyle);
                     }}

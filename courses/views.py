@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
+
 from .models import *
 from .serializers import (
     CategorySerializer,
@@ -12,7 +13,8 @@ from .serializers import (
     TrackFeatureValueUpdateSerializer,
     TrackSerializer,
     SectionSerializer,
-    LectureSerializer
+    LectureSerializer,
+    CourseReviewSerializer,
 )
 
 
@@ -84,7 +86,7 @@ class TrackFeatureValueViewSet(viewsets.ModelViewSet):
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.select_related("track", "track__course")
     serializer_class = SectionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
     ordering = ["track", "created_at"]
@@ -100,7 +102,7 @@ class SectionViewSet(viewsets.ModelViewSet):
 class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
     serializer_class = LectureSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]
     ordering = ["section", "order"]
@@ -135,3 +137,101 @@ class LectureViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+        
+
+
+class CourseReviewViewSet(viewsets.ModelViewSet):
+    queryset = CourseReview.objects.all()
+    serializer_class = CourseReviewSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+import razorpay
+import hashlib
+import hmac
+
+from django.conf import settings
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+class PaymentViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]  # Require login for payments
+
+    @action(detail=False, methods=["post"], url_path="create-order")
+    def create_order(self, request):
+        user = request.user
+        track_id = request.data.get("track_id")
+
+        if not track_id:
+            return Response({"error": "track_id is required"}, status=400)
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            return Response({"error": "Invalid track ID"}, status=400)
+
+        # Check if user is already enrolled for this track/course
+        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
+        if enrollment_exists:
+            return Response({"error": "User already enrolled for this course"}, status=400)
+
+        # (Optional) Check for existing pending payment orders here if you keep track of orders
+
+        amount = int(float(track.fee) * 100)  # convert to paise
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order = client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "payment_capture": 1
+        })
+
+        return Response({
+            "order_id": order["id"],
+            "amount": amount,
+            "currency": "INR",
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "track_id": track.id,
+            "course_id": track.course.id,
+        })
+
+    @action(detail=False, methods=["post"], url_path="verify", permission_classes=[permissions.IsAuthenticated])
+    def verify_payment(self, request):
+        user = request.user
+        data = request.data
+        order_id = data.get("razorpay_order_id")
+        payment_id = data.get("razorpay_payment_id")
+        signature = data.get("razorpay_signature")
+        track_id = data.get("track_id")
+
+        if not all([order_id, payment_id, signature, track_id]):
+            return Response({"error": "Missing required fields"}, status=400)
+
+        expected_signature = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode(),
+            f"{order_id}|{payment_id}".encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        if expected_signature != signature:
+            return Response({"error": "Invalid signature"}, status=400)
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            return Response({"error": "Invalid track ID"}, status=400)
+
+        # Double-check enrollment to prevent duplicates
+        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
+        if enrollment_exists:
+            return Response({"message": "Already enrolled."})
+
+        Enrollment.objects.create(
+            user=user,
+            course=track.course,
+            track=track
+        )
+
+        return Response({"message": "Payment verified and enrollment successful."})
