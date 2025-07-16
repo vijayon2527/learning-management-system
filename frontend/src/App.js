@@ -81,7 +81,7 @@ const App = () => {
                 <Register />
               </AuthRoute>
             } />
-            <Route exact path="/courses/:id" name="Page 404" element={<CourseDetail />} />
+            <Route exact path="/courses/:slug" name="Page 404" element={<CourseDetail />} />
             <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />

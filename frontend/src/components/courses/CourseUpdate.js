@@ -149,8 +149,8 @@ const CourseUpdate = ({ course, onUpdated, onClose, categories }) => {
             value={form.visibility}
             onChange={(e) => setForm({ ...form, visibility: e.target.value })}
           >
-            <option value="PAID">Paid</option>
-            <option value="FREE">Free</option>
+            <option value="Paid">Paid</option>
+            <option value="free">Free</option>
           </CFormSelect>
         </CCol>
 

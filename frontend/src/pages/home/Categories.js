@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import "./Categories.css";
 import Slider from "react-slick";
 import { useMediaQuery } from "react-responsive";
 import { Link } from "react-router-dom";
-import { FaImage, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaImage } from "react-icons/fa";
 import axiosInstance from "../../utils/axiosInstance";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const Categories = () => {
   const isMobile = useMediaQuery({ maxWidth: 640 });
-
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,57 +23,34 @@ const Categories = () => {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  const CustomPrevArrow = ({ onClick }) => (
-    <div className="custom-arrow prev-arrow" onClick={onClick} style={{ cursor: "pointer" }}>
-      <FaChevronLeft size={20} />
-    </div>
-  );
-
-  const CustomNextArrow = ({ onClick }) => (
-    <div className="custom-arrow next-arrow" onClick={onClick} style={{ cursor: "pointer" }}>
-      <FaChevronRight size={20} />
-    </div>
-  );
-
-  const sliderSettings = isMobile
-    ? {
-        dots: false,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 3,
-        slidesToScroll: 1,
-        arrows: true,
-        nextArrow: <CustomNextArrow />,
-        prevArrow: <CustomPrevArrow />,
-      }
-    : {
-        dots: false,
-        infinite: false,
-        speed: 500,
-        slidesToShow: 7,
-        slidesToScroll: 3,
-        arrows: true,
-        nextArrow: <CustomNextArrow />,
-        prevArrow: <CustomPrevArrow />,
-        responsive: [
-          {
-            breakpoint: 1200,
-            settings: { slidesToShow: 5, slidesToScroll: 2 },
-          },
-          {
-            breakpoint: 900,
-            settings: { slidesToShow: 4, slidesToScroll: 2 },
-          },
-          {
-            breakpoint: 700,
-            settings: { slidesToShow: 3, slidesToScroll: 1 },
-          },
-        ],
-      };
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    speed: 600,
+    slidesToShow: isMobile ? 3 : 7,
+    slidesToScroll: isMobile ? 1 : 3,
+    autoplay: true,
+    autoplaySpeed: 2500,
+    pauseOnHover: true,
+    arrows: false,  // <-- arrows removed here
+    responsive: [
+      {
+        breakpoint: 1200,
+        settings: { slidesToShow: 5, slidesToScroll: 2 },
+      },
+      {
+        breakpoint: 900,
+        settings: { slidesToShow: 4, slidesToScroll: 2 },
+      },
+      {
+        breakpoint: 700,
+        settings: { slidesToShow: 3, slidesToScroll: 1 },
+      },
+    ],
+  };
 
   const CategoryItem = ({ id, name, logo }) => (
     <Link
@@ -133,25 +110,34 @@ const Categories = () => {
 
   if (loading) {
     return (
-      <div className="categories-section text-center py-4">
-        <div>Loading categories...</div>
+      <div style={{ textAlign: "center", padding: "2rem 0" }}>
+        Loading categories...
       </div>
     );
   }
 
   if (categories.length === 0) {
     return (
-      <div className="categories-section text-center py-4 text-muted">
+      <div style={{ textAlign: "center", padding: "2rem 0", color: "#888" }}>
         No categories found.
       </div>
     );
   }
 
   return (
-    <div className="categories-section">
-      <h2 className="section-title">Explore Course Categories</h2>
+    <div style={{ padding: "20px 10px" }}>
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "1.8rem",
+          fontWeight: "600",
+          fontSize: "1.8rem",
+        }}
+      >
+        Explore Course Categories
+      </h2>
 
-      <Slider {...sliderSettings} className="categories-slider">
+      <Slider {...sliderSettings}>
         {categories.map((cat) => (
           <CategoryItem key={cat.id} id={cat.id} name={cat.name} logo={cat.logo} />
         ))}
