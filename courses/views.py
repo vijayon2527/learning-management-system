@@ -2,6 +2,7 @@ from rest_framework import generics, status, viewsets,permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import AllowAny
 
 from .models import *
 from .serializers import (
@@ -12,8 +13,15 @@ from .serializers import (
     TrackFeatureValueUpdateSerializer,
     TrackSerializer,
     SectionSerializer,
-    LectureSerializer
+    LectureSerializer,
+    PublicCourseSerializer,
+    LectureNoteSerializer,
+    CourseReviewSerializer
 )
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
 
@@ -92,10 +100,29 @@ class SectionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         track_id = self.request.query_params.get("track")
+        course_slug = self.request.query_params.get("course_slug")  # ✅ new param
+
         if track_id:
             qs = qs.filter(track_id=track_id)
+        elif course_slug:
+            qs = qs.filter(track__course__slug=course_slug)  # ✅ filter by slug via foreign key relation
+
+        if self.request.query_params.get("include_lectures"):
+            qs = qs.prefetch_related("lectures")
+
         return qs
 
+    def get_serializer(self, *args, **kwargs):
+        # Pass context to allow serializer access request if needed
+        return self.serializer_class(*args, context=self.get_serializer_context(), **kwargs)
+
+    @action(detail=True, methods=["get"], url_path="lectures")
+    def get_lectures(self, request, pk=None):
+        section = self.get_object()
+        lectures = Lecture.objects.filter(section=section).order_by("order")
+        serializer = LectureSerializer(lectures, many=True)
+        return Response(serializer.data)
+    
 
 class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
@@ -135,3 +162,55 @@ class LectureViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+        
+
+class PublicCourseViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Course.objects.filter(enrollment_open=True)
+    serializer_class = PublicCourseSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug'
+
+
+class LectureNotePagination(PageNumberPagination):
+    page_size = 5  # ✅ Only 5 per page
+
+
+class LectureNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = LectureNoteSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = LectureNotePagination  # ✅ Use custom pagination
+
+    def get_queryset(self):
+        lecture_id = self.request.query_params.get("lecture")
+        qs = LectureNote.objects.filter(user=self.request.user).order_by("-created_at")
+        if lecture_id:
+            qs = qs.filter(lecture_id=lecture_id)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class CourseReviewViewSet(viewsets.ModelViewSet):
+    queryset = CourseReview.objects.all()
+    serializer_class = CourseReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            return self.queryset.filter(course_id=course_id)
+        return self.queryset
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        course = serializer.validated_data['course']
+
+        existing_review = CourseReview.objects.filter(user=user, course=course).first()
+
+        if existing_review:
+            # Update existing review properly using serializer
+            serializer.instance = existing_review
+            serializer.update(existing_review, serializer.validated_data)
+        else:
+            serializer.save(user=user)

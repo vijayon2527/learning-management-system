@@ -36,30 +36,39 @@ export const AuthProvider = ({ children }) => {
 
   // Login
   const loginUser = async (credentials) => {
-    try {
-      const response = await axiosInstance.post('api/users/token/', credentials);
-      const { access, refresh, role } = response.data;
-      const decodedUser = jwtDecode(access);
-  
-      const updatedUser = {
-        ...decodedUser,
-        role: role || "",
-      };
-  
-      setAuthTokens({ access, refresh, role });
-      setUser(updatedUser);
-      localStorage.setItem(
-        'authTokens',
-        JSON.stringify({ access, refresh, role })
-      );
-  
-      notify('Logged in successfully.');
-      navigate('/dashboard');
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
-      notify(errorMsg, 'error');
-    }
-  };
+  try {
+    const response = await axiosInstance.post('api/users/token/', credentials);
+    const { access, refresh, role } = response.data;
+    const decodedUser = jwtDecode(access);
+    const userType = decodedUser.user_type || "";  // ✅ THIS IS NOW SAFE
+    const userRole = role || "";
+
+    const updatedUser = {
+      ...decodedUser,
+      role: userRole,
+    };
+
+    setAuthTokens({ access, refresh, role });
+    setUser(updatedUser);
+    localStorage.setItem(
+      'authTokens',
+      JSON.stringify({ access, refresh, role })
+    );
+
+    notify('Logged in successfully.');
+
+    // ✅ Role-based redirection
+    if (userType === "STUDENT") {
+      navigate('/'); // student → home
+    } else if (userType === "PLATFORM" && userRole === "SUPER_ADMIN") {
+      navigate('/dashboard'); // super admin
+    } 
+
+  } catch (error) {
+    const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
+    notify(errorMsg, 'error');
+  }
+};
   
   // Logout
   const logoutUser = () => {

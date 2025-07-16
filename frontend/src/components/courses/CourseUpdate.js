@@ -42,7 +42,7 @@ const CourseUpdate = ({ course, onUpdated, onClose, categories }) => {
         summary: course.summary || "",
         description: course.description || "",
         category: course.category || "",
-        visibility: course.visibility || "PAID",
+        visibility: course.visibility || "paid",
         estimated_duration: course.estimated_duration || "",
         enrollment_open: course.enrollment_open ?? true,
       });
@@ -149,8 +149,8 @@ const CourseUpdate = ({ course, onUpdated, onClose, categories }) => {
             value={form.visibility}
             onChange={(e) => setForm({ ...form, visibility: e.target.value })}
           >
-            <option value="PAID">Paid</option>
-            <option value="FREE">Free</option>
+            <option value="paid">Paid</option>
+            <option value="free">Free</option>
           </CFormSelect>
         </CCol>
 
