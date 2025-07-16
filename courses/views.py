@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny
 
+
 from .models import *
 from .serializers import (
     CategorySerializer,
@@ -21,7 +22,11 @@ from .serializers import (
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.conf import settings
+import razorpay
+import hashlib
+import hmac
+
 
 
 
@@ -38,10 +43,9 @@ class CourseViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
 
-
 class TrackViewSet(viewsets.ModelViewSet):
     serializer_class   = TrackSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = Track.objects.select_related("course").order_by("created_at")
@@ -54,7 +58,7 @@ class TrackViewSet(viewsets.ModelViewSet):
 
 class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class   = FeatureSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = Feature.objects.select_related("course").order_by("order")
@@ -63,7 +67,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
 
 
 class TrackFeatureValueViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends    = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields   = {
         "track__course_id": ["exact"],
@@ -92,7 +96,7 @@ class TrackFeatureValueViewSet(viewsets.ModelViewSet):
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.select_related("track", "track__course")
     serializer_class = SectionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
     ordering = ["track", "created_at"]
@@ -127,7 +131,7 @@ class SectionViewSet(viewsets.ModelViewSet):
 class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
     serializer_class = LectureSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]
     ordering = ["section", "order"]
@@ -192,25 +196,149 @@ class LectureNoteViewSet(viewsets.ModelViewSet):
 
 
 class CourseReviewViewSet(viewsets.ModelViewSet):
-    queryset = CourseReview.objects.all()
+    queryset = CourseReview.objects.select_related('user', 'course', 'track')
     serializer_class = CourseReviewSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
+        qs = super().get_queryset()
         course_id = self.request.query_params.get('course')
         if course_id:
-            return self.queryset.filter(course_id=course_id)
-        return self.queryset
+            qs = qs.filter(course_id=course_id)
+        return qs.order_by('-created_at')
 
     def perform_create(self, serializer):
-        user = self.request.user
-        course = serializer.validated_data['course']
+        serializer.save(user=self.request.user)
 
-        existing_review = CourseReview.objects.filter(user=user, course=course).first()
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required to review."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-        if existing_review:
-            # Update existing review properly using serializer
-            serializer.instance = existing_review
-            serializer.update(existing_review, serializer.validated_data)
-        else:
-            serializer.save(user=user)
+        course_id = request.data.get('course')
+        if not course_id:
+            return Response(
+                {"detail": "Course is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        existing = CourseReview.objects.filter(
+            user=request.user, course_id=course_id
+        ).first()
+        if existing:
+            data = self.get_serializer(existing).data
+            return Response(
+                {
+                    "detail": "You have already reviewed this course.",
+                    "review": data,
+                },
+                status=status.HTTP_400_BAD_REQUEST,  # or 200 if you prefer
+            )
+
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Allow only owner or staff to edit.
+        """
+        instance = self.get_object()
+        user = request.user
+        if not user.is_authenticated or (not user.is_staff and instance.user_id != user.id):
+            raise PermissionDenied("You do not own this review.")
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Allow owner or staff.
+        """
+        instance = self.get_object()
+        user = request.user
+        if not user.is_authenticated or (not user.is_staff and instance.user_id != user.id):
+            raise PermissionDenied("You do not own this review.")
+        return super().destroy(request, *args, **kwargs)
+
+
+class PaymentViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]  # Require login for payments
+
+    @action(detail=False, methods=["post"], url_path="create-order")
+    def create_order(self, request):
+        user = request.user
+        track_id = request.data.get("track_id")
+
+        if not track_id:
+            return Response({"error": "track_id is required"}, status=400)
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            return Response({"error": "Invalid track ID"}, status=400)
+
+        # Check if user is already enrolled for this track/course
+        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
+        if enrollment_exists:
+            return Response({"error": "User already enrolled for this course"}, status=400)
+
+        # (Optional) Check for existing pending payment orders here if you keep track of orders
+
+        amount = int(float(track.fee) * 100)  # convert to paise
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order = client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "payment_capture": 1
+        })
+
+        return Response({
+            "order_id": order["id"],
+            "amount": amount,
+            "currency": "INR",
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "track_id": track.id,
+            "course_id": track.course.id,
+        })
+
+    @action(detail=False, methods=["post"], url_path="verify", permission_classes=[permissions.IsAuthenticated])
+    def verify_payment(self, request):
+        user = request.user
+        data = request.data
+        order_id = data.get("razorpay_order_id")
+        payment_id = data.get("razorpay_payment_id")
+        signature = data.get("razorpay_signature")
+        track_id = data.get("track_id")
+
+        if not all([order_id, payment_id, signature, track_id]):
+            return Response({"error": "Missing required fields"}, status=400)
+
+        expected_signature = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode(),
+            f"{order_id}|{payment_id}".encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        if expected_signature != signature:
+            return Response({"error": "Invalid signature"}, status=400)
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            return Response({"error": "Invalid track ID"}, status=400)
+
+        # Double-check enrollment to prevent duplicates
+        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
+        if enrollment_exists:
+            return Response({"message": "Already enrolled."})
+
+        Enrollment.objects.create(
+            user=user,
+            course=track.course,
+            track=track
+        )
+
+        return Response({"message": "Payment verified and enrollment successful."})

@@ -49,7 +49,7 @@ const Trainings = () => {
             <div className="training-cards">
               {courses.map((course, index) => (
                 <Link
-                  to={`/courses/${course.id}`}
+                  to={`/courses/${course.slug}`}
                   className="training-card"
                   key={course.id}
                   data-aos="fade-up"

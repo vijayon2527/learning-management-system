@@ -207,6 +207,62 @@ class Course(BaseModel):
         self.save(update_fields=['average_rating'])
 
 
+class CourseReview(models.Model):
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name=_("Course"),
+        help_text=_("Course that this review is for"),
+    )
+    track = models.ForeignKey(
+        "Track",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviews",
+        verbose_name=_("Track"),
+        help_text=_("Optional track this review relates to"),
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    rating = models.PositiveSmallIntegerField(
+        default=5,
+        verbose_name=_("Rating"),
+        help_text=_("Rating given by the user (1-5 stars)"),
+    )
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Comment"),
+        help_text=_("Optional review comment"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Created At"),
+    )
+
+    class Meta:
+        verbose_name = _("Course Review")
+        verbose_name_plural = _("Course Reviews")
+        indexes = [
+            models.Index(fields=["course"], name="review_course_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "course"],
+                name="uniq_user_course_review",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user.first_name if self.user else 'Anonymous'} review on {self.course.name}"
+
+
 class Track(BaseModel):
     course = models.ForeignKey(
         Course,
@@ -701,18 +757,18 @@ def update_enrollment_progress(sender, instance, **kwargs):
 
 
 
-class CourseReview(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
-    text = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+# class CourseReview(models.Model):
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
+#     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+#     rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+#     text = models.TextField(blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-created_at']
-        constraints = [
-            models.UniqueConstraint(fields=['course', 'user'], name='unique_user_course_review')
-        ]
+#     class Meta:
+#         ordering = ['-created_at']
+#         constraints = [
+#             models.UniqueConstraint(fields=['course', 'user'], name='unique_user_course_review')
+#         ]
 
-    def __str__(self):
-        return f"{self.user} - {self.course.name} - {self.rating}"
+#     def __str__(self):
+#         return f"{self.user} - {self.course.name} - {self.rating}"

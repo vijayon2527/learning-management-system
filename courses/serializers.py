@@ -29,7 +29,25 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = '__all__'
 
-        
+
+class CourseReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = CourseReview
+        fields = [
+            "id",
+            "course",
+            "track",
+            "user",
+            "user_name",
+            "rating",
+            "comment",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user_name"]
+
+
 class TrackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Track
@@ -59,24 +77,41 @@ class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
 
 class LectureSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source="section.name", read_only=True)
-    track_name   = serializers.CharField(source="section.track.name", read_only=True)
-    course_name  = serializers.CharField(source="section.track.course.name", read_only=True)
+    track_name = serializers.CharField(source="section.track.name", read_only=True)
+    course_name = serializers.CharField(source="section.track.course.name", read_only=True)
+    video_url = serializers.SerializerMethodField()
 
     class Meta:
-        model  = Lecture
+        model = Lecture
         fields = (
-            "id", "section",                 # FK
-            "section_name", "track_name", "course_name",
-            "name", "video", "order", "duration",
-            "is_preview", "release_date",
-            "is_locked", "unlock_criteria",
-            "created_at", "updated_at",
+            "id",
+            "section",
+            "section_name",
+            "track_name",
+            "course_name",
+            "name",
+            "video",
+            "video_url",
+            "order",
+            "duration",
+            "is_preview",
+            "release_date",
+            "is_locked",
+            "unlock_criteria",
+            "created_at",
+            "updated_at",
         )
         read_only_fields = (
-            "id", "order", "duration",       # order is auto; duration can be set later
+            "id", "order", "duration",
             "created_at", "updated_at",
             "section_name", "track_name", "course_name",
         )
+
+    def get_video_url(self, obj):
+        request = self.context.get("request")
+        if obj.video and hasattr(obj.video, "url"):
+            return request.build_absolute_uri(obj.video.url) if request else obj.video.url
+        return None
 
 
 class SectionSerializer(serializers.ModelSerializer):
@@ -179,7 +214,32 @@ class LectureNoteSerializer(serializers.ModelSerializer):
 class CourseReviewSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     user = serializers.IntegerField(source='user.id', read_only=True)
+    text = serializers.CharField(source='comment', allow_blank=True, required=False)
 
     class Meta:
         model = CourseReview
-        fields = ['id', 'user', 'first_name', 'course', 'rating', 'text', 'created_at']
+        fields = [
+            'id',
+            'user',
+            'first_name',
+            'course',
+            'track',       # optional
+            'rating',
+            'text',        # maps to comment
+            'created_at',
+        ]
+        read_only_fields = ['id', 'user', 'first_name', 'created_at']
+
+    def validate(self, attrs):
+       
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+        course = attrs.get('course') or getattr(self.instance, 'course', None)
+
+        if self.instance is None:
+            # create
+            if user and course and CourseReview.objects.filter(user=user, course=course).exists():
+                raise serializers.ValidationError("You have already reviewed this course.")
+        return attrs
+
+    

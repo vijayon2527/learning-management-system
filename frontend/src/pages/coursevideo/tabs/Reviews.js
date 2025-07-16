@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dropdown,
   DropdownButton,
@@ -16,11 +16,26 @@ import {
 import axiosInstance from "../../../utils/axiosInstance";
 import "./Reviews.css";
 
+/* --------------------------------------------------
+ * Normalize API review object to safe shape
+ * -------------------------------------------------- */
+function normalizeReview(raw) {
+  return {
+    id: raw.id,
+    user: raw.user ?? null, // numeric user id
+    first_name: raw.first_name ?? "Anonymous",
+    rating: typeof raw.rating === "number" ? raw.rating : 0,
+    // backend may send 'text' (serializer source=comment) OR 'comment' (older)
+    text: (raw.text ?? raw.comment ?? "").trim(),
+    created_at: raw.created_at ?? null,
+  };
+}
+
 const Reviews = ({ courseId, currentUser }) => {
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [text, setText] = useState("");
+  const [reviewText, setReviewText] = useState("");
   const [selectedRating, setSelectedRating] = useState("All ratings");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleReviews, setVisibleReviews] = useState(3);
@@ -29,76 +44,116 @@ const Reviews = ({ courseId, currentUser }) => {
   const [success, setSuccess] = useState(false);
   const [existingReviewId, setExistingReviewId] = useState(null);
 
- useEffect(() => {
-  const fetchReviews = async () => {
-    try {
-      const res = await axiosInstance.get(`/api/courses/reviews/?course=${courseId}`);
-      setReviews(res.data);
-      console.log("Reviews:", res.data);
-      console.log("Current User:", currentUser);
+  /* --------------------------------------------------
+   * Fetch reviews whenever course/user/submit changes
+   * -------------------------------------------------- */
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!courseId) return;
+      setLoading(true);
+      setError("");
+      try {
+        const res = await axiosInstance.get(
+          `/api/courses/reviews/?course=${courseId}`
+        );
+        // API may return list or paginated {results:[]}
+        const rawData = Array.isArray(res.data)
+          ? res.data
+          : res.data.results || [];
+        const normalized = rawData.map(normalizeReview);
+        setReviews(normalized);
 
-      const userReview = res.data.find((r) => r.user === currentUser?.id);
-      if (userReview) {
-        setRating(userReview.rating);
-        setText(userReview.text);
-        setExistingReviewId(userReview.id);
+        // detect user review
+        const userReview = normalized.find(
+          (r) => r.user === currentUser?.id
+        );
+        if (userReview) {
+          setExistingReviewId(userReview.id);
+          setRating(userReview.rating);
+          setReviewText(userReview.text);
+        } else {
+          setExistingReviewId(null);
+          setRating(0);
+          setReviewText("");
+        }
+      } catch (err) {
+        console.error("Failed to fetch reviews", err);
+        setError("Failed to load reviews.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch reviews", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchReviews();
-}, [courseId, success, currentUser]);
+    fetchReviews();
+  }, [courseId, success, currentUser]);
 
-
+  /* --------------------------------------------------
+   * Submit review (create only; server rejects duplicates)
+   * -------------------------------------------------- */
   const handleSubmit = async () => {
-    if (!rating || !text.trim()) {
+    if (!rating || !reviewText.trim()) {
       setError("Please provide both rating and review.");
       return;
     }
 
-    setError(null);
+    setError("");
     setSuccess(false);
 
     try {
-      if (existingReviewId) {
-        // Update
-        await axiosInstance.put(`/api/courses/reviews/${existingReviewId}/`, {
-          course: courseId,
-          rating,
-          text,
-        });
-      } else {
-        // Create
-        const res = await axiosInstance.post("/api/courses/reviews/", {
-          course: courseId,
-          rating,
-          text,
-        });
-        setExistingReviewId(res.data.id);
-      }
+      const res = await axiosInstance.post("/api/courses/reviews/", {
+        course: courseId,
+        rating,
+        text: reviewText, // serializer maps to comment
+      });
 
+      // success create (201)
+      setExistingReviewId(res.data.id);
       setSuccess(true);
     } catch (err) {
-      console.error(err);
-      setError("Failed to submit review. Try again.");
+      console.error("Review submit error:", err);
+
+      // Did backend tell us we already reviewed?
+      const data = err.response?.data;
+      if (err.response?.status === 400 && data?.review) {
+        const normalized = normalizeReview(data.review);
+        setExistingReviewId(normalized.id);
+        setRating(normalized.rating);
+        setReviewText(normalized.text);
+        setSuccess(true); // show thank-you
+      } else {
+        setError("Failed to submit review. Try again.");
+      }
     }
   };
 
+  /* --------------------------------------------------
+   * Filtering + search
+   * -------------------------------------------------- */
   const selectedRatingNumber =
-    selectedRating === "All ratings" ? null : parseInt(selectedRating);
-  const filteredReviews = reviews.filter((review) =>
-    (!selectedRatingNumber || review.rating === selectedRatingNumber) &&
-    review.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    selectedRating === "All ratings" ? null : parseInt(selectedRating, 10);
 
-  const ratingsData = [5, 4, 3, 2, 1].map((star) => ({
-    stars: star,
-    count: reviews.filter((r) => r.rating === star).length,
-  }));
+  const filteredReviews = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return reviews.filter((review) => {
+      const reviewTextLower = review.text.toLowerCase();
+      const passesRating =
+        !selectedRatingNumber || review.rating === selectedRatingNumber;
+      const passesSearch = reviewTextLower.includes(q);
+      return passesRating && passesSearch;
+    });
+  }, [reviews, selectedRatingNumber, searchQuery]);
+
+  /* --------------------------------------------------
+   * Ratings summary
+   * -------------------------------------------------- */
+  const ratingsData = useMemo(
+    () =>
+      [5, 4, 3, 2, 1].map((star) => ({
+        stars: star,
+        count: reviews.filter((r) => r.rating === star).length,
+      })),
+    [reviews]
+  );
 
   const totalReviews = reviews.length;
   const overallRating = totalReviews
@@ -107,6 +162,9 @@ const Reviews = ({ courseId, currentUser }) => {
       ).toFixed(1)
     : 0;
 
+  /* --------------------------------------------------
+   * Render
+   * -------------------------------------------------- */
   return (
     <div className="rating-container">
       <h2 className="student-feedback">Student Feedback</h2>
@@ -147,43 +205,52 @@ const Reviews = ({ courseId, currentUser }) => {
         </div>
       </div>
 
-      <h5 className="fw-bold mt-4">{existingReviewId ? "Update Your Review" : "Write a Review"}</h5>
+      {/* Review form: show ONLY if user hasn't reviewed */}
+      {!existingReviewId && (
+        <>
+          <h5 className="fw-bold mt-4">Write a Review</h5>
+          <div className="mb-3">
+            <div className="d-flex align-items-center mb-2">
+              <span className="me-2">Your Rating:</span>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <FaStar
+                  key={star}
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  color={(hoverRating || rating) >= star ? "orange" : "#ccc"}
+                  style={{ cursor: "pointer", fontSize: "22px" }}
+                />
+              ))}
+            </div>
 
-      <div className="mb-3">
-        <div className="d-flex align-items-center mb-2">
-          <span className="me-2">Your Rating:</span>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <FaStar
-              key={star}
-              onClick={() => setRating(star)}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
-              color={(hoverRating || rating) >= star ? "orange" : "#ccc"}
-              style={{ cursor: "pointer", fontSize: "22px" }}
+            <FormControl
+              as="textarea"
+              rows={3}
+              placeholder="Write your review..."
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              className="mb-2"
             />
-          ))}
-        </div>
 
-        <FormControl
-          as="textarea"
-          rows={3}
-          placeholder="Write your review..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="mb-2"
-        />
+            {error && <div className="text-danger mb-2">{error}</div>}
+            {success && (
+              <div className="text-success mb-2">✅ Review submitted!</div>
+            )}
 
-        {error && <div className="text-danger mb-2">{error}</div>}
-        {success && (
-          <div className="text-success mb-2">
-            ✅ {existingReviewId ? "Review updated!" : "Review submitted!"}
+            <Button variant="success" onClick={handleSubmit}>
+              Submit Review
+            </Button>
           </div>
-        )}
+        </>
+      )}
 
-        <Button variant="success" onClick={handleSubmit}>
-          {existingReviewId ? "Update Review" : "Submit Review"}
-        </Button>
-      </div>
+      {/* If user already submitted, show info */}
+      {existingReviewId && (
+        <div className="alert alert-info mt-4" role="alert">
+          You’ve already reviewed this course. Thank you!
+        </div>
+      )}
 
       <h5 className="fw-bold mt-4">Reviews</h5>
 
@@ -235,7 +302,9 @@ const Reviews = ({ courseId, currentUser }) => {
                       <FaStar key={i} color="gold" />
                     ))}
                   <small className="text-muted ms-2">
-                    {new Date(review.created_at).toLocaleDateString()}
+                    {review.created_at
+                      ? new Date(review.created_at).toLocaleDateString()
+                      : ""}
                   </small>
                 </div>
               </div>
