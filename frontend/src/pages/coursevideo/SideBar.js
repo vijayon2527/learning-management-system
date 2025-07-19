@@ -15,27 +15,28 @@ const SideBar = ({
   onCloseSidebar,
   activeLectureId,
   activeSectionId,
-  autoExpandActive = true,   // NEW: allows parent to turn off auto-open if ever needed
+  autoExpandActive = true, // allow parent to control auto-open
 }) => {
   const [openSectionId, setOpenSectionId] = useState(null);
   const [checkedLectures, setCheckedLectures] = useState({});
 
-  /* -------------------- load watched checkmarks -------------------- */
+  /* Load watched checkmarks ----------------------------------- */
   useEffect(() => {
     const watched = JSON.parse(localStorage.getItem('checkedLectures')) || {};
     setCheckedLectures(watched);
   }, []);
 
+  /* Auto-open active section (or first) ----------------------- */
   useEffect(() => {
     if (!sections.length) return;
 
     if (autoExpandActive && activeSectionId != null) {
       setOpenSectionId(activeSectionId);
     } else if (openSectionId == null) {
-      // initial mount fallback
       setOpenSectionId(sections[0].id);
     }
-  }, [activeSectionId, sections, autoExpandActive]); // deliberately omit openSectionId to allow reset
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSectionId, sections, autoExpandActive]);
 
   const toggleSection = (id) => {
     setOpenSectionId((prev) => (prev === id ? null : id));
@@ -70,8 +71,7 @@ const SideBar = ({
             (lec) => checkedLectures[lec.id]
           ).length;
 
-          // loose equality so number vs string both match
-          const isOpen = section.id == openSectionId;
+          const isOpen = section.id == openSectionId; // loose == handles num/str
           const isActive = section.id == activeSectionId;
 
           return (
@@ -79,14 +79,25 @@ const SideBar = ({
               key={section.id}
               className={`sidebar-section ${isActive ? 'active-section' : ''}`}
             >
+              {/* HEADER: NOT CLICKABLE except icon */}
               <div className="sidebar-section-header">
-                <strong>{section.name}</strong>
-                <span
-                  className="accordion-icon"
-                  onClick={() => toggleSection(section.id)}
+                <strong className="sidebar-section-title">{section.name}</strong>
+                <button
+                  type="button"
+                  className="accordion-icon-btn"
+                  aria-expanded={isOpen}
+                  aria-label={
+                    isOpen
+                      ? `Collapse ${section.name}`
+                      : `Expand ${section.name}`
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection(section.id);
+                  }}
                 >
                   {isOpen ? <BsChevronUp /> : <BsChevronDown />}
-                </span>
+                </button>
               </div>
 
               <div className="sidebar-section-meta">

@@ -20,6 +20,7 @@ from .serializers import (
     AGPTokenObtainPairSerializer,
     AGPTokenRefreshSerializer,
     OtpVerifySerializer,
+    UserSerializer
 )
 
 import logging
@@ -31,6 +32,9 @@ from .utils import send_otp_email
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 
 
 class AGPTokenObtainPairView(TokenObtainPairView):
@@ -114,6 +118,11 @@ class AGPTokenRefreshView(TokenRefreshView):
     serializer_class = AGPTokenRefreshSerializer
 
         
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    return Response(UserSerializer(request.user).data)
+
 
 class SetPasswordView(APIView):
     permission_classes = [IsAuthenticated]

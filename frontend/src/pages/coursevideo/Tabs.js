@@ -20,7 +20,8 @@ const Tabs = React.forwardRef(
       videoRef,
       authToken,
       course,
-      selectedCourseId
+      currentUser,
+      userChecked,        // <-- NEW
     },
     ref
   ) => {
@@ -83,8 +84,9 @@ const Tabs = React.forwardRef(
           )}
           {activeTab === 'search' && <Search />}
           {activeTab === 'overview' && <OverView course={course} />}
-          {activeTab === 'reviews' && <Reviews courseId={course?.id} />}
-          {activeTab === 'learning-tools' && <LearningTools />}
+          {activeTab === 'reviews' && (
+             <Reviews courseId={course?.id} currentUser={currentUser} />)}
+          {activeTab === "learning-tools" && <LearningTools />}
         </div>
       </div>
     );

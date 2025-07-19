@@ -39,24 +39,24 @@ const MyLearning = () => {
             <CCol xs={12} sm={6} md={4} lg={4} key={course.id}>
               <CCard
                onClick={async () => {
-  try {
-    const res = await axiosInstance.get(`/api/courses/sections/?course_slug=${course.slug}`);
-    const sections = res.data;
+                  try {
+                    const res = await axiosInstance.get(`/api/courses/sections/?course_slug=${course.slug}`);
+                    const sections = res.data;
 
-    if (!sections.length || !sections[0].lectures?.length) {
-      alert("This course has no available sections or lectures.");
-      return;
-    }
+                    if (!sections.length || !sections[0].lectures?.length) {
+                      alert("This course has no available sections or lectures.");
+                      return;
+                    }
 
-    const section = sections[0];
-    const lecture = section.lectures[0];
+                    const section = sections[0];
+                    const lecture = section.lectures[0];
 
-    navigate(`/course-video/${course.slug}/${section.id}/${lecture.id}`);
-  } catch (err) {
-    console.error('Navigation error:', err);
-    alert('Failed to load course content.');
-  }
-}}
+                    navigate(`/course-video/${course.slug}/${section.id}/${lecture.id}`);
+                  } catch (err) {
+                    console.error('Navigation error:', err);
+                    alert('Failed to load course content.');
+                  }
+                }}
 
                 className="shadow-sm border-0 course-card"
                 style={{ cursor: 'pointer', transition: 'transform 0.3s ease' }}

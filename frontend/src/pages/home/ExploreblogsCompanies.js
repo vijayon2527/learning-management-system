@@ -1,9 +1,13 @@
-import React from 'react'
+import React from 'react';
 import Slider from "react-slick";
 import './ExploreblogsCompanies.css';
 
+const STATIC_BASE = process.env.REACT_APP_STATIC_URL || process.env.PUBLIC_URL || "";
+
+
+// Dynamically create logos with correct static base path
 const logos = Array.from({ length: 24 }, (_, i) => ({
-    src: `/assets/images/clients/logo${i + 1}.jpg`,
+    src: `${STATIC_BASE}/assets/images/clients/logo${i + 1}.jpg`,
     alt: `Client Logo ${i + 1}`
 }));
 
@@ -38,8 +42,15 @@ const ExploreblogsCompanies = () => {
         <>
             <div className="explore-blogs-banner" data-aos="fade">
                 <picture>
-                    <source media="(max-width: 639px)" srcSet="/assets/images/explore_blogs2.jpg" />
-                    <img src="/assets/images/explore_blogs1.jpg" alt="Explore Blogs" className="explore-banner-img" />
+                    <source
+                        media="(max-width: 639px)"
+                        srcSet={`${STATIC_BASE}/assets/images/explore_blogs2.jpg`}
+                    />
+                    <img
+                        src={`${STATIC_BASE}/assets/images/explore_blogs1.jpg`}
+                        alt="Explore Blogs"
+                        className="explore-banner-img"
+                    />
                 </picture>
             </div>
 
