@@ -1,14 +1,7 @@
-// src/utils/axiosInstance.js
 import axios from 'axios';
 
-/*
-  BASE_URL priority:
-  1. REACT_APP_API_URL (if defined in env at build time)
-  2. window.location.origin (works when React is served by Django)
-*/
 const API_BASE = process.env.REACT_APP_API_URL || window.location.origin;
 
-/* Read a cookie by name (needed for CSRF) */
 function getCookie(name) {
   const match = document.cookie
     .split('; ')
@@ -16,7 +9,6 @@ function getCookie(name) {
   return match ? decodeURIComponent(match.split('=')[1]) : null;
 }
 
-/* Methods that do NOT require a CSRF header */
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE'];
 
 const axiosInstance = axios.create({
