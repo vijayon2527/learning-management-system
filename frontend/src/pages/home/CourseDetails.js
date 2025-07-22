@@ -58,7 +58,7 @@ useEffect(() => {
         axiosInstance.get(`/api/courses/tracks/?course_id=${courseId}`),
         axiosInstance.get(`/api/courses/features/?course_id=${courseId}`),
         axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`),
-        axiosInstance.get(`/api/courses/course-reviews/?course=${courseId}`),
+        axiosInstance.get(`/api/courses/reviews/?course=${courseId}`),
       ]);
 
       setTracks(tracksRes.data);

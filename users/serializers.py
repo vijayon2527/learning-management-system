@@ -13,6 +13,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from .models import User
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email']
+
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -28,6 +33,7 @@ class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['role'] = user.get_role()
+        token['user_type'] = user.user_type
         return token
 
     def validate(self, attrs):
@@ -37,6 +43,7 @@ class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not user:
             raise AuthenticationFailed('Invalid credentials')
         data['role']=user.get_role()
+        data['user_type'] = user.user_type 
         return data
 
 
@@ -54,9 +61,11 @@ class AGPTokenRefreshSerializer(TokenRefreshSerializer):
 
         access_token = refresh_token.access_token
         access_token['role'] = user.get_role()
+        access_token['user_type'] = user.user_type
 
         data['access'] = str(access_token)
         data['role'] = user.get_role()
+        data['user_type'] = user.user_type 
         return data
 
 

@@ -35,9 +35,8 @@ const Login = () => {
       });
 
       if (res.status === 200) {
-        await loginUser(formData);
-        navigate('/dashboard');
-      }
+      await loginUser(formData);
+    }
     } catch (err) {
       setErrors({ general: 'Invalid OTP.' });
     } finally {

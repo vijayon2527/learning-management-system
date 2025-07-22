@@ -212,6 +212,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             return profile.role
         return None
 
+
 class PlatformUser(models.Model):
     class Role(models.TextChoices):
         SUPER_ADMIN = 'SUPER_ADMIN', _('Super Admin')

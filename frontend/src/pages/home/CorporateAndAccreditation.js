@@ -1,12 +1,14 @@
 import React from 'react';
-
 import './CorporateAndAccreditation.css';
+
+const STATIC_BASE = process.env.REACT_APP_STATIC_URL || process.env.PUBLIC_URL || "";
+
 
 const CorporateAndAccreditation = () => {
     return (
         <div className="corporate-accreditation-wrapper">
 
-            
+            {/* Corporate Training Section */}
             <section className="section corporate-training">
                 <div className="content">
                     <h2>Corporate Training Solutions</h2>
@@ -21,14 +23,20 @@ const CorporateAndAccreditation = () => {
                     <a href="#contact" className="get-in-touch-link">Get in touch</a>
                 </div>
                 <div className="image" data-aos="fade-left">
-                    <img src="/assets/images/corporate_training.jpg" alt="Corporate Training" />
+                    <img
+                        src={`${STATIC_BASE}/assets/images/corporate_training.jpg`}
+                        alt="Corporate Training"
+                    />
                 </div>
             </section>
 
             {/* Global Accreditations Section */}
             <section className="section global-accreditation">
                 <div className="image" data-aos="fade-right">
-                    <img src="/assets/images/global_accreditation.jpg" alt="Global Accreditations" />
+                    <img
+                        src={`${STATIC_BASE}/assets/images/global_accreditation.jpg`}
+                        alt="Global Accreditations"
+                    />
                 </div>
                 <div className="content">
                     <h2>Global Accreditations</h2>

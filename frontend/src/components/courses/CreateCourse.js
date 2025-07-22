@@ -17,7 +17,7 @@ const CourseCreate = ({ onCreated, onClose, categories }) => {
     summary: "",
     description: "",
     category: "",
-    visibility: "Paid",
+    visibility: "paid",
     enrollment_open: true,
     estimated_duration: "",
   });
@@ -160,12 +160,13 @@ const CourseCreate = ({ onCreated, onClose, categories }) => {
         <CCol md={6}>
           <label className="form-label fw-semibold">Visibility</label>
           <CFormSelect
-            value={form.visibility}
-            onChange={(e) => setForm({ ...form, visibility: e.target.value })}
-          >
-            <option value="paid">Paid</option>
-            <option value="free">Free</option>
-          </CFormSelect>
+              value={form.visibility}
+              onChange={(e) => setForm({ ...form, visibility: e.target.value })}
+            >
+              <option value="paid">Paid</option>
+              <option value="free">Free</option>
+            </CFormSelect>
+
         </CCol>
 
         <CCol md={6}>

@@ -6,6 +6,7 @@ import Blog1 from './Blogs/Blog1'
 import Blog2 from './Blogs/Blog2'
 import blogData from '../data/blogs.json'
 
+const STATIC_URL = process.env.REACT_APP_STATIC_URL || process.env.PUBLIC_URL;
 
 const Blog = () => {
   return (
@@ -17,8 +18,14 @@ const Blog = () => {
           index % 2 === 0 ? (
             <Blog1
               key={index}
-              feature={section.feature}
-              blogs={section.blogs}
+              feature={{ 
+                ...section.feature, 
+                img: `${STATIC_URL}/${section.feature.img}` 
+              }}
+              blogs={section.blogs.map(blog => ({
+                ...blog,
+                img: `${STATIC_URL}/${blog.img}`
+              }))}
               buttonText={section.buttonText}
             />
           ) : (
@@ -26,7 +33,10 @@ const Blog = () => {
               key={index}
               title={section.feature.title}
               description={section.feature.description}
-              blogs={section.blogs}
+              blogs={section.blogs.map(blog => ({
+                ...blog,
+                img: `${STATIC_URL}/${blog.img}`
+              }))}
               buttonText={section.buttonText}
               backgroundColor={section.feature.backgroundColor}
             />

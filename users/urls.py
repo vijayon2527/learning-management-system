@@ -9,5 +9,6 @@ urlpatterns = [
     path('set-password/', views.SetPasswordView.as_view(), name='set-password'),
     path('send-otp/', views.SendOtpView.as_view(), name='send-otp'),
     path('verify-otp/', views.VerifyOtpView.as_view(), name='verify-otp'),
+    path('me/', views.current_user, name='current-user'),
 
 ]

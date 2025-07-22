@@ -1,79 +1,106 @@
 import axios from 'axios';
 
-// Define the base URL from environment variables
-const BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE = process.env.REACT_APP_API_URL || window.location.origin;
 
-// Create an Axios instance with default configurations
+function getCookie(name) {
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(name + '='));
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
+
+const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE'];
+
 const axiosInstance = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 20000, // Add timeout of 5 seconds for all requests
+  baseURL: API_BASE,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 20000,
+  withCredentials: true,         // allow cookies (csrftoken, sessionid)
+  xsrfCookieName: 'csrftoken',   // axios built‑in XSRF support
+  xsrfHeaderName: 'X-CSRFToken', // header Django expects
 });
 
-// Interceptor for adding the token to requests
+/* ----- Request Interceptor ----- */
 axiosInstance.interceptors.request.use(
   (config) => {
-    const authTokens = JSON.parse(localStorage.getItem('authTokens'));
-    if (authTokens && authTokens.access) {
-      config.headers['Authorization'] = `Bearer ${authTokens.access}`;
+    // Attach JWT access token (if any)
+    const stored = localStorage.getItem('authTokens');
+    if (stored) {
+      try {
+        const authTokens = JSON.parse(stored);
+        if (authTokens?.access) {
+          config.headers['Authorization'] = `Bearer ${authTokens.access}`;
+        }
+      } catch {
+        /* ignore parse errors */
+      }
     }
+
+    // Attach CSRF token on unsafe methods
+    const method = (config.method || 'get').toUpperCase();
+    if (!SAFE_METHODS.includes(method)) {
+      const csrftoken = getCookie('csrftoken');
+      if (csrftoken) {
+        config.headers['X-CSRFToken'] = csrftoken;
+      }
+    }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor for handling responses and token refresh
+/* ----- Response Interceptor (token refresh) ----- */
 axiosInstance.interceptors.response.use(
-  (response) => {
-    // Return the response if successful
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle request timeout errors
-    if (error.code === 'ECONNABORTED' || error.message === 'timeout of 5000ms exceeded') {
-      console.error('Request timeout:', error.message);
-      return Promise.reject({ message: 'Request timed out. Please try again later.', error });
+    // Timeout handling
+    if (error.code === 'ECONNABORTED') {
+      return Promise.reject({
+        message: 'Request timed out. Please try again.',
+        error,
+      });
     }
 
-    // Check for token expiration (401) and handle token refresh if needed
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    // If 401 and we haven't retried yet, try refresh
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest?._retry
+    ) {
       originalRequest._retry = true;
-      const authTokens = JSON.parse(localStorage.getItem('authTokens'));
 
-      if (authTokens && authTokens.refresh) {
+      const stored = localStorage.getItem('authTokens');
+      if (stored) {
         try {
-          // Attempt to refresh the token using the refresh token
-          const refreshResponse = await axios.post(`${BASE_URL}/api/users/token/refresh/`, {
-            refresh: authTokens.refresh,
-          });
+          const authTokens = JSON.parse(stored);
+          if (authTokens?.refresh) {
+            // refresh token call (use root axios to avoid interceptor loop)
+            const refreshResp = await axios.post(
+              `${API_BASE}/api/users/token/refresh/`,
+              { refresh: authTokens.refresh },
+              { withCredentials: true }
+            );
 
-          // Update the authTokens in localStorage
-          localStorage.setItem('authTokens', JSON.stringify(refreshResponse.data));
+            // save new tokens
+            localStorage.setItem('authTokens', JSON.stringify(refreshResp.data));
 
-          // Update the Authorization header for the original request with the new token
-          axios.defaults.headers['Authorization'] = `Bearer ${refreshResponse.data.access}`;
-          originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.access}`;
-
-          // Retry the original request with the new access token
-          return axiosInstance(originalRequest);
-        } catch (refreshError) {
-          // Handle token refresh failure (e.g., log the user out)
-          console.error('Token refresh failed:', refreshError);
+            // update header + retry original
+            const newAccess = refreshResp.data.access;
+            originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
+            return axiosInstance(originalRequest);
+          }
+        } catch (refreshErr) {
+          // refresh failed; clear & redirect (adjust as needed)
           localStorage.removeItem('authTokens');
-          window.location.href = '/'; // Redirect to login
-          return Promise.reject(refreshError);
+          window.location.href = '/';
+          return Promise.reject(refreshErr);
         }
       }
     }
 
-    // Log and handle other errors (e.g., network issues, server errors)
-    console.error('Request failed:', error.response || error.message);
     return Promise.reject(error);
   }
 );

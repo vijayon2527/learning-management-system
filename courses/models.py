@@ -199,6 +199,13 @@ class Course(BaseModel):
 
     def calculate_total_duration(self):
         return self.sections.aggregate(total=Sum("estimated_duration"))["total"] or timedelta(0)
+    
+    def update_average_rating(self):
+        from django.db.models import Avg
+        avg = self.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0.0
+        self.average_rating = round(avg, 2)
+        self.save(update_fields=['average_rating'])
+
 
 class CourseReview(models.Model):
     course = models.ForeignKey(
@@ -245,9 +252,15 @@ class CourseReview(models.Model):
         indexes = [
             models.Index(fields=["course"], name="review_course_idx"),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "course"],
+                name="uniq_user_course_review",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.user.username if self.user else 'Anonymous'} review on {self.course.name}"
+        return f"{self.user.first_name if self.user else 'Anonymous'} review on {self.course.name}"
 
 
 class Track(BaseModel):
@@ -583,6 +596,56 @@ def validate_prerequisites(sender, instance, action, pk_set, **kwargs):
         )
     
 
+
+
+class LectureNote(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="lecture_notes",
+        verbose_name=_("User"),
+        help_text=_("User who created the note"),
+    )
+    lecture = models.ForeignKey(
+        Lecture,
+        on_delete=models.CASCADE,
+        related_name="notes",
+        verbose_name=_("Lecture"),
+        help_text=_("Lecture that the note is associated with"),
+    )
+    timestamp = models.CharField(
+        max_length=100,
+        verbose_name=_("Video Time"),
+        help_text=_("Time in the video when the note was taken, e.g., 00:03:45"),
+    )
+    content = models.TextField(
+        verbose_name=_("Note Content"),
+        help_text=_("The content of the note"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Created At"),
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Updated At"),
+    )
+
+    class Meta:
+        verbose_name = _("Lecture Note")
+        verbose_name_plural = _("Lecture Notes")
+        ordering = ["lecture", "timestamp"]
+        indexes = [
+            models.Index(fields=["user", "lecture"], name="note_user_lecture_idx"),
+            models.Index(fields=["lecture", "timestamp"], name="note_lecture_timestamp_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user.first_name} - {self.lecture.name} @ {self.timestamp}"
+
+
+
+
 class Enrollment(models.Model):
     user = models.ForeignKey(
         User,
@@ -691,3 +754,21 @@ def update_enrollment_progress(sender, instance, **kwargs):
     ).first()
     if enrollment:
         enrollment.update_progress()
+
+
+
+# class CourseReview(models.Model):
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
+#     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+#     rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+#     text = models.TextField(blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         constraints = [
+#             models.UniqueConstraint(fields=['course', 'user'], name='unique_user_course_review')
+#         ]
+
+#     def __str__(self):
+#         return f"{self.user} - {self.course.name} - {self.rating}"

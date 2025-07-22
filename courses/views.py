@@ -2,6 +2,7 @@ from rest_framework import generics, status, viewsets,permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import AllowAny
 
 
 from .models import *
@@ -14,8 +15,18 @@ from .serializers import (
     TrackSerializer,
     SectionSerializer,
     LectureSerializer,
-    CourseReviewSerializer,
+    PublicCourseSerializer,
+    LectureNoteSerializer,
+    CourseReviewSerializer
 )
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from django.conf import settings
+import razorpay
+import hashlib
+import hmac
+
 
 
 
@@ -30,7 +41,6 @@ class CourseViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["category"]
     lookup_field = 'slug'
-
 
 
 class TrackViewSet(viewsets.ModelViewSet):
@@ -94,10 +104,29 @@ class SectionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         track_id = self.request.query_params.get("track")
+        course_slug = self.request.query_params.get("course_slug")  # ✅ new param
+
         if track_id:
             qs = qs.filter(track_id=track_id)
+        elif course_slug:
+            qs = qs.filter(track__course__slug=course_slug)  # ✅ filter by slug via foreign key relation
+
+        if self.request.query_params.get("include_lectures"):
+            qs = qs.prefetch_related("lectures")
+
         return qs
 
+    def get_serializer(self, *args, **kwargs):
+        # Pass context to allow serializer access request if needed
+        return self.serializer_class(*args, context=self.get_serializer_context(), **kwargs)
+
+    @action(detail=True, methods=["get"], url_path="lectures")
+    def get_lectures(self, request, pk=None):
+        section = self.get_object()
+        lectures = Lecture.objects.filter(section=section).order_by("order")
+        serializer = LectureSerializer(lectures, many=True)
+        return Response(serializer.data)
+    
 
 class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
@@ -139,22 +168,100 @@ class LectureViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=400)
         
 
-
-class CourseReviewViewSet(viewsets.ModelViewSet):
-    queryset = CourseReview.objects.all()
-    serializer_class = CourseReviewSerializer
+class PublicCourseViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Course.objects.filter(enrollment_open=True)
+    serializer_class = PublicCourseSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug'
+
+
+class LectureNotePagination(PageNumberPagination):
+    page_size = 5  # ✅ Only 5 per page
+
+
+class LectureNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = LectureNoteSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = LectureNotePagination  # ✅ Use custom pagination
+
+    def get_queryset(self):
+        lecture_id = self.request.query_params.get("lecture")
+        qs = LectureNote.objects.filter(user=self.request.user).order_by("-created_at")
+        if lecture_id:
+            qs = qs.filter(lecture_id=lecture_id)
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-import razorpay
-import hashlib
-import hmac
 
-from django.conf import settings
-from rest_framework import viewsets, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
+
+class CourseReviewViewSet(viewsets.ModelViewSet):
+    queryset = CourseReview.objects.select_related('user', 'course', 'track')
+    serializer_class = CourseReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        return qs.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required to review."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        course_id = request.data.get('course')
+        if not course_id:
+            return Response(
+                {"detail": "Course is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        existing = CourseReview.objects.filter(
+            user=request.user, course_id=course_id
+        ).first()
+        if existing:
+            data = self.get_serializer(existing).data
+            return Response(
+                {
+                    "detail": "You have already reviewed this course.",
+                    "review": data,
+                },
+                status=status.HTTP_400_BAD_REQUEST,  # or 200 if you prefer
+            )
+
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Allow only owner or staff to edit.
+        """
+        instance = self.get_object()
+        user = request.user
+        if not user.is_authenticated or (not user.is_staff and instance.user_id != user.id):
+            raise PermissionDenied("You do not own this review.")
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Allow owner or staff.
+        """
+        instance = self.get_object()
+        user = request.user
+        if not user.is_authenticated or (not user.is_staff and instance.user_id != user.id):
+            raise PermissionDenied("You do not own this review.")
+        return super().destroy(request, *args, **kwargs)
+
 
 class PaymentViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]  # Require login for payments

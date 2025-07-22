@@ -58,9 +58,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "cp .env.dev .env && rm -rf build && react-scripts build",
-    "production": "cp .env.prod .env && rm -rf build && react-scripts build",
+    "start": "react-scripts start",    
+    "build": "node -e \"require('fs-extra').copySync('.env.dev', '.env')\" && node -e \"require('fs').rmSync('build', { recursive: true, force: true })\" && react-scripts build",
+    "production": "node -e \"require('fs-extra').copySync('.env.prod', '.env')\" && node -e \"require('fs').rmSync('build', { recursive: true, force: true })\" && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -84,6 +84,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
+    "fs-extra": "^9.0.0",
     "sass": "^1.81.0"
   }
 }
