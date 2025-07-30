@@ -41,8 +41,10 @@ const UpcomingTrainings = () => {
   }
 
   return (
-    <div className="upcoming-trainings">
-      <h2 className="section-title">Courses</h2>
+  <div className="upcoming-trainings">
+    {/* Outer Card */}
+    <div className="outer-card">
+      <h2 className="section-title">Our Top Courses</h2>
 
       <div className="training-cards">
         {courses.slice(0, 4).map((item, index) => (
@@ -81,15 +83,6 @@ const UpcomingTrainings = () => {
             </div>
             <div className="card-text">
               <h5 className="card-title">{item.name}</h5>
-              <p
-                className="card-category"
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#777",
-                  marginTop: 6,
-                }}
-              >
-              </p>
             </div>
           </div>
         ))}
@@ -104,7 +97,8 @@ const UpcomingTrainings = () => {
         </button>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default UpcomingTrainings;

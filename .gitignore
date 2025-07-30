@@ -23,4 +23,5 @@ frontend/yarn-error.log*
 frontend/.env
 frontend/.env.dev
 frontend/.env.prod
+frontend/.env.production
 */scripts

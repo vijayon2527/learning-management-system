@@ -469,7 +469,7 @@ const CourseVideoPage = () => {
     if (lecture && section && courseSlug) {
       const currentLecture = {
         title: lecture.name,
-        thumbnail: lecture.thumbnail || '/default-thumbnail.jpg',
+        thumbnail: lecture.course_logo || '/default-thumbnail.jpg',
         watchedAt: new Date().toISOString(),
         courseSlug,
         sectionId: section.id,

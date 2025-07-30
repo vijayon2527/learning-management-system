@@ -21,8 +21,25 @@ const Header = () => {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+  };
+
+  window.addEventListener("close-login", handleLoginSuccess);
+
+  return () => {
+    window.removeEventListener("close-login", handleLoginSuccess);
+  };
+}, []);
+
+
   // Use STATIC_BASE for user avatar
   const user = { avatar: `${STATIC_BASE}/assets/images/avatars/1.jpg` };
+
+  const handleLoginClick = () => {
+    navigate('/login') // Correct way
+  }
 
   useEffect(() => {
     const checkAuth = () => {
@@ -172,13 +189,14 @@ const Header = () => {
               <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
               <BsBag role="button" className="fs-4" onClick={toggleCart} />
               {!isLoggedIn && (
-                <NavLink
-                  to="/login"
-                  className="btn btn-sm"
-                  style={{ backgroundColor: "#ff5722", color: "#fff", border: "none" }}
-                >
-                  Login
-                </NavLink>
+             <button
+              className="btn btn-sm"
+              style={{ backgroundColor: "#ff5722", color: "#fff", border: "none" }}
+              onClick={() => window.dispatchEvent(new CustomEvent("show-login"))}
+            >
+              Login
+            </button>
+
               )}
             </div>
           </Container>
@@ -218,11 +236,14 @@ const Header = () => {
             <div className="ms-auto login-block">
               {isLoggedIn && (
                 <>
-                  {/* My Learning */}
-                  <div className="my-learning-dropdown-wrapper">
-                    <span className="ml-btn" onClick={() => setShowLearningDropdown((prev) => !prev)}>
-                      My Learning
-                    </span>
+                {/* My Learning */}
+                  <div
+                    className="my-learning-dropdown-wrapper"
+                    onMouseEnter={() => setShowLearningDropdown(true)}
+                    onMouseLeave={() => setShowLearningDropdown(false)}
+                  >
+                    <span className="ml-btn">My Learning</span>
+
                     {showLearningDropdown && (
                       <div className="learning-dropdown-menu">
                         <div className="learning-dropdown-content">

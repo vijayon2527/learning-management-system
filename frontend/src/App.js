@@ -21,6 +21,7 @@ import CourseDetail from './pages/home/CourseDetails'
 import CategoryCourses from './pages/home/CategoryCourses'
 
 import './style.css'
+import StudentRegister from './components/users/StudentRegister'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -76,11 +77,12 @@ const App = () => {
                 <Login />
               </AuthRoute>
             } />
-            <Route exact path="/register" name="Register Page" element={
+            <Route exact path="/UserRegister" name="Register Page" element={
               <AuthRoute>
                 <Register />
               </AuthRoute>
             } />
+            <Route exact path="/Register" name="Student Register" element={<StudentRegister />} />
             <Route exact path="/courses/:slug" name="Page 404" element={<CourseDetail />} />
             <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail />} />
             <Route exact path="/404" name="Page 404" element={<Page404 />} />

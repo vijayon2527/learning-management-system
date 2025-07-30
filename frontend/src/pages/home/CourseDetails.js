@@ -931,7 +931,7 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                         border: "1px solid #ddd",
                         borderRadius: "12px",
                         padding: "24px",
-                        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.06)",
+                        boxShadow: "0 8px 24px rgba(52, 108, 143, 0.06)",
                         backgroundColor: "#fff",
                         minHeight: "420px",
                       }}
@@ -942,7 +942,7 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                             style={{
                               fontSize: "1.25rem",
                               fontWeight: "600",
-                              color: "#006400",
+                              color: "#199fcc",
                               backgroundColor: "#e6f2e6",
                               padding: "6px 16px",
                               borderRadius: "999px",
@@ -991,7 +991,7 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                           onClick={() => handleEnroll(track.id)}
                           style={{
                             width: "100%",
-                            backgroundColor: "#006400",
+                            backgroundColor: "#199fcc",
                             color: "white",
                             padding: "0.75rem 1.5rem",
                             fontSize: "16px",

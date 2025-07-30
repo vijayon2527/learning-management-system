@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
 
     // ✅ Role-based redirection
     if (userType === "STUDENT") {
-      navigate('/'); // student → home
+      window.dispatchEvent(new Event('close-login'));
     } else if (userType === "PLATFORM" && userRole === "SUPER_ADMIN") {
       navigate('/dashboard'); // super admin
     } 

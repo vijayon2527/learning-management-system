@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import status,permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -20,7 +20,11 @@ from .serializers import (
     AGPTokenObtainPairSerializer,
     AGPTokenRefreshSerializer,
     OtpVerifySerializer,
-    UserSerializer
+    UserSerializer,
+    UserRegisterSerializer,
+    UserUpdateSerializer,
+    StudentRegisterSerializer
+
 )
 
 import logging
@@ -139,8 +143,134 @@ class SetPasswordView(APIView):
         return Response({"message": "Password set successfully"}, status=status.HTTP_200_OK)
 
 
-    
-    
+class UserMetaChoicesView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return Response({
+            "genders": [{"value": v, "label": l} for v, l in User.Gender.choices],
+            "user_types": [{"value": v, "label": l} for v, l in User.UserType.choices],
+            "platform_roles": [{"value": v, "label": l} for v, l in PlatformUser.Role.choices],
+            "education_levels": [{"value": v, "label": l} for v, l in Student.EducationLevel.choices],
+        })
+
+
+class UserRegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "message": "User registered successfully.",
+                "user": UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentRegisterView(APIView):
+    def post(self, request):
+        serializer = StudentRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "message": "Student registered successfully.",
+                "user": {
+                    "id": user.id,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "mobile": user.mobile,
+                    "gender": user.gender,
+                    "user_type": user.user_type,
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = User.objects.all().select_related('platform_user', 'student')
+        serializer = UserSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.select_related('platform_user', 'student').get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
+
+class UserUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, pk, *args, **kwargs):
+        return self._update(request, pk, partial=False)
+
+    def patch(self, request, pk, *args, **kwargs):
+        return self._update(request, pk, partial=True)
+
+    def _update(self, request, pk, partial):
+        try:
+            user = User.objects.select_related('platform_user', 'student').get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserUpdateSerializer(
+            instance=user,
+            data=request.data,
+            partial=partial,
+        )
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "message": "User updated successfully.",
+                "user": UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserDeleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk, *args, **kwargs):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        user.delete()
+        return Response({"message": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class UserActivateDeactivateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk, *args, **kwargs):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        is_active = request.data.get("is_active")
+        if not isinstance(is_active, bool):
+            return Response({"is_active": ["Must be true or false."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = is_active
+        user.save(update_fields=["is_active"])
+        return Response({
+            "message": f"User {'activated' if is_active else 'deactivated'}.",
+            "user": UserSerializer(user).data
+        }, status=status.HTTP_200_OK)
 
 
 class SendOtpView(APIView):
@@ -199,3 +329,9 @@ class VerifyOtpView(APIView):
                 return Response({"error": "User not found."}, status=404)
 
         return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    return Response(UserSerializer(request.user).data)

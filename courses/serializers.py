@@ -79,6 +79,7 @@ class LectureSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source="section.name", read_only=True)
     track_name = serializers.CharField(source="section.track.name", read_only=True)
     course_name = serializers.CharField(source="section.track.course.name", read_only=True)
+    course_logo = serializers.SerializerMethodField()  # ✅ renamed here
     video_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -92,6 +93,7 @@ class LectureSerializer(serializers.ModelSerializer):
             "name",
             "video",
             "video_url",
+            "course_logo", 
             "order",
             "duration",
             "is_preview",
@@ -113,6 +115,12 @@ class LectureSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.video.url) if request else obj.video.url
         return None
 
+    def get_course_logo(self, obj):  # ✅ renamed method
+        request = self.context.get("request")
+        course = obj.section.track.course
+        if course.logo:  # ✅ use `logo` instead of `thumbnail`
+            return request.build_absolute_uri(course.logo.url) if request else course.logo.url
+        return None  # or return a default logo URL
 
 class SectionSerializer(serializers.ModelSerializer):
     track_name = serializers.CharField(source="track.name", read_only=True)

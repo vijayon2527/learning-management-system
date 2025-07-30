@@ -45,22 +45,23 @@ const CategoryCourses = () => {
   }, [id]);
 
   const cardStyle = {
-    cursor: "pointer",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    overflow: "hidden",
-    backgroundColor: "#fff",
-    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
-    transition: "transform 0.2s ease",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  };
+  cursor: "pointer",
+  border: "2px solid #199fcc",  // Green border
+  borderRadius: "10px",
+  overflow: "hidden",
+  backgroundColor: "#fff",
+  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
+  transition: "all 0.3s ease",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+};
 
-  const cardHoverStyle = {
-    transform: "translateY(-4px)",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
-  };
+const cardHoverStyle = {
+  transform: "translateY(-4px)",
+  borderColor: "#199fcc",  // Darker green on hover
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+};
 
   const truncate = (text, maxLength) =>
     text && text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
@@ -154,7 +155,7 @@ const CategoryCourses = () => {
                     <div style={{ padding: "0 1rem 1rem" }}>
                       <button
                         style={{
-                          backgroundColor: "#007bff",
+                          backgroundColor: "#199fcc",
                           color: "#fff",
                           border: "none",
                           borderRadius: "4px",

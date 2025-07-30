@@ -29,44 +29,42 @@ const Tabs = React.forwardRef(
       <div className="tab-container" ref={ref}>
         <div className="tab-scroll">
           <div className="tab-list">
-            <button
-              className={activeTab === 'search' ? 'active' : ''}
-              onClick={() => setActiveTab('search')}
-            >
-              <BsSearch />
-            </button>
-            <button
-              className={`d-block d-lg-none ${
-                activeTab === 'coursecontent' ? 'active' : ''
-              }`}
-              onClick={() => setActiveTab('coursecontent')}
-            >
-              Course Content
-            </button>
-            <button
-              className={activeTab === 'overview' ? 'active' : ''}
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </button>
-            <button
-              className={activeTab === 'notes' ? 'active' : ''}
-              onClick={() => setActiveTab('notes')}
-            >
-              Notes
-            </button>
-            <button
-              className={activeTab === 'reviews' ? 'active' : ''}
-              onClick={() => setActiveTab('reviews')}
-            >
-              Reviews
-            </button>
-            <button
-              className={activeTab === 'learning-tools' ? 'learning-tools' : ''}
-              onClick={() => setActiveTab('learning-tools')}
-            >
-              Learning Tools
-            </button>
+           <button
+            className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`}
+            onClick={() => setActiveTab('search')}
+          >
+            <BsSearch />
+          </button>
+          <button
+            className={`tab-btn d-block d-lg-none ${activeTab === 'coursecontent' ? 'active' : ''}`}
+            onClick={() => setActiveTab('coursecontent')}
+          >
+            Course Content
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notes')}
+          >
+            Notes
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            Reviews
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'learning-tools' ? 'active' : ''}`}
+            onClick={() => setActiveTab('learning-tools')}
+          >
+            Learning Tools
+          </button>
           </div>
         </div>
 

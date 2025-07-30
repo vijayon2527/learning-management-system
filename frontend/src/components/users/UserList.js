@@ -16,29 +16,64 @@ import {
   CTableHeaderCell,
   CTableDataCell,
   CSpinner,
-  CFormSelect,
+  CFormSwitch,
   CButton,
 } from "@coreui/react";
 import { CIcon } from "@coreui/icons-react";
-import { cilUserPlus,cilPen,cilTrash } from "@coreui/icons";
-import PermissionWrapper from "../common/RoleWrapper";
-import Permissions from "../common/Roles";
+import { toast } from "react-toastify";
+
+import { cilUserPlus, cilPen, cilTrash } from "@coreui/icons";
+
+const ConfirmStatusModal = ({ isOpen, onClose, onConfirm, message }) => {
+  if (!isOpen) return null;
+  return (
+    <AGPModal isOpen={isOpen} onClose={onClose} title="Confirm Action">
+      <p style={{ fontSize: "1rem", marginBottom: "1rem" }}>{message}</p>
+      <div className="d-flex justify-content-end gap-2">
+        <CButton color="secondary" onClick={onClose}>
+          Cancel
+        </CButton>
+        <CButton color="success" onClick={onConfirm}>
+          Confirm
+        </CButton>
+      </div>
+    </AGPModal>
+  );
+};
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalAction, setModalAction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState(null); // disable switch while saving
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Fetch the list of users
+  const [statusModal, setStatusModal] = useState({
+    open: false,
+    userId: null,
+    currentStatus: false,
+  });
+
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
+      setErrorMsg("");
       try {
         const response = await axiosInstance.get("api/users/list/");
-        setUsers(response.data);
+        const data = response.data;
+        const userArray = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data?.users)
+          ? data.users
+          : [];
+        setUsers(userArray);
       } catch (error) {
         console.error("Error fetching users:", error);
+        setUsers([]);
+        setErrorMsg("Unable to load users.");
       } finally {
         setLoading(false);
       }
@@ -49,21 +84,17 @@ const UserList = () => {
 
   // Handle user creation
   const handleUserCreated = (newUser) => {
-    setUsers((prevUsers) => [newUser, ...prevUsers]);
+    setUsers((prev) => [newUser, ...prev]);
   };
 
   // Handle user update
   const handleUpdateUser = (updatedUser) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === updatedUser.id ? updatedUser : user
-      )
-    );
+    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
   };
 
   // Remove user from the list
   const removeUserFromList = (userId) => {
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
   // Handle action button click (create, update, detail, delete)
@@ -78,121 +109,160 @@ const UserList = () => {
     setCurrentUser(null);
   };
 
-  // Handle user status change
-  const handleStatusChange = async (userId, newStatus) => {
-    try {
-      const isActive = newStatus === "Active";
-      const confirmChange = window.confirm(
-        `Are you sure you want to mark this user as ${isActive ? "Active" : "Inactive"}?`
-      );
-      if (confirmChange) {
-        await axiosInstance.patch(`api/users/activate-deactivate/${userId}/`, {
-          is_active: isActive,
-        });
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.id === userId
-              ? { ...user, is_active: isActive }
-              : user
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error updating user status:", error);
-    }
+  const confirmToggleStatus = (userId, currentStatus) => {
+    setStatusModal({
+      open: true,
+      userId,
+      currentStatus,
+    });
   };
+
+  const handleConfirmStatus = async () => {
+  const { userId, currentStatus } = statusModal;
+  const newStatus = !currentStatus;
+
+  setStatusModal({ open: false, userId: null, currentStatus: false });
+
+  // optimistic UI update
+  setUsers((prev) =>
+    prev.map((u) => (u.id === userId ? { ...u, is_active: newStatus } : u))
+  );
+  setTogglingId(userId);
+  setErrorMsg("");
+
+  try {
+    const resp = await axiosInstance.patch(
+      `api/users/activate-deactivate/${userId}/`,
+      { is_active: newStatus }
+    );
+
+    const updatedUser = resp.data?.user || resp.data;
+    if (updatedUser?.id) {
+      setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
+      toast.success(
+        `User ${newStatus ? "activated" : "deactivated"} successfully!`
+      );
+    }
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    setErrorMsg("Failed to update status.");
+    toast.error("Failed to update user status!");
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, is_active: currentStatus } : u))
+    );
+  } finally {
+    setTogglingId(null);
+  }
+};
+
 
   return (
     <CContainer fluid style={{ padding: "1rem", backgroundColor: "#f8f9fa" }}>
-      <PermissionWrapper requiredPermission={Permissions.ADD_USER}>
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 className="mb-0">User List</h2>
         <CTooltip content="Add User" placement="top">
-          <CButton
-            color="primary"
-            onClick={() => handleAction("create")}
-            className="mb-3 float-end"
-          >
+          <CButton color="primary" onClick={() => handleAction("create")}>
             <CIcon icon={cilUserPlus} />
           </CButton>
         </CTooltip>
-    </PermissionWrapper>
-      {/* User List Table */}
+      </div>
+
+      {errorMsg && (
+        <div className="text-danger mb-2" style={{ fontSize: "0.9rem" }}>
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Table */}
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
           <CSpinner color="primary" />
         </div>
       ) : (
-        <CTable borderColor="dark">
+        <CTable borderColor="dark" striped responsive>
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>#</CTableHeaderCell>
               <CTableHeaderCell>Name</CTableHeaderCell>
               <CTableHeaderCell>Email</CTableHeaderCell>
-              <CTableHeaderCell>Department</CTableHeaderCell>
+              <CTableHeaderCell>Gender</CTableHeaderCell>
+              <CTableHeaderCell>User Type</CTableHeaderCell>
               <CTableHeaderCell>Role</CTableHeaderCell>
-              <PermissionWrapper requiredPermission={Permissions.CHANGE_USER}>
-                <CTableHeaderCell>Status</CTableHeaderCell>
-              </PermissionWrapper>
+              <CTableHeaderCell>Status</CTableHeaderCell>
               <CTableHeaderCell>Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {users.map((user, index) => (
-              <CTableRow key={user.id}>
-                <CTableDataCell>{index + 1}</CTableDataCell>
-              <PermissionWrapper requiredPermission={Permissions.VIEW_USER}>
-                <CTableDataCell>
-                  <a
-                    href="#"
-                    onClick={() => handleAction("detail", user)}
-                    style={{ color: "#007bff", textDecoration: "none" }}
-                  >
-                    {user.first_name} {user.last_name}
-                  </a>
-                </CTableDataCell>
-                </PermissionWrapper>
-                <CTableDataCell>{user.email}</CTableDataCell>
-                <CTableDataCell>{user.department ? user.department.name : "N/A"}</CTableDataCell>
-                <CTableDataCell>{user.role ? user.role.name : "N/A"}</CTableDataCell>
-                <PermissionWrapper requiredPermission={Permissions.CHANGE_USER}>
+            {users.map((user, index) => {
+              const roleText =
+                user.role ?? user.platform_user?.role ?? user.student?.role ?? "N/A";
+
+              const switchClass = user.is_active ? "status-toggle active" : "status-toggle inactive";
+
+              const switchStyle = user.is_active
+                ? { "--cui-form-switch-checked-bg": "#28a745" }
+                : {
+                    "--cui-form-switch-bg": "#dc3545",
+                    "--cui-form-switch-border-color": "#dc3545",
+                  };
+
+              return (
+                <CTableRow key={user.id}>
+                  <CTableDataCell>{index + 1}</CTableDataCell>
+
                   <CTableDataCell>
-                    <CFormSelect
-                      value={user.is_active ? "Active" : "Inactive"}
-                      onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                      aria-label="User Status"
-                      style={{
-                        backgroundColor: user.is_active ? "#28a745" : "#dc3545",
-                        color: "white",
-                        padding: "5px 10px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAction("detail", user);
                       }}
+                      style={{ color: "#007bff", textDecoration: "none" }}
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </CFormSelect>
+                      {user.first_name} {user.last_name}
+                    </a>
                   </CTableDataCell>
-                </PermissionWrapper>
-                <CTableDataCell>
-                  <PermissionWrapper requiredPermission={Permissions.CHANGE_USER}>
-                     <CIcon
-                      icon={cilPen}
-                      onClick={() => handleAction("update", user)}
-                      style={{ fontSize: "20px", color: "blue", cursor: "pointer", marginRight: "10px" }}
-                      title="Update"
+
+                  <CTableDataCell>{user.email || "N/A"}</CTableDataCell>
+                  <CTableDataCell>{user.gender || "N/A"}</CTableDataCell>
+                  <CTableDataCell>{user.user_type || "N/A"}</CTableDataCell>
+                  <CTableDataCell>{roleText}</CTableDataCell>
+
+                  <CTableDataCell>
+                    <CFormSwitch
+                      id={`status-switch-${user.id}`}
+                      checked={!!user.is_active}
+                      disabled={togglingId === user.id}
+                      onChange={() => confirmToggleStatus(user.id, user.is_active)}
+                      label=""
+                      className={switchClass}
+                      style={switchStyle}
                     />
-                  </PermissionWrapper>
-                  <PermissionWrapper requiredPermission={Permissions.DELETE_USER}>
-                    <CIcon
-                      icon={cilTrash}
-                      onClick={() => handleAction("delete", user)}
-                      style={{ fontSize: "20px", color: "red", cursor: "pointer" }}
-                      title="Delete"
-                    />
-                  </PermissionWrapper>
-                </CTableDataCell>
-              </CTableRow>
-            ))}
+                  </CTableDataCell>
+                  <CTableDataCell className="text-center">
+                    <div className="d-flex justify-content-center gap-2">
+                      <CTooltip content="Update">
+                        <button
+                          className="icon-btn edit-btn"
+                          onClick={() => handleAction("update", user)}
+                        >
+                          <CIcon icon={cilPen} style={{ height: 18, width: 18 }} />
+                        </button>
+                      </CTooltip>
+                      <CTooltip content="Delete">
+                        <button
+                          className="icon-btn delete-btn"
+                          onClick={() => handleAction("delete", user)}
+                        >
+                          <CIcon icon={cilTrash} style={{ height: 18, width: 18 }} />
+                        </button>
+                      </CTooltip>
+                    </div>
+                  </CTableDataCell>
+                </CTableRow>
+              );
+            })}
           </CTableBody>
         </CTable>
       )}
@@ -225,9 +295,7 @@ const UserList = () => {
           />
         )}
 
-        {modalAction === "detail" && (
-          <UserDetail userId={currentUser?.id} />
-        )}
+        {modalAction === "detail" && <UserDetail userId={currentUser?.id} />}
 
         {modalAction === "delete" && (
           <UserDeleteConfirm
@@ -237,6 +305,16 @@ const UserList = () => {
           />
         )}
       </AGPModal>
+
+      {/* Confirm Activate/Deactivate Modal */}
+      <ConfirmStatusModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal({ open: false, userId: null, currentStatus: false })}
+        onConfirm={handleConfirmStatus}
+        message={`Are you sure you want to ${
+          statusModal.currentStatus ? "deactivate" : "activate"
+        } this user?`}
+      />
     </CContainer>
   );
 };

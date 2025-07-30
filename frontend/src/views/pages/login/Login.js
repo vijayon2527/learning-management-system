@@ -36,7 +36,7 @@ const Login = () => {
 
       if (res.status === 200) {
       await loginUser(formData);
-    }
+      }
     } catch (err) {
       setErrors({ general: 'Invalid OTP.' });
     } finally {
@@ -84,24 +84,9 @@ const Login = () => {
     }
   }, [otp]);
 
-  // GitHub code exchange and Facebook SDK init
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
-
-    const handleGitHubExchange = async (code) => {
-      try {
-        await loginUser({ provider: 'github', code });
-        window.history.replaceState(null, '', window.location.pathname);
-        navigate('/dashboard');
-      } catch (error) {
-        console.error('GitHub login failed:', error);
-        setErrors({ general: 'GitHub login failed.' });
-      }
-    };
-
-    if (code) handleGitHubExchange(code);
-    loadFacebookSDK();
-  }, [loginUser, navigate]);
+    loadFacebookSDK()
+  }, [])
 
   const loadFacebookSDK = () => {
     if (window.FB) return;
@@ -133,59 +118,57 @@ const Login = () => {
     );
   };
 
-  const handleGoogleLoginSuccess = async ({ credential }) => {
-    try {
-      await loginUser({ provider: 'google', access_token: credential });
-      navigate('/dashboard');
-    } catch {
-      setErrors({ general: 'Google login failed.' });
+  const handleGoogleLoginSuccess = async (res) => {
+    if (!res?.credential) {
+      setErrors({ general: 'Google login failed (no credential).' })
+      return
     }
-  };
-
-  const handleGitHubLogin = () => {
-    const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
-    if (!clientId) return console.error('Missing GitHub client ID');
-    const redirectUri = window.location.origin;
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
-  };
+    try {
+      await loginUser({ provider: 'google', access_token: res.credential })
+      navigate('/dashboard')
+    } catch (err) {
+      console.error('[Login] Google login backend error:', err)
+      setErrors({ general: 'Google login failed.' })
+    }
+  }
 
   return (
     <CContainer className="d-flex justify-content-center align-items-center vh-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
       <CRow>
         <CCol md={12}>
-          <CCard className="p-4 shadow-sm rounded-4">
+          <CCard className="p-2 shadow-sm rounded-4">
             <CCardBody>
               <h1 className="text-center mb-4">Login</h1>
               <CForm onSubmit={otpSent ? (e) => e.preventDefault() : handleSubmit}>
                 <div className="mb-3">
-                <CInputGroup>
-                  <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
-                  <CFormInput
-                    placeholder="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={errors.email ? 'is-invalid' : ''}
-                    disabled={otpSent}
-                  />
-                </CInputGroup>
-                {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
+                  <CInputGroup>
+                    <CInputGroupText><CIcon icon={cilUser} /></CInputGroupText>
+                    <CFormInput
+                      placeholder="Email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={errors.email ? 'is-invalid' : ''}
+                      disabled={otpSent}
+                    />
+                  </CInputGroup>
+                  {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
                 </div>
 
                 <div className="mb-3">
-                <CInputGroup>
-                  <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
-                  <CFormInput
-                    type="password"
-                    placeholder="Password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={errors.password ? 'is-invalid' : ''}
-                    disabled={otpSent}
-                  />
-                </CInputGroup>
-                {errors.password && <div className="text-danger small mt-1">{errors.password}</div>}
+                  <CInputGroup>
+                    <CInputGroupText><CIcon icon={cilLockLocked} /></CInputGroupText>
+                    <CFormInput
+                      type="password"
+                      placeholder="Password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={errors.password ? 'is-invalid' : ''}
+                      disabled={otpSent}
+                    />
+                  </CInputGroup>
+                  {errors.password && <div className="text-danger small mt-1">{errors.password}</div>}
                 </div>
 
                 {otpSent && (
@@ -241,13 +224,13 @@ const Login = () => {
 
               <div className="d-grid gap-2">
                 <div className="mb-2">
-                  <GoogleLogin
-                    onSuccess={handleGoogleLoginSuccess}
+                    <GoogleLogin
+                      onSuccess={handleGoogleLoginSuccess}
                     onError={() => console.log('Google login failed')}
                     useOneTap
-                    shape="pill"
-                    width="100%"
-                  />
+                      shape="pill"
+                      width="100%"
+                    />
                 </div>
 
                 <CButton
@@ -258,22 +241,19 @@ const Login = () => {
                   <i className="bi bi-facebook fs-5"></i>
                   Continue with Facebook
                 </CButton>
-
-                <CButton
-                  color="dark"
-                  className="d-flex align-items-center justify-content-center gap-2"
-                  onClick={handleGitHubLogin}
-                >
-                  <i className="bi bi-github fs-5"></i>
-                  Continue with GitHub
-                </CButton>
               </div>
 
-              <div className="text-center mt-4">
-                <Link to="/forgot-password">Forgot Password?</Link>
-                <span className="mx-2">|</span>
-                <Link to="/register">Register</Link>
-              </div>
+             <div className="text-center mt-4">
+              <Link to="/forgot-password">Forgot Password?</Link>
+              <span className="mx-2">|</span>
+              <button
+                type="button"
+                className="btn btn-link p-0"
+                onClick={() => window.dispatchEvent(new Event("show-register"))}
+              >
+                Register
+              </button>
+            </div>
             </CCardBody>
           </CCard>
         </CCol>

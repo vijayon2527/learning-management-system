@@ -55,7 +55,7 @@ const ExploreblogsCompanies = () => {
             </div>
 
             <div className="explore-blogs-companies">
-                <h2 className="text-center">Valued Industry Leaders We Have Trained For</h2>
+                <h2 className="text-center">Our Partners</h2>
                 <Slider {...settings}>
                     {logos.map((logo, index) => (
                         <div key={index} className="company-logo-slide">
