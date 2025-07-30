@@ -21,6 +21,15 @@ import CategoryUpdate from "./CourseCategoryUpdate";
 import CategoryDeleteConfirm from "./CourseCategoryDeleteConfirm";
 import { useNavigate } from "react-router-dom";
 
+const stripAndTruncate = (html, length = 150) => {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const text = div.textContent || div.innerText || '';
+  return text.length > length ? `${text.slice(0, length)}…` : text;
+};
+
+
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -178,15 +187,14 @@ const CategoryList = () => {
                   )}
                 </CTableDataCell>
 
-                <CTableDataCell>
-                  <div
-                    style={{ whiteSpace: "normal" }}
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        cat.description ||
-                        "<span class='text-muted'>No Description</span>",
-                    }}
-                  />
+               <CTableDataCell style={{ whiteSpace: 'normal' }}>
+                  {cat.description ? (
+                    <span title={stripAndTruncate(cat.description, 300)}>
+                      {stripAndTruncate(cat.description, 150)}
+                    </span>
+                  ) : (
+                    <span className="text-muted">No Description</span>
+                  )}
                 </CTableDataCell>
 
                 <CTableDataCell>{cat.parent_name || "–"}</CTableDataCell>

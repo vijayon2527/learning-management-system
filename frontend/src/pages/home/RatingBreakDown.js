@@ -82,7 +82,7 @@ const TopRatingsSlider = ({ reviews }) => {
         }}
         title={review.user_name || "Anonymous"}
       >
-        {review.user_name || "Anonymous"}
+        {review.first_name || "Anonymous"}
       </div>
 
       {/* Star Rating */}

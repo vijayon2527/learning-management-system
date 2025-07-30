@@ -1212,3 +1212,104 @@ input:checked + .slider:before {
     font-size: 13px;
   }
 }
+
+/* Default Switch Styling */
+.status-toggle .form-check-input {
+  width: 40px;
+  height: 20px;
+  cursor: pointer;
+  border-radius: 50px;
+  background-color: #dc3545; /* Red by default (inactive) */
+  transition: background-color 0.3s ease;
+}
+
+/* Active State (Green) */
+.status-toggle .form-check-input:checked {
+  background-color: #28a745; /* Green when active */
+  border-color: #28a745;
+}
+
+
+.sidebar .nav-link,
+.sidebar .nav-link .nav-icon {
+  color: #ffffff !important;  /* White text and icons */
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  color: #f1f1f1 !important;  /* Slightly lighter white on hover/active */
+}
+
+/* Hide scrollbar visually but keep scrolling */
+/* body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+} */
+/* body {
+  -ms-overflow-style: none;
+  scrollbar-width: none; 
+} */
+
+
+/* .modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-scrollable {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  scrollbar-width: none; 
+}
+
+.modal-scrollable::-webkit-scrollbar {
+  display: none;
+} */
+
+
+
+
+body.hide-scrollbar,
+html.hide-scrollbar {
+  overflow: hidden !important;
+}
+
+body.hide-scrollbar::-webkit-scrollbar,
+html.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.my-learning-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.learning-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  z-index: 1000;
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-width: 300px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+

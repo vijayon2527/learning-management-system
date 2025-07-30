@@ -11,7 +11,7 @@ const UserDetail = ({ userId, onClose }) => {
   useEffect(() => {
     const fetchUserDetail = async () => {
       try {
-        const response = await axiosInstance.get(`api/users/detail/${userId}/`);
+        const response = await axiosInstance.get(`api/users/user-detail/${userId}/`);
         setUser(response.data);
       } catch (err) {
         console.error("Error fetching user details:", err);
@@ -45,14 +45,21 @@ const UserDetail = ({ userId, onClose }) => {
                 <strong>Email:</strong> {user.email}
               </p>
               <p>
-                <strong>Department:</strong> {user.department ? user.department.name : "N/A"}
+                <strong>Mobile:</strong> {user.mobile}
               </p>
               <p>
-                <strong>Role:</strong> {user.role ? user.role.name : "N/A"}
+                <strong>User Type:</strong> {user.user_type}
               </p>
               <p>
-                <strong>Status:</strong> {user.is_active ? "Active" : "Inactive"}
+                <strong>Role:</strong> {user.role ? user.role : "N/A"}
               </p>
+             <p>
+  <strong>Status:</strong>{' '}
+  <span style={{ color: user.is_active ? 'green' : 'red' }}>
+    {user.is_active ? 'Active' : 'Inactive'}
+  </span>
+</p>
+
             </>
         )
       )}

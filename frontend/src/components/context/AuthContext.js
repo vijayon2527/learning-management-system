@@ -51,6 +51,12 @@ export const AuthProvider = ({ children }) => {
 
       notify('Logged in successfully.')
 
+    // ✅ Role-based redirection
+    if (userType === "STUDENT") {
+      window.dispatchEvent(new Event('close-login'));
+    } else if (userType === "PLATFORM" && userRole === "SUPER_ADMIN") {
+      navigate('/dashboard'); // super admin
+    } 
       // 🚀 FIX: Redirect student back to payment page if trackId is present
       let redirectTo = '/'
       let trackId = null
