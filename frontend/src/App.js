@@ -86,7 +86,7 @@ const App = () => {
             <Route exact path="/404" name="Page 404" element={<Page404 />} />
             <Route exact path="/500" name="Page 500" element={<Page500 />} />
             <Route exact path="/course" name="Courses" element={<Courses />} />
-            <Route exact path="/categories/:id" name="Courses" element={<CategoryCourses />} />
+            <Route exact path="/categories/:slug" name="Courses" element={<CategoryCourses />} />
         
             {PageRoutes}
 

@@ -3,6 +3,22 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny
+import uuid
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.http import HttpResponse
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.contrib.staticfiles import finders
+from django.template.loader import render_to_string
+import tempfile
+import razorpay
+from weasyprint import HTML
+from .models import Payment, Track
+from .serializers import PaymentSerializer
+from django.conf import settings
 
 
 from .models import *
@@ -17,7 +33,8 @@ from .serializers import (
     LectureSerializer,
     PublicCourseSerializer,
     LectureNoteSerializer,
-    CourseReviewSerializer
+    CourseReviewSerializer,
+    EnrollmentSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated
@@ -33,6 +50,8 @@ import hmac
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
+    lookup_field = 'slug'
+
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -261,84 +280,208 @@ class CourseReviewViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated or (not user.is_staff and instance.user_id != user.id):
             raise PermissionDenied("You do not own this review.")
         return super().destroy(request, *args, **kwargs)
+    
 
 
-class PaymentViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]  # Require login for payments
 
-    @action(detail=False, methods=["post"], url_path="create-order")
-    def create_order(self, request):
-        user = request.user
-        track_id = request.data.get("track_id")
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_API_KEY, settings.RAZORPAY_API_SECRET))
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Payment.objects.filter(user=self.request.user).order_by('-created_at')
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def get_track_fee(self, request):
+        track_id = request.query_params.get('track_id')
+        if not track_id:
+            return Response({'error': 'track_id is required'}, status=400)
+
+        try:
+            track = Track.objects.get(id=track_id)
+            return Response({
+                'track_id': track.id,
+                'track_name': track.name,
+                'fee': float(track.fee),
+                'currency': 'INR',
+            })
+        except Track.DoesNotExist:
+            return Response({'error': 'Invalid track id'}, status=400)
+
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def initiate(self, request):
+        track_id = request.data.get('track_id')
 
         if not track_id:
-            return Response({"error": "track_id is required"}, status=400)
+            return Response({'error': 'track_id is required'}, status=400)
 
         try:
             track = Track.objects.get(id=track_id)
+            amount = int(float(track.fee) * 100)
+            currency = 'INR'
+
+            # ❌ Prevent re-enrollment if already completed
+            completed_payment = Payment.objects.filter(
+                user=request.user,
+                track=track,
+                status='Completed'
+            ).first()
+
+            if completed_payment:
+                return Response({'error': 'You have already enrolled in this track.'}, status=400)
+
+
+            # Look for existing payment with status 'Pending' or 'Processing'
+            existing_payment = Payment.objects.filter(
+            user=request.user if request.user.is_authenticated else None,
+            track=track,
+            status__in=['Pending', 'Processing']
+            ).first()
+
+
+            if existing_payment:
+                return Response({
+                    'payment_id': existing_payment.id,
+                    'razorpay_order_id': existing_payment.razorpay_order_id,
+                    'razorpay_merchant_key': settings.RAZORPAY_API_KEY,
+                    'razorpay_amount': int(existing_payment.amount * 100),
+                    'razorpay_display_amount': existing_payment.amount,
+                    'currency': existing_payment.currency,
+                    'user_name': request.user.get_full_name(),
+                    'user_email': request.user.email,
+                    'track_name': existing_payment.track.name,
+                })
+
+            # Create new razorpay order
+            razorpay_order = razorpay_client.order.create({
+                'amount': amount,
+                'currency': currency,
+                'payment_capture': '0'
+            })
+
+            # Create unique order number (UUID)
+            unique_order_number = str(uuid.uuid4())
+
+            # Now create new Payment with razorpay_order_id and unique order_number
+            payment = Payment.objects.create(
+                user=request.user,
+                razorpay_order_id=razorpay_order['id'],
+                amount=amount / 100,
+                currency=currency,
+                track=track,
+                status='Pending',
+                order_number=unique_order_number,  # <--- Important fix here
+            )
+
+            return Response({
+                'payment_id': payment.id,
+                'razorpay_order_id': razorpay_order['id'],
+                'razorpay_merchant_key': settings.RAZORPAY_API_KEY,
+                'razorpay_amount': amount,
+                'razorpay_display_amount': amount / 100,
+                'currency': currency,
+                'user_name': request.user.get_full_name(),
+                'user_email': request.user.email,
+                'track_name': track.name,
+            })
+
         except Track.DoesNotExist:
-            return Response({"error": "Invalid track ID"}, status=400)
+            return Response({'error': 'Invalid track id'}, status=400)
 
-        # Check if user is already enrolled for this track/course
-        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
-        if enrollment_exists:
-            return Response({"error": "User already enrolled for this course"}, status=400)
+    @action(detail=False, methods=['post'])
+    def verify(self, request):
+        payment_id = request.data.get('razorpay_payment_id')
+        razorpay_order_id = request.data.get('razorpay_order_id')
+        signature = request.data.get('razorpay_signature')
 
-        # (Optional) Check for existing pending payment orders here if you keep track of orders
+        if not all([payment_id, razorpay_order_id, signature]):
+            return Response({'error': 'Missing razorpay payment details'}, status=status.HTTP_400_BAD_REQUEST)
 
-        amount = int(float(track.fee) * 100)  # convert to paise
+        params_dict = {
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': payment_id,
+            'razorpay_signature': signature,
+        }
 
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-        order = client.order.create({
-            "amount": amount,
-            "currency": "INR",
-            "payment_capture": 1
-        })
+        try:
+            razorpay_client.utility.verify_payment_signature(params_dict)
 
-        return Response({
-            "order_id": order["id"],
-            "amount": amount,
-            "currency": "INR",
-            "razorpay_key": settings.RAZORPAY_KEY_ID,
-            "track_id": track.id,
-            "course_id": track.course.id,
-        })
+            try:
+                payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
+            except Payment.DoesNotExist:
+                return Response({'error': 'Payment not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=["post"], url_path="verify", permission_classes=[permissions.IsAuthenticated])
-    def verify_payment(self, request):
+            amount = int(payment.amount * 100)
+            razorpay_client.payment.capture(payment_id, amount)
+
+            payment.razorpay_payment_id = payment_id
+            payment.razorpay_signature = signature
+            payment.status = 'Completed'
+            payment.save()
+
+            return Response({'status': 'success'})
+
+        except razorpay.errors.SignatureVerificationError:
+            payment = Payment.objects.filter(razorpay_order_id=razorpay_order_id).first()
+            if payment:
+                payment.status = 'Failed'
+                payment.save()
+            return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def receipt(self, request, pk=None):
+        payment = get_object_or_404(Payment, id=pk, user=request.user)
+
+        org_details = {
+            'name': "DigitalBeans",
+            'address': "123 Tech Park, Bengaluru, Karnataka - 560001",
+            'gstin': "22ABCDE1234F1Z5",
+            'phone': "+91 9876543210",
+            'email': "accounts@digitalbeans.in",
+            'logo': finders.find('img/logo.png'),
+        }
+
+        context = {
+            'payment': payment,
+            'org': org_details,
+            'today': timezone.now().date(),
+        }
+
+        html_string = render_to_string('payment/receipt_pdf.html', context)
+        html = HTML(string=html_string, base_url=request.build_absolute_uri())
+        pdf_result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Payment_Receipt_{payment.id}.pdf"'
+        response['Content-Transfer-Encoding'] = 'binary'
+
+        with tempfile.NamedTemporaryFile(delete=True) as output:
+            output.write(pdf_result)
+            output.flush()
+            output.seek(0)
+            response.write(output.read())
+
+        return response
+
+
+class EnrollmentViewSet(viewsets.ModelViewSet):
+    queryset = Enrollment.objects.all()
+    serializer_class = EnrollmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="my-enrollments")
+    def my_enrollments(self, request):
         user = request.user
-        data = request.data
-        order_id = data.get("razorpay_order_id")
-        payment_id = data.get("razorpay_payment_id")
-        signature = data.get("razorpay_signature")
-        track_id = data.get("track_id")
-
-        if not all([order_id, payment_id, signature, track_id]):
-            return Response({"error": "Missing required fields"}, status=400)
-
-        expected_signature = hmac.new(
-            settings.RAZORPAY_KEY_SECRET.encode(),
-            f"{order_id}|{payment_id}".encode(),
-            hashlib.sha256
-        ).hexdigest()
-
-        if expected_signature != signature:
-            return Response({"error": "Invalid signature"}, status=400)
-
-        try:
-            track = Track.objects.get(id=track_id)
-        except Track.DoesNotExist:
-            return Response({"error": "Invalid track ID"}, status=400)
-
-        # Double-check enrollment to prevent duplicates
-        enrollment_exists = Enrollment.objects.filter(user=user, course=track.course).exists()
-        if enrollment_exists:
-            return Response({"message": "Already enrolled."})
-
-        Enrollment.objects.create(
-            user=user,
-            course=track.course,
-            track=track
-        )
-
-        return Response({"message": "Payment verified and enrollment successful."})
+        enrollments = Enrollment.objects.filter(user=user)
+        data = [
+            {"course_id": e.course.id, "track_id": e.track.id if e.track else None}
+            for e in enrollments
+        ]
+        return Response(data)

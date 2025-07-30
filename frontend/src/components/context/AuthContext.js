@@ -35,40 +35,56 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Login
-  const loginUser = async (credentials) => {
-  try {
-    const response = await axiosInstance.post('api/users/token/', credentials);
-    const { access, refresh, role } = response.data;
-    const decodedUser = jwtDecode(access);
-    const userType = decodedUser.user_type || "";  // ✅ THIS IS NOW SAFE
-    const userRole = role || "";
+ const loginUser = async (credentials) => {
+    try {
+      const response = await axiosInstance.post('api/users/token/', credentials)
+      const { access, refresh, role } = response.data
+      const decodedUser = jwtDecode(access)
+      const userType = decodedUser.user_type || ''
+      const userRole = role || ''
 
-    const updatedUser = {
-      ...decodedUser,
-      role: userRole,
-    };
+      const updatedUser = { ...decodedUser, role: userRole }
 
-    setAuthTokens({ access, refresh, role });
-    setUser(updatedUser);
-    localStorage.setItem(
-      'authTokens',
-      JSON.stringify({ access, refresh, role })
-    );
+      setAuthTokens({ access, refresh, role })
+      setUser(updatedUser)
+      localStorage.setItem('authTokens', JSON.stringify({ access, refresh, role }))
 
-    notify('Logged in successfully.');
+      notify('Logged in successfully.')
 
-    // ✅ Role-based redirection
-    if (userType === "STUDENT") {
-      navigate('/'); // student → home
-    } else if (userType === "PLATFORM" && userRole === "SUPER_ADMIN") {
-      navigate('/dashboard'); // super admin
-    } 
+      // 🚀 FIX: Redirect student back to payment page if trackId is present
+      let redirectTo = '/'
+      let trackId = null
 
-  } catch (error) {
-    const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.';
-    notify(errorMsg, 'error');
+      // Read redirect info stored in sessionStorage
+      const redirectDataRaw = sessionStorage.getItem('redirectAfterLogin')
+      if (redirectDataRaw) {
+        try {
+          const redirectData = JSON.parse(redirectDataRaw)
+          redirectTo = redirectData.from || '/'
+          trackId = redirectData.trackId || null
+        } catch {
+          // ignore JSON parse errors
+        }
+        sessionStorage.removeItem('redirectAfterLogin')
+      }
+
+      if (userType === 'STUDENT') {
+        navigate(redirectTo, {
+          state: { trackId },
+          replace: true,
+        })
+      } else if (userType === 'PLATFORM' && userRole === 'SUPER_ADMIN') {
+        navigate('/dashboard')
+      } else {
+        // fallback for other users
+        navigate('/')
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Login failed. Please try again.'
+      notify(errorMsg, 'error')
+    }
   }
-};
+
   
   // Logout
   const logoutUser = () => {
