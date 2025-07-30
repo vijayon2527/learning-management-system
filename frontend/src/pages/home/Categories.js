@@ -52,9 +52,9 @@ const Categories = () => {
     ],
   };
 
-  const CategoryItem = ({ id, name, logo }) => (
+  const CategoryItem = ({ slug, name, logo }) => (
     <Link
-      to={`/categories/${id}`}
+      to={`/categories/${slug}`}
       style={{
         textDecoration: "none",
         color: "inherit",

@@ -251,3 +251,17 @@ class CourseReviewSerializer(serializers.ModelSerializer):
         return attrs
 
     
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'
+        read_only_fields = [
+            'user', 'razorpay_order_id', 'razorpay_payment_id',
+            'razorpay_signature', 'status', 'currency', 'created_at', 'updated_at'
+        ]
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Enrollment
+        fields = '__all__'

@@ -23,7 +23,11 @@ import Footer from "../layout/partials/Footer";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import TopRatingsSlider from "./RatingBreakDown";
-const CourseDetail = () => {
+import Payment from "./Payement";
+import RazorpayPayment from "./Payement";
+import { useLocation } from "react-router-dom";
+
+const CourseDetail = (user) => {
   const { slug } = useParams();
 
   const [course, setCourse] = useState(null);
@@ -43,6 +47,10 @@ const CourseDetail = () => {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [showAllReviews, setShowAllReviews] = React.useState(false);
   const [dotsMenuOpen, setDotsMenuOpen] = useState(null);
+  const [selectedTrack, setSelectedTrack] = useState(null); // store which track user enrolled for
+  const [showPayment, setShowPayment] = useState(false);
+  const [selectedTrackId, setSelectedTrackId] = React.useState(null);
+  const location = useLocation();
 
 
 
@@ -257,62 +265,53 @@ const timeAgo = (dateString) => {
   return `${months} month${months > 1 ? "s" : ""} ago`;
 };
 
+ const handleEnroll = (trackId) => {
+  const tokens = localStorage.getItem('authTokens')
+  const token = tokens ? JSON.parse(tokens).access : null
 
-const handleEnroll = async (trackId) => {
-  const authTokens = JSON.parse(localStorage.getItem("authTokens"));
-
-  if (!authTokens || !authTokens.access) {
-    // Not logged in – redirect to login with redirect back
-    const currentPath = window.location.pathname;
-    navigate(`/login?next=${currentPath}`);
-    return;
+  if (!token) {
+    sessionStorage.setItem(
+      'redirectAfterLogin',
+      JSON.stringify({
+        from: window.location.pathname,
+        trackId,
+      }),
+    )
+    navigate('/login')
+  } else {
+    setSelectedTrackId(trackId)
+    setShowPayment(true)
   }
+}
 
-  try {
-    // Step 1: Create Razorpay order from backend
-    const res = await axiosInstance.post("/api/courses/payment/create-order/", { track_id: trackId });
-    const { order_id, amount, currency, razorpay_key } = res.data;
 
-    // Step 2: Open Razorpay checkout
-    const options = {
-      key: razorpay_key,
-      amount,
-      currency,
-      name: "YourSite.com",
-      description: "Course Enrollment",
-      order_id,
-      handler: async function (response) {
-        // Step 3: Verify payment with backend
-        try {
-          await axiosInstance.post("/api/courses/payment/verify/", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            track_id: trackId,
-          });
-          alert("✅ Enrollment successful!");
-        } catch (verifyError) {
-          console.error("Verification Failed:", verifyError);
-          alert("❌ Payment verification failed.");
-        }
-      },
-      prefill: {
-        name: "Student",
-        email: "student@example.com",
-      },
-      theme: {
-        color: "#006400",
-      },
-    };
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-
-  } catch (error) {
-    console.error("Payment Error:", error);
-    alert("❌ Failed to start payment.");
+useEffect(() => {
+  if (location.state?.trackId && localStorage.getItem("access_token")) {
+    setSelectedTrackId(location.state.trackId);
+    setShowPayment(true);
   }
+}, []);
+
+
+
+  const closePayment = () => {
+    setShowPayment(false);
+    setSelectedTrack(null);
+  };
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 };
+
 
   // Skeleton placeholder for Hero Section
   const HeroSkeleton = () => (
@@ -463,6 +462,16 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
         <Footer />
       </>
     );
+
+
+  if (selectedTrackId) {
+    return (
+      <RazorpayPayment
+        trackId={selectedTrackId}
+        onCancel={() => setSelectedTrackId(null)}
+      />
+    );
+  }
 
   return (
     <>
