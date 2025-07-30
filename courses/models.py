@@ -13,6 +13,8 @@ from django.db.models import Count
 from users.models import User
 from agplms.utils.functions import generate_unique_slug
 from django.db.models.signals import m2m_changed
+import uuid
+
 
 def course_thumbnail_path(instance, filename):
     return f"course/course_thumbnails/{instance.slug}/{filename}"
@@ -72,6 +74,14 @@ class Category(BaseModel):
     blank=True,
     verbose_name=_("Logo"),
     help_text=_("Optional logo image for this category"),
+    )
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name=_("Slug"),
+        help_text=_("URL-friendly identifier for the course"),
     )
 
     class Meta:
@@ -757,18 +767,42 @@ def update_enrollment_progress(sender, instance, **kwargs):
 
 
 
-# class CourseReview(models.Model):
-#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
-#     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-#     rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
-#     text = models.TextField(blank=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
 
-#     class Meta:
-#         ordering = ['-created_at']
-#         constraints = [
-#             models.UniqueConstraint(fields=['course', 'user'], name='unique_user_course_review')
-#         ]
 
-#     def __str__(self):
-#         return f"{self.user} - {self.course.name} - {self.rating}"
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Processing', 'Processing'),
+        ('Completed', 'Completed'),
+        ('Failed', 'Failed'),
+        ('Refunded', 'Refunded'),
+    ]
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, null=True, blank=True)
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
+
+    order_number = models.CharField(max_length=100, unique=True,default=uuid.uuid4)  
+    razorpay_order_id = models.CharField(max_length=100, unique=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='INR')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    is_verified = models.BooleanField(default=False) 
+    notes = models.TextField(blank=True, null=True)  
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['razorpay_order_id']),
+            models.Index(fields=['user', 'status']),
+        ]
+
+    def __str__(self):
+        return f"Payment {self.order_number} | {self.status}"

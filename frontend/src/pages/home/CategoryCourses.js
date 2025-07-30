@@ -5,7 +5,7 @@ import Header from "../layout/partials/Header";
 import Footer from "../layout/partials/Footer";
 
 const CategoryCourses = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [category, setCategory] = useState(null);
@@ -27,10 +27,10 @@ const CategoryCourses = () => {
       setError(null);
 
       try {
-        const categoryResponse = await axiosInstance.get(`/api/courses/categories/${id}/`);
+        const categoryResponse = await axiosInstance.get(`/api/courses/categories/${slug}/`);
         setCategory(categoryResponse.data);
 
-        const coursesResponse = await axiosInstance.get(`/api/courses/courses/?category=${id}`);
+        const coursesResponse = await axiosInstance.get(`/api/courses/courses/?category=${slug}`);
         setCourses(coursesResponse.data);
       } catch (err) {
         console.error("Error loading category or courses:", err);
@@ -42,7 +42,7 @@ const CategoryCourses = () => {
     };
 
     fetchCategoryAndCourses();
-  }, [id]);
+  }, [slug]);
 
   const cardStyle = {
     cursor: "pointer",
