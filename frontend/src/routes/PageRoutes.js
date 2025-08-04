@@ -1,6 +1,11 @@
 import React from 'react'
 import { Route } from 'react-router-dom'
 import MyLearning from '../components/courses/MyLearning/MyLearning'
+import UserProfile from '../components/users/StudentUser/UserProfile'
+import ChangePassword from '../components/users/StudentUser/ChangePassword'
+import PurchaseHistory from '../components/users/StudentUser/PurchaseHistory'
+import ReferFriend from '../components/users/StudentUser/ReferFriend'
+import MyCourses from '../components/users/StudentUser/MyCourses'
 
 const Home = React.lazy(() => import('../pages/Home'))
 const Trainings = React.lazy(() => import('../pages/Trainings'))
@@ -14,6 +19,13 @@ const PageRoutes = [
   <Route key="blog" path="/blog" element={<Blog />} />,
   <Route path="/course-video/:courseSlug/:sectionSlug/:lectureSlug" element={<CourseVideo />} />,
   <Route key="my-learning" path="/my-learning" element={<MyLearning />} />,
+  <Route key="User-Profile" path="/user-profile" element={<UserProfile />} />,
+
+  <Route path="/user-password" element={<ChangePassword />} />,
+  <Route path="/purchase-history" element={<PurchaseHistory />} />,
+  <Route path="/refer-friend" element={<ReferFriend />} />,
+  <Route path="/my-courses" element={<MyCourses />} />
+
 
 ]
 

@@ -15,6 +15,8 @@ router.register(r'notes', LectureNoteViewSet, basename='lecture-note')
 router.register(r'reviews', CourseReviewViewSet,basename="course-review")
 router.register(r'payment',PaymentViewSet, basename='payment')
 router.register(r'enrollments', EnrollmentViewSet, basename='enrollment')
+router.register(r'my-courses', MyEnrollmentsViewSet, basename='my-courses')
+router.register(r'purchase-history', PaymentHistoryViewSet, basename='purchase-history')
 
 
 

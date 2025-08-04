@@ -16,7 +16,7 @@
 }
 
 .add-reminder-btn {
-  background-color: var(--primary);
+  background-color: #199fcc;
   border: none;
   padding: 8px 10px;
   font-size: var(--font-size-small) !important;
@@ -80,7 +80,7 @@
 }
 .send-btn {
   height: 44px;
-  background-color: var(--primary);
+  background-color: #199fcc;
   border: none;
   border-radius: 6px !important;
   font-size: var(--font-size-small);

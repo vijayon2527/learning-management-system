@@ -1,10 +1,11 @@
-import React, { Suspense, useEffect, useContext } from 'react'
+import React, { Suspense, useEffect, useContext, useState } from 'react'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { CSpinner, useColorModes } from '@coreui/react'
 
 import './scss/style.scss'
 import './scss/examples.scss'
 import "./styles/root.css";
+import './style.css'
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -14,31 +15,29 @@ import PrivateRoute from './components/common/PrivateRoute'
 import Courses from './components/Courses'
 
 import PageRoutes from './routes/PageRoutes'
-
-import 'aos/dist/aos.css';
-import AOS from 'aos';
 import CourseDetail from './pages/home/CourseDetails'
 import CategoryCourses from './pages/home/CategoryCourses'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
 
-import './style.css'
-import StudentRegister from './components/users/StudentRegister'
-
-// Containers
+// Lazy load pages
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
-
-// Pages
 const Login = React.lazy(() => import('./views/pages/login/Login'))
-const Register = React.lazy(() => import('./components/users/Register'));
+const Register = React.lazy(() => import('./components/users/Register'))
+const StudentRegister = React.lazy(() => import('./components/users/StudentRegister'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
-// AuthRoute Component (For Login and Register)
+
+// AuthRoute to protect login/register routes
 const AuthRoute = ({ children }) => {
-  const { user } = useContext(AuthContext); // Get user from AuthContext
-  return !user ? children : <Navigate to="/dashboard" />; // Redirect to dashboard if logged in
-};
+  const { user } = useContext(AuthContext)
+  return !user ? children : <Navigate to="/dashboard" />
+}
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
+
+  const [modalType, setModalType] = useState(null) // 'login' | 'register' | null
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.href.split('?')[1])
@@ -46,64 +45,83 @@ const App = () => {
     if (theme) {
       setColorMode(theme)
     }
-
-    if (isColorModeSet()) {
-      return
-    }
+    if (isColorModeSet()) return
   }, [isColorModeSet, setColorMode])
 
-   useEffect(() => {
-    AOS.init({
-      duration: 800, // animation duration
-      once: true     // whether animation should happen only once
-    });
-  }, []);
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true })
+  }, [])
+
+  useEffect(() => {
+    const handleShowLogin = () => setModalType('login')
+    const handleShowRegister = () => setModalType('register')
+    const handleCloseLogin = () => setModalType(null)
+
+    window.addEventListener('show-login', handleShowLogin)
+    window.addEventListener('show-register', handleShowRegister)
+    window.addEventListener('close-login', handleCloseLogin)
+
+    return () => {
+      window.removeEventListener('show-login', handleShowLogin)
+      window.removeEventListener('show-register', handleShowRegister)
+      window.removeEventListener('close-login', handleCloseLogin)
+    }
+  }, [])
+
+  const closeModal = () => setModalType(null)
 
   return (
     <BrowserRouter>
       <AuthProvider>
         <ToastContainer />
-        <Suspense
-          fallback={
-            <div className="pt-3 text-center">
-              <CSpinner color="primary" variant="grow" />
-            </div>
-          }
-        >
+        <Suspense fallback={<div className="pt-3 text-center"><CSpinner color="primary" variant="grow" /></div>}>
           <Routes>
-            {/* Auth-protected routes */}
-            <Route exact path="/login" name="Login Page" element={
-              <AuthRoute>
-                <Login />
-              </AuthRoute>
-            } />
-            <Route exact path="/UserRegister" name="Register Page" element={
-              <AuthRoute>
-                <Register />
-              </AuthRoute>
-            } />
-            <Route exact path="/Register" name="Student Register" element={<StudentRegister />} />
-            <Route exact path="/courses/:slug" name="Page 404" element={<CourseDetail />} />
-            <Route exact path="/api/users/verify-email/:token/" name="Page 404" element={<VerifyEmail />} />
-            <Route exact path="/404" name="Page 404" element={<Page404 />} />
-            <Route exact path="/500" name="Page 500" element={<Page500 />} />
-            <Route exact path="/course" name="Courses" element={<Courses />} />
-            <Route exact path="/categories/:slug" name="Courses" element={<CategoryCourses />} />
-        
+            <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
+            <Route path="/UserRegister" element={<AuthRoute><StudentRegister /></AuthRoute>} />
+            <Route path="/Register" element={<StudentRegister />} />
+            <Route path="/courses/:slug" element={<CourseDetail />} />
+            <Route path="/api/users/verify-email/:token/" element={<VerifyEmail />} />
+            <Route path="/404" element={<Page404 />} />
+            <Route path="/500" element={<Page500 />} />
+            <Route path="/course" element={<Courses />} />
+            <Route path="/categories/:slug" element={<CategoryCourses />} />
             {PageRoutes}
-
-            <Route
-              path="*"
-              name="Home"
-              element={
-                <PrivateRoute>
-                  <DefaultLayout />
-                </PrivateRoute>
-              }
-            />
+            <Route path="*" element={<PrivateRoute><DefaultLayout /></PrivateRoute>} />
           </Routes>
-        </Suspense>
 
+          {/* GLOBAL LOGIN/REGISTER MODAL */}
+          {modalType && (
+            <div
+              className="login-modal-overlay"
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "rgba(0,0,0,0.6)",
+                zIndex: 9999,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onClick={closeModal}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: "500px", width: "100%" }}
+              >
+                <Suspense fallback={<div className="text-center"><CSpinner color="primary" /></div>}>
+              {modalType === "login" ? (
+                <Login onLoginSuccess={() => setModalType(null)} />
+              ) : (
+                <StudentRegister />
+              )}
+                </Suspense>
+              </div>
+            </div>
+          )}
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   )

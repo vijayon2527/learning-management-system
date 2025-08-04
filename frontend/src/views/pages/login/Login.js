@@ -11,7 +11,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import axiosInstance from '../../../utils/axiosInstance';
 import OTPInput from 'react-otp-input';
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const { loginUser } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -36,6 +36,8 @@ const Login = () => {
 
       if (res.status === 200) {
       await loginUser(formData);
+      window.dispatchEvent(new Event("user-logged-in")); 
+       if (onLoginSuccess) onLoginSuccess();
       }
     } catch (err) {
       setErrors({ general: 'Invalid OTP.' });
@@ -110,7 +112,10 @@ const Login = () => {
       (res) => {
         if (res.authResponse) {
           loginUser({ provider: 'facebook', access_token: res.authResponse.accessToken })
-            .then(() => navigate('/dashboard'))
+           .then(() => {
+              if (onLoginSuccess) onLoginSuccess();
+              else navigate('/');
+            })
             .catch(() => setErrors({ general: 'Facebook login failed.' }));
         }
       },
@@ -119,18 +124,21 @@ const Login = () => {
   };
 
   const handleGoogleLoginSuccess = async (res) => {
-    if (!res?.credential) {
-      setErrors({ general: 'Google login failed (no credential).' })
-      return
-    }
-    try {
-      await loginUser({ provider: 'google', access_token: res.credential })
-      navigate('/dashboard')
-    } catch (err) {
-      console.error('[Login] Google login backend error:', err)
-      setErrors({ general: 'Google login failed.' })
-    }
+  if (!res?.credential) {
+    setErrors({ general: 'Google login failed (no credential).' });
+    return;
   }
+  try {
+    await loginUser({ provider: 'google', access_token: res.credential });
+    window.dispatchEvent(new Event("user-logged-in"));
+
+    if (onLoginSuccess) onLoginSuccess(); // ✅ Let parent handle redirection
+    // ❌ DO NOT: navigate('/')
+  } catch (err) {
+    console.error('[Login] Google login backend error:', err);
+    setErrors({ general: 'Google login failed.' });
+  }
+};
 
   return (
     <CContainer className="d-flex justify-content-center align-items-center vh-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
@@ -138,6 +146,14 @@ const Login = () => {
         <CCol md={12}>
           <CCard className="p-2 shadow-sm rounded-4">
             <CCardBody>
+                <div className="d-flex justify-content-end">
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={() => window.dispatchEvent(new Event("close-login"))}
+                ></button>
+              </div>
               <h1 className="text-center mb-4">Login</h1>
               <CForm onSubmit={otpSent ? (e) => e.preventDefault() : handleSubmit}>
                 <div className="mb-3">

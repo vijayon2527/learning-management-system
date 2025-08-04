@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate,useLocation } from "react-router-dom";
 import { Container, Nav } from "react-bootstrap";
 import { BsSearch, BsBag, BsList, BsX, BsBell } from "react-icons/bs";
+import axiosInstance from "../../../utils/axiosInstance";
 import "./Header.css";
 
 // STATIC BASE PATH
@@ -18,20 +19,33 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [recentlyWatched, setRecentlyWatched] = useState([]);
   const [learningCourses, setLearningCourses] = useState([]);
+  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+  // const profile = userInfo;
+  const defaultAvatar = "https://via.placeholder.com/30";
+  const [profile, setProfile] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  const location = useLocation();
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
+useEffect(() => {
+  const checkAuth = () => {
+    const token = localStorage.getItem("authTokens");
+    setIsLoggedIn(!!token);
   };
 
-  window.addEventListener("close-login", handleLoginSuccess);
-
+  checkAuth();
+  window.addEventListener("storage", checkAuth);
+  window.addEventListener("user-logged-in", checkAuth); // ✅ Add this
   return () => {
-    window.removeEventListener("close-login", handleLoginSuccess);
+    window.removeEventListener("storage", checkAuth);
+    window.removeEventListener("user-logged-in", checkAuth); // ✅
   };
 }, []);
+
+
+
 
 
   // Use STATIC_BASE for user avatar
@@ -54,8 +68,11 @@ const Header = () => {
 
   useEffect(() => {
     if (showLearningDropdown) {
-      const rw = localStorage.getItem("recentlyWatched");
-      if (rw) setRecentlyWatched(JSON.parse(rw));
+      const uid = profile?.id;
+      if (uid) {
+        const rw = localStorage.getItem(`recentlyWatched_${uid}`);
+        if (rw) setRecentlyWatched(JSON.parse(rw));
+      }
 
       const lc = localStorage.getItem("learningCourses");
       if (lc) setLearningCourses(JSON.parse(lc));
@@ -124,6 +141,47 @@ const Header = () => {
     },
   ];
 
+
+    useEffect(() => {
+    if (isLoggedIn) {
+      axiosInstance
+        .get("/api/users/profile/") // ✅ Update to match your backend endpoint
+        .then((response) => {
+          setProfile(response.data);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch profile", error);
+        });
+    }
+  }, [isLoggedIn]);
+
+
+   const getProfileImage = () => {
+    if (!profile?.profile_pic) return defaultAvatar;
+
+    // Return full URL if it's a relative path
+    if (profile.profile_pic.startsWith("/")) {
+      return `http://127.0.0.1:8000${profile.profile_pic}`;
+    }
+    return profile.profile_pic;
+  };
+
+  const getInitials = () => {
+  if (!profile) return "";
+
+  // Combine first and last names
+  const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+
+  // Split by space and take the first character of each word
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean) // removes empty strings
+    .map(word => word[0].toUpperCase())
+    .join("");
+
+  return initials;
+};
+
   return (
     <>
       <div className={`header-wrapper ${showSearch ? "search-active" : ""}`}>
@@ -173,11 +231,8 @@ const Header = () => {
                   </div>
                 ))}
               </div>
-              <NavLink to="/program" className="nav-item" onClick={closeMenu}>
-                Affiliate Program
-              </NavLink>
-              <NavLink to="/webinar" className="nav-item" onClick={closeMenu}>
-                Webinar
+              <NavLink to="/my-learning" className="nav-item" onClick={closeMenu}>
+                My Learning
               </NavLink>
             </div>
 
@@ -185,17 +240,67 @@ const Header = () => {
               {/* STATIC LOGO */}
               <img src={`${STATIC_BASE}/assets/images/AGP-LOGO.png`} alt="Logo" height="50" />
             </div>
-            <div className="d-flex gap-3 align-items-center">
-              <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
-              <BsBag role="button" className="fs-4" onClick={toggleCart} />
-              {!isLoggedIn && (
-             <button
-              className="btn btn-sm"
-              style={{ backgroundColor: "#ff5722", color: "#fff", border: "none" }}
-              onClick={() => window.dispatchEvent(new CustomEvent("show-login"))}
-            >
-              Login
-            </button>
+         <div className="d-flex gap-3 align-items-center">
+              {/* Desktop: Search & Cart icons */}
+              <div className="d-none d-md-flex gap-3 align-items-center">
+                <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
+                <BsBag role="button" className="fs-4" onClick={toggleCart} />
+              </div>
+
+              {/* Mobile: Bell & Profile icons if logged in */}
+              {isLoggedIn ? (
+                <div className="d-flex d-md-none gap-3 align-items-center position-relative">
+                  <BsBell role="button" className="fs-5" />
+
+                  {/* Profile Icon */}
+                  <div className="position-relative">
+                    <img
+                      src={getProfileImage()}
+                      alt="profile"
+                      width={30}
+                      height={30}
+                      className="rounded-circle"
+                      role="button"
+                      onClick={toggleProfileDropdown}
+                    />
+
+                    {/* Dropdown positioned below the avatar */}
+                    {showProfileDropdown && (
+                      <div
+                        className="position-absolute bg-white border shadow-sm rounded"
+                        style={{
+                          top: "110%", // pushes it just below the image
+                          right: 0,
+                          zIndex: 1000,
+                          minWidth: "150px",
+                        }}
+                      >
+                        <div
+                          role="button"
+                          className="dropdown-item px-3 py-2"
+                          onClick={() => navigate("/user-profile")}
+                        >
+                          Profile
+                        </div>
+                        <div
+                          role="button"
+                          className="dropdown-item px-3 py-2 text-danger"
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-sm"
+                  style={{ backgroundColor: "#199fcc", color: "#fff", border: "none" }}
+                  onClick={() => window.dispatchEvent(new CustomEvent("show-login"))}
+                >
+                  Login
+                </button>
 
               )}
             </div>
@@ -214,9 +319,13 @@ const Header = () => {
                   onMouseEnter={() => setHoveredDropdown(key)}
                   onMouseLeave={() => setHoveredDropdown(null)}
                 >
-                  <NavLink to={path} className="dropdown-nav-link">
+                   <NavLink
+                    to={path}
+                    className={`dropdown-nav-link${location.pathname.startsWith(path) ? " active" : ""}`}
+                  >
                     {title}
                   </NavLink>
+
                   <div className={`nav-dropdown-menu ${hoveredDropdown === key ? "hovered" : ""}`}>
                     {links.map(({ to, label }) => (
                       <NavLink to={to} className="dropdown-item" key={label}>
@@ -227,9 +336,6 @@ const Header = () => {
                   </div>
                 </div>
               ))}
-              <NavLink to="/affiliate" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-                Affiliate Program
-              </NavLink>
             </Nav>
 
             {/* Right-side user section */}
@@ -264,7 +370,7 @@ const Header = () => {
                               >
                                 <img src={item.thumbnail} alt={item.title} className="learning-thumbnail" />
                                 <div className="learning-details">
-                                  <div className="learning-course-title">{item.title}</div>
+                                  <div className="learning-course-title">{item.courseName} — {item.title}</div>
                                   <div className="text-muted small mb-1">
                                     Watched at: {new Date(item.watchedAt).toLocaleDateString()}
                                   </div>
@@ -294,37 +400,98 @@ const Header = () => {
                     )}
                   </div>
 
-                  <BsBell className="nav-icon" role="button" title="Notifications" />
-
-                  {/* Profile */}
-                  <div className="position-relative profile-wrapper">
+                <BsBell className="nav-icon" role="button" title="Notifications" />
+                <div
+                  className="profile-hover-container"
+                  onMouseEnter={() => setShowProfileDropdown(true)}
+                  onMouseLeave={() => setShowProfileDropdown(false)}
+                  style={{ display: "inline-block", position: "relative" }}
+                >
+                  {getProfileImage() && !imageError ? (
                     <img
-                      src={user.avatar}
-                      alt="Avatar"
+                      src={getProfileImage()}
+                      alt="profile"
                       className="avatar-img"
-                      onClick={toggleProfileDropdown}
-                      style={{ cursor: "pointer" }}
+                      style={{
+                        cursor: "pointer",
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                      }}
+                      onError={() => setImageError(true)}
                     />
-                    {showProfileDropdown && (
-                      <ul className="profile-dropdown">
-                        <li>
-                          <NavLink to="/wishlist" className="dropdown-item">
-                            Wishlist
-                          </NavLink>
-                        </li>
-                        <li>
-                          <NavLink to="/edit-profile" className="dropdown-item">
-                            Edit Profile
-                          </NavLink>
-                        </li>
-                        <li>
-                          <button className="dropdown-item" onClick={handleLogout}>
-                            Log Out
-                          </button>
-                        </li>
-                      </ul>
-                    )}
-                  </div>
+                  ) : (
+                    <div
+                      className="avatar-fallback"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        backgroundColor: "#199fcc",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        fontSize: "16px",
+                      }}
+                    >
+                      {getInitials()}
+                    </div>
+                  )}
+
+                  {showProfileDropdown && (
+                    <ul
+                      className="profile-dropdown"
+                      style={{
+                        position: "absolute",
+                        top: "110%",
+                        right: 0,
+                        backgroundColor: "#fff",
+                        border: "1px solid #ddd",
+                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                        borderRadius: "0.25rem",
+                        zIndex: 1000,
+                        minWidth: "160px",
+                        padding: "0.5rem 0",
+                        listStyle: "none",
+                      }}
+                    >
+                      <li>
+                        <NavLink to="/user-profile" className="dropdown-item">
+                          Profile
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/refer-friend" className="dropdown-item">
+                          Refer a Friend
+                        </NavLink>
+                      </li>
+                      <li className="dropdown-divider" style={{ borderTop: "1px solid #eee", margin: "4px 0" }}></li>
+                      <li>
+                        <NavLink to="/purchase-history" className="dropdown-item">
+                          Purchase History
+                        </NavLink>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item text-danger"
+                          onClick={handleLogout}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "0.5rem 1rem",
+                          }}
+                        >
+                          Log Out
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </div>
                 </>
               )}
             </div>

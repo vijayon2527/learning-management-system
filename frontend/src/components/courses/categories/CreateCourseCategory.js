@@ -189,13 +189,19 @@ const CategoryCreate = ({ onCreated, onClose, categories }) => {
         </div>
       )}
 
-      <div className="d-flex justify-content-end">
-        <CButton type="button" color="secondary" onClick={onClose} className="me-2">
-          Cancel
-        </CButton>
-        <CButton type="submit" color="primary" disabled={submitting}>
-          {submitting ? "Creating..." : "Create"}
-        </CButton>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        marginTop: '20px'
+      }}>
+        <button className="btn btn-secondary" type="button" onClick={onClose}>Cancel</button>
+       <button
+          className="btn"
+          style={{ backgroundColor: '#199fcc', color: 'white'}}
+        >
+          Create Category
+        </button>
       </div>
     </CForm>
   );

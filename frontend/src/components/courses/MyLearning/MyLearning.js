@@ -36,7 +36,7 @@ const MyLearning = () => {
       <CContainer className="my-5">
         <CRow className="gy-4">
           {courses.slice(0, visibleCount).map((course) => (
-            <CCol xs={12} sm={6} md={4} lg={4} key={course.id}>
+            <CCol xs={12} sm={6} md={4} lg={4} key={course.id} className="d-flex">
               <CCard
                onClick={async () => {
                   try {
@@ -58,7 +58,7 @@ const MyLearning = () => {
                   }
                 }}
 
-                className="shadow-sm border-0 course-card"
+                 className="shadow-sm border-0 course-card"
                 style={{ cursor: 'pointer', transition: 'transform 0.3s ease' }}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-5px)')}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
@@ -112,21 +112,15 @@ const MyLearning = () => {
         {/* Show More Button */}
         {courses.length > 6 && (
           <div className="text-center mt-4">
-            {visibleCount < courses.length ? (
-              <div
-                style={{ fontSize: '1.5rem', cursor: 'pointer', color: '#0d6efd' }}
-                onClick={() => setVisibleCount((prev) => prev + 6)}
-              >
-                ↓ Show More
-              </div>
-            ) : (
-              <div
-                style={{ fontSize: '1.5rem', cursor: 'pointer', color: '#0d6efd' }}
-                onClick={() => setVisibleCount(6)}
-              >
-                ↑ Show Less
-              </div>
-            )}
+           {visibleCount < courses.length && (
+            <div
+              style={{ fontSize: '1.5rem', cursor: 'pointer', color: '#0d6efd' }}
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+            >
+              ↓ Show More
+            </div>
+          )}
+
           </div>
         )}
       </CContainer>

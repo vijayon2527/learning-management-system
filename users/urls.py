@@ -10,7 +10,9 @@ from .views import (
     UserUpdateView,
     UserDeleteView,
     UserActivateDeactivateView,
-    StudentRegisterView
+    StudentRegisterView,
+    UserProfileView,
+    StudentProfileView
 )
 
 urlpatterns = [
@@ -34,5 +36,7 @@ urlpatterns = [
     path('verify-otp/', views.VerifyOtpView.as_view(), name='verify-otp'),
     path('me/', views.current_user, name='current-user'),
     path('profile/', views.user_profile, name='user-profile'),
+    path('user/profile/', UserProfileView.as_view(), name='users-profile'),
+    path('referral/', StudentProfileView.as_view(), name='student-profile'),
 
 ]

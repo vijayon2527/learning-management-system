@@ -83,7 +83,7 @@ const CategoryUpdate = ({ category, onUpdated, onClose, categories }) => {
       }
 
       const response = await axiosInstance.put(
-        `/api/courses/categories/${category.id}/`,
+        `/api/courses/categories/${category.slug}/`,
         formData,
         {
           headers: {

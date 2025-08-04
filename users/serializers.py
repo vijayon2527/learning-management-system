@@ -8,6 +8,49 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import *
 
 
+
+
+class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['role'] = user.get_role()
+        token['user_type'] = user.user_type
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        user = authenticate(email=attrs.get('email'), password=attrs.get('password'))
+        if not user:
+            raise AuthenticationFailed('Invalid credentials')
+        data['role']=user.get_role()
+        data['user_type'] = user.user_type 
+        return data
+
+
+class AGPTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        refresh_token = RefreshToken(attrs['refresh'])
+
+        user_id = refresh_token.get('user_id')
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("Invalid user associated with the token.")
+
+        access_token = refresh_token.access_token
+        access_token['role'] = user.get_role()
+        access_token['user_type'] = user.user_type
+
+        data['access'] = str(access_token)
+        data['role'] = user.get_role()
+        data['user_type'] = user.user_type 
+        return data
+
+
 class PlatformUserReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlatformUser
@@ -49,7 +92,6 @@ class UserSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         profile = obj.get_profile()
         return getattr(profile, "role", None) if profile else None
-
 
 
 class UserRegisterSerializer(serializers.Serializer):
@@ -171,6 +213,9 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
             user_type="STUDENT",
             password=validated_data["password"],
         )
+
+        Student.objects.create(user=user)
+        
         return user
 
 
@@ -261,61 +306,54 @@ class OtpVerifySerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6)
 
 
-class AGPTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token['role'] = user.get_role()
-        token['user_type'] = user.user_type
-        return token
 
-    def validate(self, attrs):
-        data = super().validate(attrs)
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        exclude = ['user', 'last_active']
 
-        user = authenticate(email=attrs.get('email'), password=attrs.get('password'))
-        if not user:
-            raise AuthenticationFailed('Invalid credentials')
-        data['role']=user.get_role()
-        data['user_type'] = user.user_type 
-        return data
-
-
-class AGPTokenRefreshSerializer(TokenRefreshSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        refresh_token = RefreshToken(attrs['refresh'])
-
-        user_id = refresh_token.get('user_id')
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise AuthenticationFailed("Invalid user associated with the token.")
-
-        access_token = refresh_token.access_token
-        access_token['role'] = user.get_role()
-        access_token['user_type'] = user.user_type
-
-        data['access'] = str(access_token)
-        data['role'] = user.get_role()
-        data['user_type'] = user.user_type 
-        return data
+    def __init__(self, *args, **kwargs):
+        super(StudentSerializer, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].required = False  # make all fields optional
 
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email', 'mobile', 'gender', 'date_of_birth',
+            'address_line_1', 'address_line_2', 'city', 'state', 'country', 'postal_code',
+            'profile_pic', 'student'
+        ]
+
+    def update(self, instance, validated_data):
+        student_data = validated_data.pop('student', None)
+
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update or create Student profile
+        if student_data:
+            student, created = Student.objects.get_or_create(user=instance)
+            for attr, value in student_data.items():
+                setattr(student, attr, value)
+            student.save()
+
+        return instance
+    
 
 
+class StudentProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email')
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    class Meta:
+        model = Student
+        fields = ['email', 'first_name', 'last_name', 'referral_code']

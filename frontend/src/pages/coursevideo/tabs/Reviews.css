@@ -34,7 +34,7 @@
 
   .rating-score {
       font-size: 4rem;
-      color: var(--rating-color);
+      color: #199fcc;
       font-weight: var(--font-weight-bolder);
   }
 
@@ -42,7 +42,7 @@
 
   .rating-label {
       font-size: var(--font-size-small) !important;
-      color: var(--rating-color);
+      color: #199fcc;
       font-weight: var(--font-weight-bold);
   }
 
@@ -84,7 +84,7 @@
 
   .percentage {
       text-align: right;
-      color: var(--blue);
+      color: #199fcc;
       font-size: var(--font-size-small);
       font-weight: var(--font-weight-bold);
   }
@@ -116,8 +116,8 @@
 
 
   .input-group-text {
-      background-color: var(--primary) !important;
-      color: var(--light) !important;
+      background-color: #199fcc;
+      color: #199fcc;
       border: 1px solid var(--dark) !important;
       height: 40px;
   }
@@ -128,7 +128,7 @@
   }
 
   .filter-dropdown button {
-      border: 1px solid var(--primary) !important;
+      border: 1px solid #199fcc;
   }
 
   .filter-dropdown .dropdown-menu {
@@ -143,14 +143,14 @@
       align-items: center;
       justify-content: center;
       border-radius: var(--border-radius);
-      border: 1px solid var(--primary);
-      color: var(--primary);
+      border: 1px solid #199fcc;
+      color: #199fcc;
   }
 
   .filter-dropdown .dropdown-toggle:focus,
   .filter-dropdown .dropdown-toggle:active {
       box-shadow: none !important;
-      border: 1px solid var(--primary) !important;
+      border: 1px solid #199fcc;
   }
 
   .review-card {
@@ -170,7 +170,7 @@
   .user-avatar {
       width: 40px;
       height: 40px;
-      background-color: var(--gray);
+      background-color: #199fcc;
       color: var(--light);
       font-weight: var(--font-weight-bold);
       display: flex;
@@ -194,12 +194,12 @@
 
   .action-icon {
       cursor: pointer;
-      color: var(--orange);
+      color: #199fcc;
       transition: color 0.2s;
   }
 
   .action-icon:hover {
-      color: var(--primary);
+      color: #199fcc;
   }
 
   .report-link {

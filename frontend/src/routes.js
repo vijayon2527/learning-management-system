@@ -7,8 +7,6 @@ import SectionDetail from './components/courses/SectionDetail'
 
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
-const DepartmentList =React.lazy(() => import('./components/users/DepartmentList'))
-const RoleList =React.lazy(() => import('./components/users/RoleList'))
 const UserList = React.lazy(() => import('./components/users/UserList'));
 
 const CourseCategoryList = React.lazy(() => import('./components/courses/categories/CourseCategoryList'));
@@ -27,22 +25,6 @@ const routes = [
     element: UserList ,
     requiredPermissions: [
       Permissions.VIEW_USER,
-    ] 
-  },
-  { 
-    path: '/dashboard/department-list', 
-    name: 'deprtment list', 
-    element: DepartmentList, 
-    requiredPermissions: [
-      Permissions.VIEW_DEPARTMENT,
-    ] 
-  },
-  { 
-    path: '/dashboard/roles-list', 
-    name: 'roles list', 
-    element: RoleList, 
-    requiredPermissions: [
-      Permissions.VIEW_ROLE,
     ] 
   },
   { 

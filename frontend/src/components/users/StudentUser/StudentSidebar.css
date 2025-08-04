@@ -1,0 +1,131 @@
+.student-sidebar {
+  position: fixed;
+  width: 250px;
+  background-color: #f4f4f4;
+  border-radius: 10px;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 100px;
+}
+
+.student-sidebar .avatar {
+  width: 90px;
+  height: 90px;
+  background-color: #199fcc;
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.student-sidebar h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.student-sidebar .menu {
+  list-style: none;
+  padding: 0;
+}
+
+.student-sidebar .menu li {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #444;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.student-sidebar .menu li:hover,
+.student-sidebar .menu .active {
+  background-color: #ddd;
+  font-weight: 500;
+}
+
+.student-sidebar .menu li a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+
+
+
+.student-sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.student-sidebar .avatar {
+  width: 60px;
+  height: 60px;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.student-sidebar h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.student-sidebar .menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.student-sidebar .menu li {
+  margin-bottom: 10px;
+}
+
+.student-sidebar .menu li.active a {
+  font-weight: bold;
+}
+
+.student-sidebar .menu li a {
+  text-decoration: none;
+  color: #333;
+}
+
+
+.student-sidebar {
+  position: sticky;
+  top: 80px; /* adjust based on your header height */
+  height: fit-content;
+  z-index: 1000;
+  background-color: #fff; /* or match your layout */
+  padding: 1rem;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Optional: sidebar layout */
+.student-sidebar {
+  width: 250px; /* adjust width */
+  border-right: 1px solid #e0e0e0;
+}
+
+
+

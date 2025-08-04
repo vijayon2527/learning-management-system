@@ -188,11 +188,44 @@ class LectureViewSet(viewsets.ModelViewSet):
         
 
 class PublicCourseViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Course.objects.filter(enrollment_open=True)
     serializer_class = PublicCourseSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'slug'
 
+    def get_queryset(self):
+        user = self.request.user
+        return Course.objects.filter(enrollments__user=user).distinct()
+
+    # views.py
+    @action(detail=True, methods=["get"], url_path="track-content")
+    def track_content(self, request, slug=None):
+        user = request.user
+        print(f"[DEBUG] track_content called — user: {user}, course slug: {slug}")
+
+        try:
+            course = Course.objects.get(slug=slug)
+            print(f"[DEBUG] Course found: {course.name}")
+        except Course.DoesNotExist:
+            print(f"[ERROR] Course with slug '{slug}' not found.")
+            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            enrollment = Enrollment.objects.get(user=user, course=course)
+            print(f"[DEBUG] Enrollment found — User: {user.email}, Track: {enrollment.track.name}")
+        except Enrollment.DoesNotExist:
+            print(f"[ERROR] Enrollment not found for user: {user.email}, course: {course.name}")
+            return Response({"error": "You are not enrolled in this course"}, status=status.HTTP_403_FORBIDDEN)
+
+        track = enrollment.track
+
+        # ✅ Fetch only sections from the enrolled track
+        sections = Section.objects.filter(track=track).prefetch_related("lectures").order_by("order")
+        print(f"[DEBUG] Sections fetched for track: {track.name}, total sections: {sections.count()}")
+
+        serializer = SectionSerializer(sections, many=True)
+        return Response(serializer.data)
+
+    
 
 class LectureNotePagination(PageNumberPagination):
     page_size = 5  # ✅ Only 5 per page
@@ -422,6 +455,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment.razorpay_signature = signature
             payment.status = 'Completed'
             payment.save()
+            track = payment.track
+            course = track.course
+            user = payment.user
+
+            enrollment, created = Enrollment.objects.get_or_create(
+                user=user,
+                course=course,
+                defaults={'track': track}
+            )
+
+            if not created and enrollment.track is None:
+                enrollment.track = track
+                enrollment.save(update_fields=["track"])
 
             return Response({'status': 'success'})
 
@@ -485,3 +531,21 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             for e in enrollments
         ]
         return Response(data)
+    
+    
+class MyEnrollmentsViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+        enrollments = Enrollment.objects.filter(user=user).select_related('course', 'track')
+        serializer = EnrollmentSerializer(enrollments, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+
+class PaymentHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Payment.objects.filter(user=self.request.user, status='Completed').order_by('-created_at')

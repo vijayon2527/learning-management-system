@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
+import uuid
+from django.utils.crypto import get_random_string
+
 
 class UserManager(BaseUserManager):
     def _create_user(self, email, password=None, mobile=None, **extra_fields):
@@ -313,6 +316,15 @@ class Student(models.Model):
         default=timezone.now
     )
 
+    referral_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    referred_by = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='referrals'
+    )
+
     class Meta:
         verbose_name = _('student')
         verbose_name_plural = _('students')
@@ -340,6 +352,14 @@ class Student(models.Model):
         if self.graduation_year:
             parts.append(f"(Graduating {self.graduation_year})")
         return ' '.join(parts) or _('No education information provided')
+
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            self.referral_code = get_random_string(8).upper()
+        self.user.user_type = User.UserType.STUDENT
+        self.user.save(update_fields=['user_type'])
+        super().save(*args, **kwargs)
+
 
 
 User = get_user_model()

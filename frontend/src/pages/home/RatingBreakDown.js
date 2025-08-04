@@ -52,7 +52,7 @@ const TopRatingsSlider = ({ reviews }) => {
       {/* User Initial Circle */}
       <div
         style={{
-          backgroundColor: "#8d0e69ff",
+          backgroundColor: "#199fcc",
           color: "white",
           borderRadius: "50%",
           width: 48,
@@ -80,13 +80,13 @@ const TopRatingsSlider = ({ reviews }) => {
           textOverflow: "ellipsis",
           width: "100%",
         }}
-        title={review.user_name || "Anonymous"}
+        title={review.first_name || "Anonymous"}
       >
         {review.first_name || "Anonymous"}
       </div>
 
       {/* Star Rating */}
-      <div style={{ color: "#f7b500", fontSize: "1.1rem", marginBottom: 12 }}>
+      <div style={{ color: "#199fcc", fontSize: "1.1rem", marginBottom: 12 }}>
         {"★".repeat(review.rating)}
         {"☆".repeat(5 - review.rating)}
       </div>

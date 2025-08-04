@@ -210,7 +210,7 @@ input:checked + .slider:before {
 }
 
 .edit-btn {
-  background-color: #28a745; /* Green */
+  background-color: #28a745; 
   color: white;
 }
 
@@ -901,8 +901,8 @@ input:checked + .slider:before {
 
 /* when sidebar hidden (shrink height) */
 .course-video-shell.no-sidebar .video-aspect {
-  aspect-ratio: 16 / 6;
-  max-height: 400px;   /* adjust or remove */
+  aspect-ratio: 15 / 6;
+  max-height: 390px;   /* adjust or remove */
 }
 
 /* video element (page mode) */
@@ -980,8 +980,8 @@ input:checked + .slider:before {
 /* ---- Restore sidebar ---- */
 .restore-sidebar-middle {
   position: absolute;
-  top: 50%;
-  left: -16px;
+  top: 10%;
+  right: -13px;
   transform: translateY(-50%);
   z-index: 5;
 }
@@ -989,7 +989,7 @@ input:checked + .slider:before {
   background: #0a19eea6;
   border: none;
   color: #fff;
-  padding: 4px 6px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
 }
@@ -1312,4 +1312,140 @@ html.hide-scrollbar::-webkit-scrollbar {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+
+.tabs-btn {
+  padding: 10px 20px;
+  background-color: #f2f2f2;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.tabs-btn.active {
+  background-color: #2a40edff;
+  color: white;
+  border-color: #2a40edff;
+}
+
+
+.course-card {
+  height: 100%; /* Allow child height control */
+  display: flex;
+  flex-direction: column;
+}
+
+.course-card .video-wrapper {
+  height: 180px;
+}
+
+.course-card .description-box {
+  min-height: 60px; /* Adjust based on description text */
+}
+
+.course-card .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+
+/* src/pages/student/PurchaseHistory.css */
+
+.purchase-list {
+  padding: 1rem;
+}
+
+.purchase-item {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+}
+
+
+.player-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+.overlay-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: white;
+  background: none;
+  border: none;
+}
+.controls {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s;
+}
+.controls.show {
+  opacity: 1;
+}
+.subtitle-box {
+  position: absolute;
+  bottom: 10%;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.3);
+}
+.seekbar {
+  width: 100%;
+}
+.bottom-control-icons {
+  font-size: 1.2rem;
+  color: white;
+}
+.tooltip-container {
+  position: relative;
+}
+.tooltip-text {
+  visibility: hidden;
+  position: absolute;
+  background-color: black;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  top: -24px;
+  white-space: nowrap;
+}
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+}
+
+
+.sidebar-wrapper.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-wrapper.visible {
+  opacity: 1;
+}
+
+
+.cvp-video {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+html, body {
+  overflow-x: hidden;
+}
 

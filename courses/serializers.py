@@ -5,6 +5,7 @@ from .models import *
 class CategorySerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(source="parent.name", read_only=True)
     logo = serializers.ImageField(required=False, allow_null=True)
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = Category
@@ -18,6 +19,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "is_active",
             "created_at",
             "updated_at",
+             "slug", 
         ]
 
 
@@ -252,6 +254,8 @@ class CourseReviewSerializer(serializers.ModelSerializer):
 
     
 class PaymentSerializer(serializers.ModelSerializer):
+    course_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Payment
         fields = '__all__'
@@ -260,8 +264,16 @@ class PaymentSerializer(serializers.ModelSerializer):
             'razorpay_signature', 'status', 'currency', 'created_at', 'updated_at'
         ]
 
+    def get_course_name(self, obj):
+        # Safely get course name from track
+        if obj.track and obj.track.course:
+            return obj.track.course.name
+        return None
+
 
 class EnrollmentSerializer(serializers.ModelSerializer):
+    course = CourseSerializer()
+
     class Meta:
         model = Enrollment
-        fields = '__all__'
+        fields = ['id', 'course', 'progress', 'completed', 'enrolled_at']

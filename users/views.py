@@ -23,7 +23,9 @@ from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     UserUpdateSerializer,
-    StudentRegisterSerializer
+    StudentRegisterSerializer,
+    UserProfileSerializer,
+    StudentProfileSerializer
 
 )
 
@@ -101,6 +103,9 @@ class AGPTokenObtainPairView(TokenObtainPairView):
                     email=email,
                     defaults={"first_name": name or "FacebookUser", "user_type": "STUDENT"}
                 )
+
+                if user.user_type == "STUDENT":
+                    Student.objects.get_or_create(user=user)
 
                 refresh = RefreshToken.for_user(user)
                 refresh["role"] = user.get_role() if hasattr(user, "get_role") else "unknown"
@@ -335,3 +340,34 @@ class VerifyOtpView(APIView):
 @permission_classes([IsAuthenticated])
 def user_profile(request):
     return Response(UserSerializer(request.user).data)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+
+        if not serializer.is_valid():
+            print(serializer.errors)  # Debug output to console
+            return Response(serializer.errors, status=400)
+
+        serializer.save()
+        return Response(serializer.data)
+
+
+
+class StudentProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            student = Student.objects.get(user=request.user)
+            serializer = StudentProfileSerializer(student)
+            return Response(serializer.data)
+        except Student.DoesNotExist:
+            return Response({'detail': 'Student profile not found.'}, status=status.HTTP_404_NOT_FOUND)

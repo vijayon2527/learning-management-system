@@ -271,7 +271,7 @@ const Notes = ({ lecture, videoRef }) => {
           onClick={() => setShowEditor(true)}
         >
           <input type="text" placeholder="Add a note..." readOnly />
-          <FaPlus className="plus-icon" style={{ color: '#28a745' }} />
+          <FaPlus className="plus-icon" style={{ color: '#199fcc' }} />
         </div>
       )}
 

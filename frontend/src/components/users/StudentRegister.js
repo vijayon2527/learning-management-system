@@ -123,7 +123,7 @@ const StudentRegister = () => {
       <CCol md={6} lg={10}>
         <CCard className="shadow-sm rounded-4">
           <CCardBody>
-            <h2 className="text-center mb-5">Create Your Account</h2>
+            <h2 className="text-center mb-4">Create Your Account</h2>
             {metaError && <CAlert color="warning">{metaError}</CAlert>}
             {serverError && <CAlert color="danger">{serverError}</CAlert>}
 

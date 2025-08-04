@@ -51,7 +51,7 @@ const OverView = ({ course }) => {
           </div>
 
           <div className="reminder-buttons">
-            <button className="btn btn-outline-warning">Get started</button>
+            <button className="btn btn-outline-info">Get started</button>
             <button className="btn btn-light">Dismiss</button>
           </div>
         </div>

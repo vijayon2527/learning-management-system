@@ -47,45 +47,46 @@ const Reviews = ({ courseId, currentUser }) => {
   /* --------------------------------------------------
    * Fetch reviews whenever course/user/submit changes
    * -------------------------------------------------- */
-  useEffect(() => {
-    const fetchReviews = async () => {
-      if (!courseId) return;
-      setLoading(true);
-      setError("");
-      try {
-        const res = await axiosInstance.get(
-          `/api/courses/reviews/?course=${courseId}`
-        );
+ useEffect(() => {
+  const fetchReviews = async () => {
+    if (!courseId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await axiosInstance.get(
+        `/api/courses/reviews/?course=${courseId}`
+      );
         // API may return list or paginated {results:[]}
-        const rawData = Array.isArray(res.data)
-          ? res.data
-          : res.data.results || [];
-        const normalized = rawData.map(normalizeReview);
-        setReviews(normalized);
+      const rawData = Array.isArray(res.data) 
+      ? res.data 
+      : res.data.results || [];
+      const normalized = rawData.map(normalizeReview);
+      setReviews(normalized);
 
         // detect user review
-        const userReview = normalized.find(
-          (r) => r.user === currentUser?.id
-        );
-        if (userReview) {
-          setExistingReviewId(userReview.id);
-          setRating(userReview.rating);
-          setReviewText(userReview.text);
-        } else {
-          setExistingReviewId(null);
-          setRating(0);
-          setReviewText("");
-        }
-      } catch (err) {
-        console.error("Failed to fetch reviews", err);
-        setError("Failed to load reviews.");
-      } finally {
-        setLoading(false);
+      const userReview = normalized.find(
+        (r) => r.user === currentUser?.id
+      );
+      if (userReview) {
+        setExistingReviewId(userReview.id);
+        setRating(userReview.rating);
+        setReviewText(userReview.text);
+      } else {
+        setExistingReviewId(null);
+        setRating(0);
+        setReviewText("");
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch reviews", err);
+      setError("Failed to load reviews.");
+    } finally {
+      setLoading(false);
+      if (success) setSuccess(false); // ✅ reset success trigger
+    }
+  };
 
-    fetchReviews();
-  }, [courseId, success, currentUser]);
+  fetchReviews();
+}, [courseId, success, currentUser]);
 
   /* --------------------------------------------------
    * Submit review (create only; server rejects duplicates)
@@ -176,7 +177,7 @@ const Reviews = ({ courseId, currentUser }) => {
             {Array.from({ length: 5 }, (_, i) => (
               <FaStar
                 key={i}
-                color={i < Math.floor(overallRating) ? "orange" : "#ddd"}
+                color={i < Math.floor(overallRating) ? "#199fcc" : "#ddd"}
               />
             ))}
           </div>
@@ -195,7 +196,7 @@ const Reviews = ({ courseId, currentUser }) => {
                 </div>
                 <div className="stars">
                   {Array.from({ length: 5 }, (_, i) => (
-                    <FaStar key={i} color={i < stars ? "orange" : "#ddd"} />
+                    <FaStar key={i} color={i < stars ? "#199fcc" : "#ddd"} />
                   ))}
                 </div>
                 <span className="percentage">{percentage}%</span>
@@ -218,7 +219,7 @@ const Reviews = ({ courseId, currentUser }) => {
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  color={(hoverRating || rating) >= star ? "orange" : "#ccc"}
+                  color={(hoverRating || rating) >= star ? "#199fcc" : "#ccc"}
                   style={{ cursor: "pointer", fontSize: "22px" }}
                 />
               ))}
@@ -269,7 +270,7 @@ const Reviews = ({ courseId, currentUser }) => {
         <DropdownButton
           title={selectedRating}
           className="filter-dropdown"
-          variant="light"
+          variant="#199fcc"
         >
           <Dropdown.Item onClick={() => setSelectedRating("All ratings")}>
             All ratings
@@ -299,7 +300,7 @@ const Reviews = ({ courseId, currentUser }) => {
                   {Array(review.rating)
                     .fill()
                     .map((_, i) => (
-                      <FaStar key={i} color="gold" />
+                      <FaStar key={i} color="#199fcc" />
                     ))}
                   <small className="text-muted ms-2">
                     {review.created_at

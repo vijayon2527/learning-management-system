@@ -14,7 +14,7 @@ const CategoryDeleteConfirm = ({ category, onDeleted, onClose }) => {
     setDeleting(true);
     setError("");
     try {
-      await axiosInstance.delete(`/api/courses/categories/${category.id}/`);
+      await axiosInstance.delete(`/api/courses/categories/${category.slug}/`);
       notifySuccess("Category deleted successfully!");
       onDeleted(category.id);
       onClose();

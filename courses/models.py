@@ -700,14 +700,14 @@ class Enrollment(models.Model):
         verbose_name = _("Enrollment")
         verbose_name_plural = _("Enrollments")
         constraints = [
-            models.UniqueConstraint(fields=["user", "course"], name="unique_user_course_enrollment"),
+            models.UniqueConstraint(fields=["user", "course", "track"], name="unique_user_course_enrollment"),
         ]
         indexes = [
             models.Index(fields=["user", "course"], name="enrollment_user_course_idx"),
         ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.course.name}"
+        return f"{self.user.first_name} - {self.course.name}"
 
     def update_progress(self):
         total_lectures = self.course.sections.aggregate(total_lectures=Count("lectures"))["total_lectures"] or 0
