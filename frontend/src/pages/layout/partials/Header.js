@@ -181,17 +181,18 @@ const Header = () => {
               </NavLink>
             </div>
 
-            <div className="text-center w-100">
-              {/* STATIC LOGO */}
-              <img src={`${STATIC_BASE}/assets/images/AGP-LOGO.png`} alt="Logo" height="50" />
-            </div>
+           <div className="text-center w-100">
+            <NavLink to="/">
+              <img src={`${STATIC_BASE}/assets/images/AGP-LOGO.png`} alt="Logo" height="50" style={{ cursor: 'pointer' }} />
+            </NavLink>
+          </div>
             <div className="d-flex gap-3 align-items-center">
               <BsSearch role="button" className="nav-icon" onClick={toggleSearch} />
               <BsBag role="button" className="fs-4" onClick={toggleCart} />
               {!isLoggedIn && (
              <button
               className="btn btn-sm"
-              style={{ backgroundColor: "#ff5722", color: "#fff", border: "none" }}
+              style={{ backgroundColor: "#199fcc", color: "#fff", border: "none" }}
               onClick={() => window.dispatchEvent(new CustomEvent("show-login"))}
             >
               Login

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
-import Header from '../layout/partials/Header';
-import Footer from '../layout/partials/Footer';
 
 const CombinedPaymentComponent = ({ trackId }) => {
   const navigate = useNavigate();
@@ -93,16 +91,16 @@ const CombinedPaymentComponent = ({ trackId }) => {
   if (!paymentData && !error) {
     return (
       <>
-        <Header />
+        {/* <Header /> */}
         <div className="text-center mt-5">Loading Payment Details...</div>
-        <Footer />
+        {/* <Footer /> */}
       </>
     );
   }
 
   return (
     <>
-      <Header />
+      {/* <Header /> */}
       <div className="container mt-5">
         <h2 className="text-center mb-4">Make Payment</h2>
 
@@ -157,7 +155,7 @@ const CombinedPaymentComponent = ({ trackId }) => {
           </div>
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 };

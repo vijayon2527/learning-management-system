@@ -22,6 +22,7 @@ const CategoryCourses = () => {
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // 👈 scroll to top when page loads
     const fetchCategoryAndCourses = async () => {
       setLoading(true);
       setError(null);
@@ -30,7 +31,7 @@ const CategoryCourses = () => {
         const categoryResponse = await axiosInstance.get(`/api/courses/categories/${slug}/`);
         setCategory(categoryResponse.data);
 
-        const coursesResponse = await axiosInstance.get(`/api/courses/courses/?category=${slug}`);
+        const coursesResponse = await axiosInstance.get(`/api/courses/courses/?category__slug=${slug}`);
         setCourses(coursesResponse.data);
       } catch (err) {
         console.error("Error loading category or courses:", err);
@@ -45,9 +46,9 @@ const CategoryCourses = () => {
   }, [slug]);
 
   const cardStyle = {
+  padding:"0 20px",
   cursor: "pointer",
-  border: "2px solid #199fcc",  // Green border
-  borderRadius: "10px",
+  borderRadius: "12px",
   overflow: "hidden",
   backgroundColor: "#fff",
   boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
@@ -55,6 +56,7 @@ const CategoryCourses = () => {
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
+  minHeight: "360px",
 };
 
 const cardHoverStyle = {
@@ -69,7 +71,7 @@ const cardHoverStyle = {
   return (
     <>
       <Header />
-      <main style={{ padding: "1rem", minHeight: "70vh" }}>
+      <main style={{ padding: "0 20px", minHeight: "70vh" ,marginLeft: "5%"}}>
         {loading && <p>Loading...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -97,7 +99,10 @@ const cardHoverStyle = {
                   <div
                     key={course.slug}
                     style={cardStyle}
-                    onClick={() => navigate(`/courses/${course.slug}`)}
+                    onClick={() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' }); // 👈 scroll to top before navigating
+                      navigate(`/courses/${course.slug}`);
+                    }}
                     onMouseEnter={(e) => {
                       Object.assign(e.currentTarget.style, cardHoverStyle);
                     }}
@@ -106,7 +111,7 @@ const cardHoverStyle = {
                     }}
                   >
                     {/* Course Image */}
-                    <div style={{ height: "160px", overflow: "hidden" }}>
+                    <div style={{ height: "180px", overflow: "hidden", width:"100%" }}>
                       {course.logo ? (
                         <img
                           src={course.logo}

@@ -13,6 +13,7 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const fetchCategories = async () => {
       try {
         const res = await axiosInstance.get("/api/courses/categories/");
@@ -139,7 +140,7 @@ const Categories = () => {
 
       <Slider {...sliderSettings}>
         {categories.map((cat) => (
-          <CategoryItem key={cat.id} id={cat.id} name={cat.name} logo={cat.logo} />
+          <CategoryItem key={cat.id} slug={cat.slug} name={cat.name} logo={cat.logo} />
         ))}
       </Slider>
     </div>

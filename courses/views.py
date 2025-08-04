@@ -58,7 +58,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all().order_by("name")
     serializer_class = CourseSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["category"]
+    filterset_fields = ["category__slug"]
     lookup_field = 'slug'
 
 
@@ -118,6 +118,7 @@ class SectionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
+    filterset_fields = ["track"]
     ordering = ["track", "created_at"]
 
     def get_queryset(self):
@@ -188,11 +189,20 @@ class LectureViewSet(viewsets.ModelViewSet):
         
 
 class PublicCourseViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Course.objects.filter(enrollment_open=True)
     serializer_class = PublicCourseSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]  # require login
     lookup_field = 'slug'
 
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Course.objects.none()
+
+        # Return only courses where the user has an enrollment
+        return Course.objects.filter(
+            enrollment_open=True,
+            enrollments__user=user,
+        ).distinct()
 
 class LectureNotePagination(PageNumberPagination):
     page_size = 5  # ✅ Only 5 per page
@@ -422,7 +432,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment.razorpay_signature = signature
             payment.status = 'Completed'
             payment.save()
+            track = payment.track
+            course = track.course
+            user = payment.user
 
+            enrollment, created = Enrollment.objects.get_or_create(
+                user=user,
+                course=course,
+                defaults={'track': track}
+            )
+
+            if not created and enrollment.track is None:
+                enrollment.track = track
+                enrollment.save(update_fields=["track"])
             return Response({'status': 'success'})
 
         except razorpay.errors.SignatureVerificationError:
