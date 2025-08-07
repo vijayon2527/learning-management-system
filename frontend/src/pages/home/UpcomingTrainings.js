@@ -17,6 +17,7 @@ const UpcomingTrainings = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const fetchCourses = async () => {
       try {
         const res = await axiosInstance.get("/api/courses/courses/");

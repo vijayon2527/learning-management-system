@@ -23,13 +23,11 @@ import Footer from "../layout/partials/Footer";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import TopRatingsSlider from "./RatingBreakDown";
-import Payment from "./Payement";
 import RazorpayPayment from "./Payement";
 import { useLocation } from "react-router-dom";
 
 const CourseDetail = (user) => {
   const { slug } = useParams();
-
   const [course, setCourse] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [features, setFeatures] = useState([]);
@@ -51,10 +49,10 @@ const CourseDetail = (user) => {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = React.useState(null);
   const location = useLocation();
-
-
+  const [showAllLectures, setShowAllLectures] = useState({});
 
 useEffect(() => {
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // 👈 scroll to top when page loads
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -68,7 +66,6 @@ useEffect(() => {
         axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`),
         axiosInstance.get(`/api/courses/reviews/?course=${courseId}`),
       ]);
-
       setTracks(tracksRes.data);
       setFeatures(featuresRes.data);
       setFeatureValues(featureValuesRes.data);
@@ -83,10 +80,8 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
   fetchData();
 }, [slug]);
-
 
   useEffect(() => {
     const loadCurriculum = async () => {
@@ -94,14 +89,11 @@ useEffect(() => {
         setCurriculumData([]);
         return;
       }
-
       try {
         const sectionPromises = tracks.map((track) =>
           axiosInstance.get(`/api/courses/sections/?track=${track.id}`)
         );
-
         const sectionResponses = await Promise.all(sectionPromises);
-
         const sectionsWithTrack = [];
         sectionResponses.forEach((res, idx) => {
           const track = tracks[idx];
@@ -113,12 +105,10 @@ useEffect(() => {
             });
           });
         });
-
         const lecturePromises = sectionsWithTrack.map((section) =>
           axiosInstance.get(`/api/courses/lectures/?section=${section.id}`)
         );
         const lectureResponses = await Promise.all(lecturePromises);
-
         const curriculum = sectionsWithTrack.map((section, index) => ({
           id: section.id,
           trackId: section.trackId,
@@ -134,7 +124,6 @@ useEffect(() => {
             video_url: lec.video || null,
           })),
         }));
-
         setCurriculumData(curriculum);
         setExpandedCurriculum({ 0: true });
       } catch (error) {
@@ -142,7 +131,6 @@ useEffect(() => {
         setCurriculumData([]);
       }
     };
-
     loadCurriculum();
   }, [tracks]);
 
@@ -189,7 +177,6 @@ useEffect(() => {
   };
 }, [dotsMenuOpen]);
 
-
 const handleLike = (id) => {
   setReviewStates((prev) => {
     const r = prev[id];
@@ -233,7 +220,6 @@ const handleDislike = (id) => {
     };
   });
 };
-
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) return;
@@ -284,8 +270,6 @@ const timeAgo = (dateString) => {
   }
 }
 
-
-
 useEffect(() => {
   if (location.state?.trackId && localStorage.getItem("access_token")) {
     setSelectedTrackId(location.state.trackId);
@@ -293,27 +277,6 @@ useEffect(() => {
   }
 }, []);
 
-
-
-  const closePayment = () => {
-    setShowPayment(false);
-    setSelectedTrack(null);
-  };
-
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-
-  // Skeleton placeholder for Hero Section
   const HeroSkeleton = () => (
     <div style={{ display: "flex", gap: 40, flexWrap: "wrap", marginBottom: 40 }}>
       <Skeleton height={380} width={800} borderRadius={8} />
@@ -329,7 +292,6 @@ const loadRazorpayScript = () => {
     </div>
   );
 
-  // Skeleton placeholder for Overview Tab
   const OverviewSkeleton = () => (
     <div>
       <Skeleton height={30} width={200} style={{ marginBottom: 20 }} />
@@ -341,20 +303,12 @@ const loadRazorpayScript = () => {
     </div>
   );
 
-  const handleShowMore = () => {
-  setVisibleReviews((prev) => prev + 2); // show 2 more each time
-};
 const handleShowToggle = () => setShowAllReviews((prev) => !prev);
-
-
 const ratingsCount = reviews.reduce((acc, review) => {
   acc[review.rating] = (acc[review.rating] || 0) + 1;
   return acc;
 }, {});
 
-
-
-  // Skeleton placeholder for Curriculum Tab
   const CurriculumSkeleton = () => (
     <div>
       <Skeleton height={30} width={150} style={{ marginBottom: 20, marginLeft: "40%" }} />
@@ -383,9 +337,7 @@ const ratingsCount = reviews.reduce((acc, review) => {
       ))}
     </div>
   );
-const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
 
-  // Skeleton placeholder for Pricing Tab
   const PricingSkeleton = () => (
     <div
       style={{
@@ -477,7 +429,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
     <>
       <Header />
       <div style={styles.container}>
-        {/* Hero Section */}
         <section style={styles.heroSection}>
           <img
             src={
@@ -506,7 +457,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
           </div>
         </section>
 
-        {/* Tabs Navigation */}
         <nav style={styles.tabNav}>
           {["overview", "curriculum", "pricing"].map((tab) => (
             <button
@@ -523,7 +473,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
           ))}
         </nav>
 
-        {/* Loading skeleton on tab switch */}
         {tabLoading ? (
           <>
             {activeTab === "overview" && <OverviewSkeleton />}
@@ -534,13 +483,10 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
           <section style={styles.tabContent}>
         {activeTab === "overview" && (
               <>
-                {/* ABOUT THIS COURSE */}
                 <h2 style={{ textAlign: "center", fontWeight: "bold", marginBottom: 16 }}>
                   About this Course
                 </h2>
                 <div dangerouslySetInnerHTML={{ __html: course.summary }} />
-
-                {/* KEY FEATURES */}
                 {features.length > 0 && (
                   <>
                     <h3 style={{ marginTop: "2rem", marginBottom: 12, color: "#0070f3" }}>
@@ -692,7 +638,7 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                   lineHeight: 1.4,
                                 }}
                               >
-                                {review.comment || "No comment provided."}
+                                {review.text|| "No comment provided."}
                               </p>
 
                               {/* Like/Dislike */}
@@ -765,7 +711,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                 )}
               </>
             )}
-            {/* Curriculum Tab */}
             {activeTab === "curriculum" && (
               <>
                 <h2 style={{ textAlign: "center", fontWeight: "bold" }}>Sections</h2>
@@ -785,7 +730,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                           overflow: "hidden",
                         }}
                       >
-                        {/* Section Header */}
                         <div
                           onClick={() =>
                             setExpandedCurriculum((prev) => ({
@@ -800,24 +744,22 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                             fontWeight: "600",
                           }}
                         >
-                          {section.name}
+                          {`Section ${sectionIndex + 1} - ${section.name}`}
                           <span style={{ float: "right" }}>
                             {expandedCurriculum[sectionIndex] ? "▼" : "▶"}
                           </span>
                         </div>
-
-                        {/* Section Content */}
                         {expandedCurriculum[sectionIndex] && (
                           <div style={{ padding: "12px 16px" }}>
-                            {section.modules.map((module) => {
+                            {(showAllLectures[sectionIndex]
+                              ? section.modules
+                              : section.modules.slice(0, 2)
+                            ).map((module) => {
                               const isPreview = module.preview;
-
-                              // Truncate title to first word + "..."
                               const truncatedTitle = module.title
                                 ? module.title.split(" ")[0] +
                                   (module.title.split(" ").length > 1 ? "..." : "")
                                 : "";
-
                               const isPlaying = previewPlaying[module.id] || false;
 
                               return (
@@ -841,7 +783,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                     }
                                   }}
                                 >
-                                  {/* Lecture Header */}
                                   <div
                                     style={{
                                       display: "flex",
@@ -884,8 +825,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                       {module.duration}
                                     </span>
                                   </div>
-
-                                  {/* Video preview player toggled on click or auto open first lecture preview */}
                                   {isPlaying && module.video_url && (
                                     <div style={{ marginTop: "1rem" }}>
                                       <video
@@ -896,7 +835,7 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                           borderRadius: "6px",
                                           background: "#000",
                                         }}
-                                        onClick={(e) => e.stopPropagation()} // prevent parent click toggling video off
+                                        onClick={(e) => e.stopPropagation()}
                                       >
                                         <source src={module.video_url} type="video/mp4" />
                                         Your browser does not support the video tag.
@@ -906,6 +845,45 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                 </div>
                               );
                             })}
+                            {section.modules.length > 2 && (
+                              <div style={{ marginTop: "12px" }}>
+                                {showAllLectures[sectionIndex] ? (
+                                  <span
+                                    role="button"
+                                    onClick={() =>
+                                      setShowAllLectures((prev) => ({
+                                        ...prev,
+                                        [sectionIndex]: false,
+                                      }))
+                                    }
+                                    style={{
+                                      color: "#007BFF",
+                                      cursor: "pointer",
+                                      fontSize: "0.9rem",
+                                    }}
+                                  >
+                                    Show Less
+                                  </span>
+                                ) : (
+                                  <span
+                                    role="button"
+                                    onClick={() =>
+                                      setShowAllLectures((prev) => ({
+                                        ...prev,
+                                        [sectionIndex]: true,
+                                      }))
+                                    }
+                                    style={{
+                                      color: "#007BFF",
+                                      cursor: "pointer",
+                                      fontSize: "0.9rem",
+                                    }}
+                                  >
+                                    Load More
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -914,8 +892,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                 )}
               </>
             )}
-
-            {/* Pricing Tab */}
             {activeTab === "pricing" && (
               <>
                 <h2 style={{ marginTop: 40, textAlign: "center", fontWeight: "bold" }}>
@@ -1021,7 +997,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
           </section>
         )}
 
-        {/* Share Section */}
         <section style={styles.shareSection}>
           <h3>Share this course</h3>
           <div style={styles.shareIcons}>
@@ -1044,7 +1019,6 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
           </div>
         </section>
 
-        {/* Business Section */}
         <section style={styles.businessSection}>
           <h3 style={{ fontSize: "1.6rem", marginBottom: 8 }}>
             Interested in this course for your business or team?
@@ -1128,7 +1102,7 @@ const styles = {
     borderRadius: "8px",
   },
   requestButton: {
-    backgroundColor: "#fe7e16ff",
+    backgroundColor: "#199fcc",
     color: "white",
     padding: "0.75rem 1.5rem",
     fontSize: "16px",
@@ -1146,3 +1120,8 @@ const styles = {
   gap: "20px",
 },
 };
+
+
+
+
+

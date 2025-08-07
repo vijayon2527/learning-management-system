@@ -18,8 +18,9 @@ class CategorySerializer(serializers.ModelSerializer):
             "is_active",
             "created_at",
             "updated_at",
+            "slug"
         ]
-
+        read_only_fields = ['slug']
 
 class CourseSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
@@ -141,7 +142,6 @@ class SectionSerializer(serializers.ModelSerializer):
             "created_at", "updated_at", "track_name", "course_name",
         )
 
-
 class PublicCourseSerializer(serializers.ModelSerializer):
     instructor = serializers.CharField(source='instructor.get_full_name', default='Instructor')
     instructor_profile_pic = serializers.SerializerMethodField()
@@ -150,13 +150,15 @@ class PublicCourseSerializer(serializers.ModelSerializer):
     promotional_video = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
+    is_enrolled = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = [
-            'id', 'name', 'description', 'thumbnail', 'logo', 'promotional_video', 'average_rating',
-            'slug', 'instructor', 'instructor_profile_pic', 'estimated_duration', 'lectures_count',
-            'total_hours', 'enrolled_students', 'visibility'
+            'id', 'name', 'description', 'thumbnail', 'logo', 'promotional_video',
+            'average_rating', 'slug', 'instructor', 'instructor_profile_pic',
+            'estimated_duration', 'lectures_count', 'total_hours',
+            'enrolled_students', 'visibility', 'is_enrolled',
         ]
 
     def get_promotional_video(self, obj):
@@ -180,24 +182,23 @@ class PublicCourseSerializer(serializers.ModelSerializer):
     def get_instructor_profile_pic(self, obj):
         request = self.context.get('request')
         instructor = obj.instructor
-        if instructor and instructor.profile_pic and hasattr(instructor.profile_pic, 'url'):
+        if instructor and getattr(instructor, 'profile_pic', None) and hasattr(instructor.profile_pic, 'url'):
             return request.build_absolute_uri(instructor.profile_pic.url)
-        return None  # Or return a default image path if needed
+        return None
 
     def get_lectures_count(self, obj):
-        return (
-            Section.objects.filter(track__course=obj)
-            .prefetch_related('lectures')
-            .aggregate(count=Count('lectures'))['count'] or 0
-        )
+        return Section.objects.filter(track__course=obj).aggregate(count=Count('lectures'))['count'] or 0
 
     def get_total_hours(self, obj):
         duration = obj.estimated_duration
         if duration:
             total_minutes = duration.total_seconds() // 60
-            return f"{total_minutes // 60}h {total_minutes % 60}m"
+            return f"{int(total_minutes // 60)}h {int(total_minutes % 60)}m"
         return None
 
+    def get_is_enrolled(self, obj):
+        user = self.context['request'].user
+        return Enrollment.objects.filter(user=user, course=obj).exists()
 
 class LectureNoteSerializer(serializers.ModelSerializer):
     timestamp = serializers.CharField()  # accept string from frontend
@@ -262,6 +263,10 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):
+    course_name = serializers.CharField(source="course.name", read_only=True)
+    course_slug = serializers.CharField(source="course.slug", read_only=True)
+    course_thumbnail = serializers.ImageField(source="course.thumbnail", read_only=True)
+
     class Meta:
         model = Enrollment
-        fields = '__all__'
+        fields = ['course_id', 'track_id', 'course_name', 'course_slug', 'course_thumbnail']
