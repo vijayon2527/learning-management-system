@@ -66,7 +66,7 @@ const TopRatingsSlider = ({ reviews }) => {
           userSelect: "none",
         }}
       >
-        {review.user_name ? review.user_name[0].toUpperCase() : "A"}
+        {review.first_name ? review.first_name[0].toUpperCase() : "A"}
       </div>
 
       {/* Username */}

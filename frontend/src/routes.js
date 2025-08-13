@@ -44,7 +44,7 @@ const routes = [
     ] 
   },
 {
-  path: '/dashboard/category-detail/:id',
+  path: '/dashboard/category-detail/:slug',
   name: 'Category Detail',
   element: CategoryDetail,
   requiredPermissions: [

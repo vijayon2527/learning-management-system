@@ -21,7 +21,7 @@ const stripHtmlTags = (html) => {
 };
 
 const CategoryDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
 
   const [category, setCategory] = useState(null);
@@ -30,8 +30,9 @@ const CategoryDetail = () => {
 
   useEffect(() => {
     const fetchCategory = async () => {
+      console.log("slug from useParams:", slug); 
       try {
-        const res = await axiosInstance.get(`/api/courses/categories/${id}/`);
+        const res = await axiosInstance.get(`/api/courses/categories/${slug}/`);
         setCategory(res.data);
       } catch (err) {
         console.error("Error fetching category:", err);
@@ -42,7 +43,7 @@ const CategoryDetail = () => {
     };
 
     fetchCategory();
-  }, [id]);
+  }, [slug]);
 
   if (loading) {
     return (
@@ -57,7 +58,7 @@ const CategoryDetail = () => {
       <div className="text-danger text-center p-4">
         {error}
         <div className="mt-3">
-          <CButton color="secondary" onClick={() => navigate(-1)}>
+          <CButton color="secondary" onClick={() => navigate('/dashboard/course-category-list')}>
             Back
           </CButton>
         </div>
@@ -76,7 +77,7 @@ const CategoryDetail = () => {
           <CButton
             color="light"
             className="text-dark border border-secondary"
-            onClick={() => navigate('/dashboard/course-list')}
+            onClick={() => navigate('/dashboard/course-category-list')}
           >
             <CIcon icon={cilArrowLeft} className="me-2" />
             Back

@@ -147,9 +147,9 @@ const CategoryList = () => {
                     href="#!"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigate(`/dashboard/category-detail/${cat.id}`);
+                      navigate(`/dashboard/category-detail/${cat.slug}`);
                     }}
-                    className="fw-semibold link-primary text-decoration-none"
+                    
                   >
                     {cat.name}
                   </a>

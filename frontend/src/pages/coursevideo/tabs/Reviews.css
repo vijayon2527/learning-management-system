@@ -254,3 +254,16 @@
           width: 100%;
       }
   }
+
+
+  .reviews-scroll-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.reviews-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}

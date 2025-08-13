@@ -123,6 +123,14 @@ const StudentRegister = () => {
       <CCol md={6} lg={10}>
         <CCard className="shadow-sm rounded-4">
           <CCardBody>
+             <div className="d-flex justify-content-end">
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={() => window.dispatchEvent(new Event("close-login"))}
+                ></button>
+              </div>
             <h2 className="text-center mb-4">Create Your Account</h2>
             {metaError && <CAlert color="warning">{metaError}</CAlert>}
             {serverError && <CAlert color="danger">{serverError}</CAlert>}

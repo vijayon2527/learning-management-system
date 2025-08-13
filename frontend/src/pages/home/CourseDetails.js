@@ -664,9 +664,8 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                     </div>
                   </div>
 
-                  {/* REVIEWS HEADER */}
                   <h2 style={{ fontWeight: "bold", textAlign: "center", color: "#222" }}>
-                    ⭐ {course.average_rating || "4.5"} course rating • {reviews.length} ratings
+                    ⭐ {reviews.rating || "4.5"} course rating • {reviews.length} ratings
                   </h2>
 
                   {reviewsLoading ? (
@@ -725,8 +724,8 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
                                       fontWeight: 600,
                                     }}
                                   >
-                                    {review.user_name
-                                      ? review.user_name[0].toUpperCase()
+                                    {review.first_name
+                                      ? review.first_name[0].toUpperCase()
                                       : "A"}
                                   </div>
                                   <div>

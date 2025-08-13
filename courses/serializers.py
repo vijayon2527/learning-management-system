@@ -124,6 +124,7 @@ class LectureSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(course.logo.url) if request else course.logo.url
         return None  # or return a default logo URL
 
+
 class SectionSerializer(serializers.ModelSerializer):
     track_name = serializers.CharField(source="track.name", read_only=True)
     course_name = serializers.CharField(source="track.course.name", read_only=True)
@@ -235,6 +236,7 @@ class CourseReviewSerializer(serializers.ModelSerializer):
             'course',
             'track',       # optional
             'rating',
+            'comment',
             'text',        # maps to comment
             'created_at',
         ]

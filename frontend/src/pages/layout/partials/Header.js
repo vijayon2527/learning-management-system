@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate,useLocation } from "react-router-dom";
 import { Container, Nav } from "react-bootstrap";
 import { BsSearch, BsBag, BsList, BsX, BsBell } from "react-icons/bs";
+import { toast } from 'react-toastify';
 import axiosInstance from "../../../utils/axiosInstance";
 import "./Header.css";
 
@@ -79,11 +80,22 @@ useEffect(() => {
     }
   }, [showLearningDropdown]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("authTokens");
-    setIsLoggedIn(false);
-    navigate("/login");
-  };
+const handleLogout = () => {
+  localStorage.removeItem("authTokens");
+  localStorage.removeItem("userInfo");
+  setProfile(null);
+  setIsLoggedIn(false);
+  toast.success("Logged out successfully!", {
+    position: "top-right",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  });
+  navigate("/");
+};
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -143,17 +155,19 @@ useEffect(() => {
 
 
     useEffect(() => {
-    if (isLoggedIn) {
-      axiosInstance
-        .get("/api/users/profile/") // ✅ Update to match your backend endpoint
-        .then((response) => {
-          setProfile(response.data);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch profile", error);
-        });
-    }
-  }, [isLoggedIn]);
+  if (isLoggedIn) {
+    axiosInstance
+      .get("/api/users/profile/")
+      .then((response) => {
+        setProfile(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch profile", error);
+      });
+  } else {
+    setProfile(null); // clear profile if not logged in
+  }
+}, [isLoggedIn]);
 
 
    const getProfileImage = () => {

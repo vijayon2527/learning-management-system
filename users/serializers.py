@@ -62,7 +62,8 @@ class StudentReadSerializer(serializers.ModelSerializer):
         model = Student
         fields = ["education_level", "institution", "field_of_study",
                   "graduation_year", "is_premium", "premium_expiry",
-                  "points", "last_active"]
+                  "points", "last_active","interests",
+                  "goals"]
 
 
 class UserSerializer(serializers.ModelSerializer):

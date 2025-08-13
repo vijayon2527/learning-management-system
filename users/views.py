@@ -109,11 +109,17 @@ class AGPTokenObtainPairView(TokenObtainPairView):
 
                 refresh = RefreshToken.for_user(user)
                 refresh["role"] = user.get_role() if hasattr(user, "get_role") else "unknown"
+                refresh["user_type"] = user.user_type 
+
+                access = refresh.access_token
+                access["role"] = refresh["role"]         # ✅ ensure role is in access too
+                access["user_type"] = refresh["user_type"]
 
                 return Response({
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "role": refresh["role"],
+                    "user_type": refresh["user_type"],
                 })
 
             except Exception as e:
