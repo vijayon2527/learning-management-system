@@ -23,14 +23,12 @@ import Footer from "../layout/partials/Footer";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import TopRatingsSlider from "./RatingBreakDown";
-import Payment from "./Payement";
 import RazorpayPayment from "./Payement";
 import { useLocation } from "react-router-dom";
 import Login from "../../views/pages/login/Login";
 
 const CourseDetail = (user) => {
   const { slug } = useParams();
-
   const [course, setCourse] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [features, setFeatures] = useState([]);
@@ -57,8 +55,10 @@ const CourseDetail = (user) => {
   const [enrolledTrackIds, setEnrolledTrackIds] = useState([]);
 
   
+  const [showAllLectures, setShowAllLectures] = useState({});
 
 useEffect(() => {
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // 👈 scroll to top when page loads
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -72,7 +72,6 @@ useEffect(() => {
         axiosInstance.get(`/api/courses/feature-values/?course_id=${courseId}`),
         axiosInstance.get(`/api/courses/reviews/?course=${courseId}`),
       ]);
-
       setTracks(tracksRes.data);
       setFeatures(featuresRes.data);
       setFeatureValues(featureValuesRes.data);
@@ -87,10 +86,8 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
   fetchData();
 }, [slug]);
-
 
   useEffect(() => {
     const loadCurriculum = async () => {
@@ -98,14 +95,11 @@ useEffect(() => {
         setCurriculumData([]);
         return;
       }
-
       try {
         const sectionPromises = tracks.map((track) =>
           axiosInstance.get(`/api/courses/sections/?track=${track.id}`)
         );
-
         const sectionResponses = await Promise.all(sectionPromises);
-
         const sectionsWithTrack = [];
         sectionResponses.forEach((res, idx) => {
           const track = tracks[idx];
@@ -117,12 +111,10 @@ useEffect(() => {
             });
           });
         });
-
         const lecturePromises = sectionsWithTrack.map((section) =>
           axiosInstance.get(`/api/courses/lectures/?section=${section.id}`)
         );
         const lectureResponses = await Promise.all(lecturePromises);
-
         const curriculum = sectionsWithTrack.map((section, index) => ({
           id: section.id,
           trackId: section.trackId,
@@ -138,7 +130,6 @@ useEffect(() => {
             video_url: lec.video || null,
           })),
         }));
-
         setCurriculumData(curriculum);
         setExpandedCurriculum({ 0: true });
       } catch (error) {
@@ -146,7 +137,6 @@ useEffect(() => {
         setCurriculumData([]);
       }
     };
-
     loadCurriculum();
   }, [tracks]);
 
@@ -205,7 +195,6 @@ useEffect(() => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
 const handleLike = (id) => {
   setReviewStates((prev) => {
     const r = prev[id];
@@ -249,7 +238,6 @@ const handleDislike = (id) => {
     };
   });
 };
-
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) return;
@@ -419,7 +407,6 @@ const loadRazorpayScript = () => {
     </div>
   );
 
-  // Skeleton placeholder for Overview Tab
   const OverviewSkeleton = () => (
     <div>
       <Skeleton height={30} width={200} style={{ marginBottom: 20 }} />
@@ -431,20 +418,12 @@ const loadRazorpayScript = () => {
     </div>
   );
 
-  const handleShowMore = () => {
-  setVisibleReviews((prev) => prev + 2); // show 2 more each time
-};
 const handleShowToggle = () => setShowAllReviews((prev) => !prev);
-
-
 const ratingsCount = reviews.reduce((acc, review) => {
   acc[review.rating] = (acc[review.rating] || 0) + 1;
   return acc;
 }, {});
 
-
-
-  // Skeleton placeholder for Curriculum Tab
   const CurriculumSkeleton = () => (
     <div>
       <Skeleton height={30} width={150} style={{ marginBottom: 20, marginLeft: "40%" }} />
@@ -473,9 +452,7 @@ const ratingsCount = reviews.reduce((acc, review) => {
       ))}
     </div>
   );
-const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
 
-  // Skeleton placeholder for Pricing Tab
   const PricingSkeleton = () => (
     <div
       style={{
@@ -563,646 +540,683 @@ const sortedReviews = [...reviews].sort((a, b) => b.rating - a.rating);
     );
   }
 
-  return (
-    <>
-      <Header />
-      <div style={styles.container}>
-        {/* Hero Section */}
-        <section style={styles.heroSection}>
-          <img
-            src={
-              course.logo ||
-              "httpmages.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1500&q=80"
-            }
-            alt={course.name}
-            style={styles.heroImage}
-            data-aos="fade-up"
-            data-aos-delay="100"
-          />
-          <div style={styles.heroInfo} data-aos="fade-up" data-aos-delay="200">
-            <h1 style={styles.courseTitle}>{course.name}</h1>
-            <p style={styles.courseCategory}>{course.category_name}</p>
-            <div style={styles.metaInfo}>
-              <span>
-                <FaClock /> {course.duration || "Self-paced"}
-              </span>
-              <span>
-                <FaUserGraduate /> {course.certificate} Certified
-              </span>
-              <span>
-                <FaStar style={{ color: "#199fcc" }} /> 4.8 rating
-              </span>
-            </div>
+ return (
+  <>
+    <Header />
+
+    <div style={styles.container}>
+      {/* HERO */}
+      <section style={styles.heroSection}>
+        <img
+          src={
+            course.logo ||
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1500&q=80"
+          }
+          alt={course.name}
+          style={styles.heroImage}
+          data-aos="fade-up"
+          data-aos-delay="100"
+        />
+        <div style={styles.heroInfo} data-aos="fade-up" data-aos-delay="200">
+          <h1 style={styles.courseTitle}>{course.name}</h1>
+          <p style={styles.courseCategory}>{course.category_name}</p>
+          <div style={styles.metaInfo}>
+            <span>
+              <FaClock /> {course.duration || "Self-paced"}
+            </span>
+            <span>
+              <FaUserGraduate /> {course.certificate} Certified
+            </span>
+            <span>
+              <FaStar style={{ color: "#199fcc" }} /> 4.8 rating
+            </span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Tabs Navigation */}
-        <nav style={styles.tabNav}>
-          {["overview", "curriculum", "pricing"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-               className={`tabs-btn ${activeTab === tab ? "active" : ""}`}
-              style={{
-                ...styles.tabButton,
-                ...(activeTab === tab ? styles.activeTab : {}),
-              }}
-              disabled={tabLoading}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </nav>
+      {/* TABS */}
+      <nav style={styles.tabNav}>
+        {["overview", "curriculum", "pricing"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab)}
+            className={`tabs-btn ${activeTab === tab ? "active" : ""}`}
+            style={{
+              ...styles.tabButton,
+              ...(activeTab === tab ? styles.activeTab : {}),
+            }}
+            disabled={tabLoading}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </nav>
 
-        {/* Loading skeleton on tab switch */}
-        {tabLoading ? (
-          <>
-            {activeTab === "overview" && <OverviewSkeleton />}
-            {activeTab === "curriculum" && <CurriculumSkeleton />}
-            {activeTab === "pricing" && <PricingSkeleton />}
-          </>
-        ) : (
-          <section style={styles.tabContent}>
+      {/* TAB CONTENT */}
+      {tabLoading ? (
+        <>
+          {activeTab === "overview" && <OverviewSkeleton />}
+          {activeTab === "curriculum" && <CurriculumSkeleton />}
+          {activeTab === "pricing" && <PricingSkeleton />}
+        </>
+      ) : (
+        <section style={styles.tabContent}>
+          {/* OVERVIEW */}
           {activeTab === "overview" && (
+            <>
+              <h2 style={{ textAlign: "center", fontWeight: "bold", marginBottom: 16 }}>
+                About this Course
+              </h2>
+
+              <div dangerouslySetInnerHTML={{ __html: course.summary }} />
+
+              {features.length > 0 && (
                 <>
-                  {/* ABOUT THIS COURSE */}
-                  <h2 style={{ textAlign: "center", fontWeight: "bold", marginBottom: 16 }}>
-                    About this Course
-                  </h2>
-                  <div dangerouslySetInnerHTML={{ __html: course.summary }} />
-
-                  {/* KEY FEATURES */}
-                  {features.length > 0 && (
-                    <>
-                      <h3 style={{ marginTop: "2rem", marginBottom: 12, color: "#199fcc" }}>
-                        Key Features
-                      </h3>
-                      <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
-                        {features.map((f) => (
-                          <li
-                            key={f.id}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginBottom: 6,
-                              fontWeight: 500,
-                              color: "#333",
-                            }}
-                          >
-                            <FaCheckCircle style={{ color: "#199fcc", marginRight: 8 }} />
-                            {f.name}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-
-                  {/* AVERAGE RATING */}
-                  <div style={{ marginTop: "3rem", textAlign: "center" }}>
-                    <div style={{ margin: "1rem 20px" }}>
-                      <TopRatingsSlider reviews={reviews} />
-                    </div>
-                  </div>
-
-                  <h2 style={{ fontWeight: "bold", textAlign: "center", color: "#222" }}>
-                    ⭐ {reviews.rating || "4.5"} course rating • {reviews.length} ratings
-                  </h2>
-
-                  {reviewsLoading ? (
-                    <Skeleton count={3} />
-                  ) : reviews.length === 0 ? (
-                    <p style={{ textAlign: "center", color: "#888", fontStyle: "italic" }}>
-                      No reviews yet.
-                    </p>
-                  ) : (
-                    <>
-                      <div
+                  <h3 style={{ marginTop: "2rem", marginBottom: 12, color: "#0070f3" }}>
+                    Key Features
+                  </h3>
+                  <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
+                    {features.map((f) => (
+                      <li
+                        key={f.id}
                         style={{
-                          marginTop: "2rem",
-                          display: "grid",
-                          gridTemplateColumns: "repeat(2, 1fr)", // 2 per row
-                          gap: "1.5rem",
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: 6,
+                          fontWeight: 500,
+                          color: "#333",
                         }}
                       >
-                        {reviews
-                          .slice(0, showAllReviews ? reviews.length : 4)
-                          .map((review) => {
-                            const reviewState = reviewStates[review.id] || {};
+                        <FaCheckCircle style={{ color: "#2a40ed", marginRight: 8 }} />
+                        {f.name}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
 
-                            const liked = reviewState?.liked ?? false;
-                            const disliked = reviewState?.disliked ?? false;
-                            const likeCount = reviewState?.likeCount ?? review.likeCount ?? 0;
-                            const dislikeCount =
-                              reviewState?.dislikeCount ?? review.dislikeCount ?? 0;
+              {/* TOP REVIEWS SLIDER */}
+              <div style={{ marginTop: "3rem", textAlign: "center" }}>
+                <div style={{ margin: "1rem 20px" }}>
+                  <TopRatingsSlider reviews={reviews} />
+                </div>
+              </div>
 
-                            return (
-                              <div
-                                key={review.id}
-                                style={{
-                                  backgroundColor: "#fff",
-                                  borderRadius: "8px",
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                                  padding: "1rem",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  position: "relative",
-                                }}
-                              >
-                                {/* Top Row */}
-                                <div style={{ display: "flex", alignItems: "center" }}>
-                                  <div
-                                    style={{
-                                      backgroundColor: "#199fcc",
-                                      color: "#fff",
-                                      borderRadius: "50%",
-                                      width: 36,
-                                      height: 36,
-                                      display: "flex",
-                                      justifyContent: "center",
-                                      alignItems: "center",
-                                      marginRight: 12,
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {review.first_name
-                                      ? review.first_name[0].toUpperCase()
-                                      : "A"}
-                                  </div>
-                                  <div>
-                                    <div style={{ fontWeight: 600 }}>
-                                      {review.first_name || "Anonymous"}
-                                    </div>
-                                    <div style={{ color: "#199fcc" }}>
-                                      {"★".repeat(review.rating)}
-                                      {"☆".repeat(5 - review.rating)}
-                                    </div>
-                                  </div>
-                                  <div style={{ marginLeft: "auto", position: "relative" }}>
-                                    <FiMoreVertical
-                                      style={{ cursor: "pointer", color: "#999" }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDotsMenuOpen((prev) =>
-                                          prev === review.id ? null : review.id
-                                        );
-                                      }}
-                                    />
-                                    {dotsMenuOpen === review.id && (
-                                      <div
-                                        style={{
-                                          position: "absolute",
-                                          top: "120%",
-                                          right: 0,
-                                          backgroundColor: "#fff",
-                                          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                                          borderRadius: 4,
-                                          padding: "0.5rem 1rem",
-                                          cursor: "pointer",
-                                          zIndex: 10,
-                                          whiteSpace: "nowrap",
-                                        }}
-                                        onClick={() => {
-                                          // TODO: Add report logic here
-                                          console.log("Report clicked for review id:", review.id);
-                                          setDotsMenuOpen(null);
-                                        }}
-                                      >
-                                        Report
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+              <h2 style={{ fontWeight: "bold", textAlign: "center", color: "#222" }}>
+                ⭐ {typeof course?.average_rating === "number" ? course.average_rating.toFixed(1) : "4.5"} course rating •{" "}
+                {Array.isArray(reviews) ? reviews.length : 0} ratings
+              </h2>
 
-                                {/* Comment */}
-                                <p
-                                  style={{
-                                    marginTop: "0.75rem",
-                                    color: "#444",
-                                    fontSize: "0.95rem",
-                                    lineHeight: 1.4,
-                                  }}
-                                >
-                                  {review.comment || "No comment provided."}
-                                </p>
+              {reviewsLoading ? (
+                <Skeleton count={3} />
+              ) : !Array.isArray(reviews) || reviews.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#888", fontStyle: "italic" }}>
+                  No reviews yet.
+                </p>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      marginTop: "2rem",
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    {reviews
+                      .slice(0, showAllReviews ? reviews.length : 4)
+                      .map((review) => {
+                        const reviewState = reviewStates[review.id] || {};
+                        const liked = reviewState?.liked ?? false;
+                        const disliked = reviewState?.disliked ?? false;
+                        const likeCount = reviewState?.likeCount ?? review.likeCount ?? 0;
+                        const dislikeCount =
+                          reviewState?.dislikeCount ?? review.dislikeCount ?? 0;
 
-                                {/* Like/Dislike */}
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "flex-end",
-                                    marginTop: "0.5rem",
-                                    gap: "1rem",
-                                  }}
-                                >
-                                  <button
-                                    onClick={() => handleLike(review.id)}
-                                    style={{
-                                      border: "none",
-                                      background: "transparent",
-                                      color: liked ? "#0a7f07" : "#444",
-                                      cursor: "pointer",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "0.25rem",
-                                      fontWeight: 500,
-                                    }}
-                                  >
-                                    <FaThumbsUp /> {likeCount}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDislike(review.id)}
-                                    style={{
-                                      border: "none",
-                                      background: "transparent",
-                                      color: disliked ? "#a00" : "#444",
-                                      cursor: "pointer",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "0.25rem",
-                                      fontWeight: 500,
-                                    }}
-                                  >
-                                    <FaThumbsDown /> {dislikeCount}
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-
-                      {/* Show more / less */}
-                      {reviews.length > 4 && (
-                        <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-                          <button
-                            onClick={handleShowToggle}
+                        return (
+                          <div
+                            key={review.id}
                             style={{
-                              padding: "8px 20px",
-                              border: "1.5px solid #035107ff",
-                              borderRadius: 6,
-                              backgroundColor: showAllReviews ? "#035107ff" : "transparent",
-                              color: showAllReviews ? "white" : "#035107ff",
-                              cursor: "pointer",
-                              fontWeight: 600,
-                              fontSize: "1rem",
-                              transition: "all 0.3s ease",
+                              backgroundColor: "#fff",
+                              borderRadius: "8px",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                              padding: "1rem",
+                              display: "flex",
+                              flexDirection: "column",
+                              position: "relative",
                             }}
                           >
-                            {showAllReviews ? "Show less" : "Load More"}
-                          </button>
-                        </div>
-                      )}
-                    </>
+                            {/* Top Row */}
+                            <div style={{ display: "flex", alignItems: "center" }}>
+                              <div
+                                style={{
+                                  backgroundColor: "#199fcc",
+                                  color: "#fff",
+                                  borderRadius: "50%",
+                                  width: 36,
+                                  height: 36,
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  marginRight: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {review.first_name ? review.first_name[0].toUpperCase() : "A"}
+                              </div>
+
+                              <div>
+                                <div style={{ fontWeight: 600 }}>
+                                  {review.first_name || "Anonymous"}
+                                </div>
+                                <div style={{ color: "#199fcc" }}>
+                                  {"★".repeat(review.rating)}
+                                  {"☆".repeat(Math.max(0, 5 - review.rating))}
+                                </div>
+                              </div>
+
+                              <div style={{ marginLeft: "auto", position: "relative" }}>
+                                <FiMoreVertical
+                                  style={{ cursor: "pointer", color: "#999" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDotsMenuOpen((prev) => (prev === review.id ? null : review.id));
+                                  }}
+                                />
+                                {dotsMenuOpen === review.id && (
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      top: "120%",
+                                      right: 0,
+                                      backgroundColor: "#fff",
+                                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                      borderRadius: 4,
+                                      padding: "0.5rem 1rem",
+                                      cursor: "pointer",
+                                      zIndex: 10,
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={() => {
+                                      // TODO: Add report logic here
+                                      console.log("Report clicked for review id:", review.id);
+                                      setDotsMenuOpen(null);
+                                    }}
+                                  >
+                                    Report
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Comment */}
+                            <p
+                              style={{
+                                marginTop: "0.75rem",
+                                color: "#444",
+                                fontSize: "0.95rem",
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {review.comment || review.text || "No comment provided."}
+                            </p>
+
+                            {/* Like/Dislike */}
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                marginTop: "0.5rem",
+                                gap: "1rem",
+                              }}
+                            >
+                              <button
+                                onClick={() => handleLike(review.id)}
+                                style={{
+                                  border: "none",
+                                  background: "transparent",
+                                  color: liked ? "#0a7f07" : "#444",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.25rem",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                <FaThumbsUp /> {likeCount}
+                              </button>
+                              <button
+                                onClick={() => handleDislike(review.id)}
+                                style={{
+                                  border: "none",
+                                  background: "transparent",
+                                  color: disliked ? "#a00" : "#444",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.25rem",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                <FaThumbsDown /> {dislikeCount}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Show more / less */}
+                  {reviews.length > 4 && (
+                    <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+                      <button
+                        onClick={handleShowToggle}
+                        style={{
+                          padding: "8px 20px",
+                          border: "1.5px solid #035107",
+                          borderRadius: 6,
+                          backgroundColor: showAllReviews ? "#035107" : "transparent",
+                          color: showAllReviews ? "white" : "#035107",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          fontSize: "1rem",
+                          transition: "all 0.3s ease",
+                        }}
+                      >
+                        {showAllReviews ? "Show less" : "Load More"}
+                      </button>
+                    </div>
                   )}
                 </>
               )}
-            {/* Curriculum Tab */}
-            {activeTab === "curriculum" && (
-              <>
-                <h2 style={{ textAlign: "center", fontWeight: "bold" }}>Sections</h2>
-                {curriculumData.length === 0 ? (
-                  <p style={{ textAlign: "center", color: "#888", margin: "2rem" }}>
-                    No curriculum available. Please check your sections and lectures data.
-                  </p>
-                ) : (
-                  <div style={{ marginBottom: 12 }}>
-                    {curriculumData.map((section, sectionIndex) => (
+            </>
+          )}
+
+          {/* CURRICULUM */}
+          {activeTab === "curriculum" && (
+            <>
+              <h2 style={{ textAlign: "center", fontWeight: "bold" }}>Sections</h2>
+              {curriculumData.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#888", margin: "2rem" }}>
+                  No curriculum available. Please check your sections and lectures data.
+                </p>
+              ) : (
+                <div style={{ marginBottom: 12 }}>
+                  {curriculumData.map((section, sectionIndex) => (
+                    <div
+                      key={section.id}
+                      style={{
+                        border: "1px solid #ddd",
+                        borderRadius: "6px",
+                        marginBottom: "12px",
+                        overflow: "hidden",
+                      }}
+                    >
                       <div
-                        key={section.id}
+                        onClick={() =>
+                          setExpandedCurriculum((prev) => ({
+                            ...prev,
+                            [sectionIndex]: !prev[sectionIndex],
+                          }))
+                        }
                         style={{
-                          border: "1px solid #ddd",
-                          borderRadius: "6px",
-                          marginBottom: "12px",
-                          overflow: "hidden",
+                          background: "#f7f7f7",
+                          padding: "12px 16px",
+                          cursor: "pointer",
+                          fontWeight: "600",
                         }}
                       >
-                        {/* Section Header */}
-                        <div
-                          onClick={() =>
-                            setExpandedCurriculum((prev) => ({
-                              ...prev,
-                              [sectionIndex]: !prev[sectionIndex],
-                            }))
-                          }
-                          style={{
-                            background: "#f7f7f7",
-                            padding: "12px 16px",
-                            cursor: "pointer",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {section.name}
-                          <span style={{ float: "right" }}>
-                            {expandedCurriculum[sectionIndex] ? "▼" : "▶"}
-                          </span>
-                        </div>
+                        {`Section ${sectionIndex + 1} - ${section.name}`}
+                        <span style={{ float: "right" }}>
+                          {expandedCurriculum[sectionIndex] ? "▼" : "▶"}
+                        </span>
+                      </div>
 
-                        {/* Section Content */}
-                        {expandedCurriculum[sectionIndex] && (
-                          <div style={{ padding: "12px 16px" }}>
-                            {section.modules.map((module) => {
-                              const isPreview = module.preview;
+                      {expandedCurriculum[sectionIndex] && (
+                        <div style={{ padding: "12px 16px" }}>
+                          {(showAllLectures[sectionIndex]
+                            ? section.modules
+                            : section.modules.slice(0, 2)
+                          ).map((module) => {
+                            const isPreview = module.preview;
+                            const truncatedTitle = module.title
+                              ? module.title.split(" ")[0] +
+                                (module.title.split(" ").length > 1 ? "..." : "")
+                              : "";
+                            const isPlaying = previewPlaying[module.id] || false;
 
-                              // Truncate title to first word + "..."
-                              const truncatedTitle = module.title
-                                ? module.title.split(" ")[0] +
-                                  (module.title.split(" ").length > 1 ? "..." : "")
-                                : "";
-
-                              const isPlaying = previewPlaying[module.id] || false;
-
-                              return (
+                            return (
+                              <div
+                                key={module.id}
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  borderBottom: "1px solid #eee",
+                                  padding: "12px 0",
+                                  cursor: isPreview ? "pointer" : "default",
+                                  opacity: 1,
+                                  filter: "none",
+                                }}
+                                onClick={() => {
+                                  if (isPreview) {
+                                    setPreviewPlaying((prev) => ({
+                                      ...prev,
+                                      [module.id]: !prev[module.id],
+                                    }));
+                                  }
+                                }}
+                              >
                                 <div
-                                  key={module.id}
                                   style={{
                                     display: "flex",
-                                    flexDirection: "column",
-                                    borderBottom: "1px solid #eee",
-                                    padding: "12px 0",
-                                    cursor: isPreview ? "pointer" : "default",
-                                    opacity: 1,
-                                    filter: "none",
-                                  }}
-                                  onClick={() => {
-                                    if (isPreview) {
-                                      setPreviewPlaying((prev) => ({
-                                        ...prev,
-                                        [module.id]: !prev[module.id],
-                                      }));
-                                    }
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
                                   }}
                                 >
-                                  {/* Lecture Header */}
                                   <div
                                     style={{
                                       display: "flex",
-                                      justifyContent: "space-between",
                                       alignItems: "center",
+                                      gap: "6px",
                                     }}
                                   >
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "6px",
-                                      }}
-                                    >
-                                      {isPreview ? (
-                                        <FaUnlock style={{ color: "#006400" }} />
-                                      ) : (
-                                        <FaLock style={{ color: "#888" }} />
+                                    {isPreview ? (
+                                      <FaUnlock style={{ color: "#006400" }} />
+                                    ) : (
+                                      <FaLock style={{ color: "#888" }} />
+                                    )}
+                                    <span style={{ color: "#333", fontWeight: "600" }}>
+                                      {truncatedTitle}
+                                      {isPreview && (
+                                        <span
+                                          style={{
+                                            marginLeft: 8,
+                                            fontSize: 12,
+                                            fontWeight: "bold",
+                                            color: "#006400",
+                                            backgroundColor: "#e6f2e6",
+                                            padding: "2px 6px",
+                                            borderRadius: "4px",
+                                          }}
+                                        >
+                                          Preview
+                                        </span>
                                       )}
-                                      <span style={{ color: "#333", fontWeight: "600" }}>
-                                        {truncatedTitle}
-                                        {isPreview && (
-                                          <span
-                                            style={{
-                                              marginLeft: 8,
-                                              fontSize: 12,
-                                              fontWeight: "bold",
-                                              color: "#006400",
-                                              backgroundColor: "#e6f2e6",
-                                              padding: "2px 6px",
-                                              borderRadius: "4px",
-                                            }}
-                                          >
-                                            Preview
-                                          </span>
-                                        )}
-                                      </span>
-                                    </div>
-                                    <span style={{ color: "#555", fontSize: "0.9rem" }}>
-                                      {module.duration}
                                     </span>
                                   </div>
 
-                                  {/* Video preview player toggled on click or auto open first lecture preview */}
-                                  {isPlaying && module.video_url && (
-                                    <div style={{ marginTop: "1rem" }}>
-                                      <video
-                                        width="100%"
-                                        height="300"
-                                        controls
-                                        style={{
-                                          borderRadius: "6px",
-                                          background: "#000",
-                                        }}
-                                        onClick={(e) => e.stopPropagation()} // prevent parent click toggling video off
-                                      >
-                                        <source src={module.video_url} type="video/mp4" />
-                                        Your browser does not support the video tag.
-                                      </video>
-                                    </div>
-                                  )}
+                                  <span style={{ color: "#555", fontSize: "0.9rem" }}>
+                                    {module.duration}
+                                  </span>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
 
-            {/* Pricing Tab */}
-            {activeTab === "pricing" && (
-              <>
-                <h2 style={{ marginTop: 40, textAlign: "center", fontWeight: "bold" }}>
-                  Choose Your Plan
-                </h2>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                    gap: "24px",
-                    marginTop: "30px",
-                  }}
-                >
-                  {tracks.map((track) => (
-                    <div
-                      key={track.id}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        height: "100%",
-                        border: "1px solid #ddd",
-                        borderRadius: "12px",
-                        padding: "24px",
-                        boxShadow: "0 8px 24px rgba(52, 108, 143, 0.06)",
-                        backgroundColor: "#fff",
-                        minHeight: "420px",
-                      }}
-                    >
-                      <div>
-                        <div style={{ marginBottom: "12px", textAlign: "center" }}>
-                          <span
-                            style={{
-                              fontSize: "1.25rem",
-                              fontWeight: "600",
-                              color: "#199fcc",
-                              backgroundColor: "#e6f2e6",
-                              padding: "6px 16px",
-                              borderRadius: "999px",
-                            }}
-                          >
-                            {track.name}
-                          </span>
-                        </div>
-                        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-                          <p
-                            style={{
-                              fontSize: "1.8rem",
-                              fontWeight: "bold",
-                              margin: 0,
-                              color: "#000",
-                            }}
-                          >
-                            {track.fee ? `₹${Number(track.fee).toFixed(2)}` : "Free"}
-                          </p>
-                          <p style={{ color: "#666", fontSize: "0.95rem" }}>per course</p>
-                        </div>
-                        <ul style={{ listStyle: "none", padding: 0, margin: "16px 0" }}>
-                          {features.map((f) => {
-                            const value = getFeatureValue(track.id, f.id);
-                            return (
-                              <li
-                                key={f.id}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  marginBottom: 10,
-                                  fontSize: "0.95rem",
-                                  color: "#333",
-                                }}
-                              >
-                                <span>
-                                  {f.name}: <strong>{value}</strong>
-                                </span>
-                              </li>
+                                {isPlaying && module.video_url && (
+                                  <div style={{ marginTop: "1rem" }}>
+                                    <video
+                                      width="100%"
+                                      height="300"
+                                      controls
+                                      style={{ borderRadius: "6px", background: "#000" }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <source src={module.video_url} type="video/mp4" />
+                                      Your browser does not support the video tag.
+                                    </video>
+                                  </div>
+                                )}
+                              </div>
                             );
                           })}
-                        </ul>
-                      </div>
-                      <div style={{ marginTop: "auto" }}>
-                      {enrolledTrackIds.includes(track.id) ? (
-                          <div
-                            style={{
-                              textAlign: "center",
-                              fontWeight: "bold",
-                              color: "green",
-                              marginTop: 12,
-                              fontSize: "16px",
-                            }}
-                          >
-                            ✅ Already Enrolled
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleEnroll(track.id)}
-                            style={{
-                              width: "100%",
-                              padding: "10px",
-                              backgroundColor: "#199fcc",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: "4px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Enroll Now
-                          </button>
-                        )}
 
-
-                       {showLoginModal && (
-                          <div style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            width: "100vw",
-                            height: "100vh",
-                            backgroundColor: "rgba(0, 0, 0, 0.4)",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            zIndex: 1000,
-                        }}>
-                          <div
-                            ref={loginModalRef}
-                          >
-                            <button
-                              onClick={() => setShowLoginModal(false)}
-                              style={{
-                                position: "absolute",
-                                top: "10px",
-                                right: "10px",
-                                background: "transparent",
-                                border: "none",
-                                fontSize: "1.2rem",
-                                cursor: "pointer",
-                              }}
-                            >
-                              &times;
-                            </button>
-                           <Login
-                              show={showLoginModal}
-                              onHide={() => setShowLoginModal(false)}
-                              onLoginSuccess={handleLoginSuccess}
-                            />
-
-                          </div>
+                          {section.modules.length > 2 && (
+                            <div style={{ marginTop: "12px" }}>
+                              {showAllLectures[sectionIndex] ? (
+                                <span
+                                  role="button"
+                                  onClick={() =>
+                                    setShowAllLectures((prev) => ({
+                                      ...prev,
+                                      [sectionIndex]: false,
+                                    }))
+                                  }
+                                  style={{
+                                    color: "#007BFF",
+                                    cursor: "pointer",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  Show Less
+                                </span>
+                              ) : (
+                                <span
+                                  role="button"
+                                  onClick={() =>
+                                    setShowAllLectures((prev) => ({
+                                      ...prev,
+                                      [sectionIndex]: true,
+                                    }))
+                                  }
+                                  style={{
+                                    color: "#007BFF",
+                                    cursor: "pointer",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  Load More
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
-
-
-                      </div>
                     </div>
                   ))}
                 </div>
-              </>
-            )}
-          </section>
-        )}
+              )}
+            </>
+          )}
 
-        {/* Share Section */}
-        <section style={styles.shareSection}>
-          <h3>Share this course</h3>
-          <div style={styles.shareIcons}>
-            <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
-              <FaFacebook size={28} style={styles.shareIcon} />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-              <FaTwitter size={28} style={styles.shareIcon} />
-            </a>
-            <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
-              <FaLinkedin size={28} style={styles.shareIcon} />
-            </a>
-            <a
-              href="mailto:?subject=Check%20out%20this%20course"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FaEnvelope size={28} style={styles.shareIcon} />
-            </a>
-          </div>
-        </section>
+          {/* PRICING */}
+          {activeTab === "pricing" && (
+            <>
+              <h2 style={{ marginTop: 40, textAlign: "center", fontWeight: "bold" }}>
+                Choose Your Plan
+              </h2>
 
-        {/* Business Section */}
-        <section style={styles.businessSection}>
-          <h3 style={{ fontSize: "1.6rem", marginBottom: 8 }}>
-            Interested in this course for your business or team?
-          </h3>
-          <p style={{ color: "#555", marginBottom: 16 }}>
-            Train your employees in the most in-demand topics with our business solutions.
-          </p>
-          <button style={styles.requestButton}>Request more info</button>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                  gap: "24px",
+                  marginTop: "30px",
+                }}
+              >
+                {tracks.map((track) => (
+                  <div
+                    key={track.id}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      height: "100%",
+                      border: "1px solid #ddd",
+                      borderRadius: "12px",
+                      padding: "24px",
+                      boxShadow: "0 8px 24px rgba(52, 108, 143, 0.06)",
+                      backgroundColor: "#fff",
+                      minHeight: "420px",
+                    }}
+                  >
+                    <div>
+                      <div style={{ marginBottom: "12px", textAlign: "center" }}>
+                        <span
+                          style={{
+                            fontSize: "1.25rem",
+                            fontWeight: "600",
+                            color: "#199fcc",
+                            backgroundColor: "#e6f2e6",
+                            padding: "6px 16px",
+                            borderRadius: "999px",
+                          }}
+                        >
+                          {track.name}
+                        </span>
+                      </div>
+
+                      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                        <p
+                          style={{
+                            fontSize: "1.8rem",
+                            fontWeight: "bold",
+                            margin: 0,
+                            color: "#000",
+                          }}
+                        >
+                          {track.fee ? `₹${Number(track.fee).toFixed(2)}` : "Free"}
+                        </p>
+                        <p style={{ color: "#666", fontSize: "0.95rem" }}>per course</p>
+                      </div>
+
+                      <ul style={{ listStyle: "none", padding: 0, margin: "16px 0" }}>
+                        {features.map((f) => {
+                          const value = getFeatureValue(track.id, f.id);
+                          return (
+                            <li
+                              key={f.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                marginBottom: 10,
+                                fontSize: "0.95rem",
+                                color: "#333",
+                              }}
+                            >
+                              <span>
+                                {f.name}: <strong>{value}</strong>
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+
+                    <div style={{ marginTop: "auto" }}>
+                      {enrolledTrackIds.includes(track.id) ? (
+                        <div
+                          style={{
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            color: "green",
+                            marginTop: 12,
+                            fontSize: "16px",
+                          }}
+                        >
+                          ✅ Already Enrolled
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEnroll(track.id)}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            backgroundColor: "#199fcc",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "4px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Enroll Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* (Optional) Render the login modal ONCE, outside the map */}
+              {showLoginModal && (
+                <div
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    backgroundColor: "rgba(0, 0, 0, 0.4)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 1000,
+                  }}
+                >
+                  <div ref={loginModalRef} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => setShowLoginModal(false)}
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        background: "transparent",
+                        border: "none",
+                        fontSize: "1.2rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      &times;
+                    </button>
+                    <Login
+                      show={showLoginModal}
+                      onHide={() => setShowLoginModal(false)}
+                      onLoginSuccess={handleLoginSuccess}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </section>
-      </div>
-      <Footer />
-    </>
-  );
+      )}
+
+      {/* SHARE */}
+      <section style={styles.shareSection}>
+        <h3>Share this course</h3>
+        <div style={styles.shareIcons}>
+          <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
+            <FaFacebook size={28} style={styles.shareIcon} />
+          </a>
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+            <FaTwitter size={28} style={styles.shareIcon} />
+          </a>
+          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
+            <FaLinkedin size={28} style={styles.shareIcon} />
+          </a>
+          <a
+            href="mailto:?subject=Check%20out%20this%20course"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaEnvelope size={28} style={styles.shareIcon} />
+          </a>
+        </div>
+      </section>
+
+      {/* BUSINESS CTA */}
+      <section style={styles.businessSection}>
+        <h3 style={{ fontSize: "1.6rem", marginBottom: 8 }}>
+          Interested in this course for your business or team?
+        </h3>
+        <p style={{ color: "#555", marginBottom: 16 }}>
+          Train your employees in the most in-demand topics with our business solutions.
+        </p>
+        <button style={styles.requestButton}>Request more info</button>
+      </section>
+    </div>
+
+    <Footer />
+  </>
+);
+
 };
 
 export default CourseDetail;
@@ -1291,3 +1305,8 @@ const styles = {
   gap: "20px",
 },
 };
+
+
+
+
+

@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 
-const ModalPaymentPopup = ({ trackId, onClose }) => {
+const ModalPaymentPopup = ({ trackId, onCancel }) => {
+  const onClose = onCancel;
   const [paymentData, setPaymentData] = useState(null);
   const [error, setError] = useState(null);
 

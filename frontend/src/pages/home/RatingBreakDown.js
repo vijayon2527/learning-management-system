@@ -1,45 +1,18 @@
 import React from "react";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
 const TopRatingsSlider = ({ reviews }) => {
-  const sliderSettings = {
-    dots: false,
-    infinite: true,
-    speed: 600,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-    pauseOnHover: true,
-    arrows: false,
-    responsive: [
-      {
-        breakpoint: 1200,
-        settings: { slidesToShow: 2 },
-      },
-      {
-        breakpoint: 900,
-        settings: { slidesToShow: 2 },
-      },
-      {
-        breakpoint: 700,
-        settings: { slidesToShow: 1 },
-      },
-    ],
-  };
-
   const truncateText = (text, maxLength = 80) =>
     text.length > maxLength ? text.substring(0, maxLength) + "…" : text;
 
   const ReviewCard = ({ review }) => (
     <div
       style={{
+        flex: "0 0 auto",
+        width: 280,
         background: "#fff",
         borderRadius: 12,
         padding: 16,
-        margin: "0 8px",
+        marginRight: 16,
         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         cursor: "default",
         minHeight: 200,
@@ -49,7 +22,6 @@ const TopRatingsSlider = ({ reviews }) => {
         textAlign: "center",
       }}
     >
-      {/* User Initial Circle */}
       <div
         style={{
           backgroundColor: "#199fcc",
@@ -69,7 +41,6 @@ const TopRatingsSlider = ({ reviews }) => {
         {review.first_name ? review.first_name[0].toUpperCase() : "A"}
       </div>
 
-      {/* Username */}
       <div
         style={{
           fontWeight: "600",
@@ -91,7 +62,6 @@ const TopRatingsSlider = ({ reviews }) => {
         {"☆".repeat(5 - review.rating)}
       </div>
 
-      {/* Review Text */}
       <p
         style={{
           fontSize: "0.9rem",
@@ -103,9 +73,9 @@ const TopRatingsSlider = ({ reviews }) => {
           overflow: "hidden",
           textOverflow: "ellipsis",
         }}
-        title={review.comment}
+        title={review.text}
       >
-        {truncateText(review.comment || "No comment provided.")}
+        {truncateText(review.text || "No comment provided.")}
       </p>
     </div>
   );
@@ -123,11 +93,18 @@ const TopRatingsSlider = ({ reviews }) => {
         Top Ratings
       </h2>
 
-      <Slider {...sliderSettings}>
+      <div
+        style={{
+          display: "flex",
+          overflowX: "auto",
+          paddingBottom: 8,
+          scrollbarWidth: "thin",
+        }}
+      >
         {reviews.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
-      </Slider>
+      </div>
     </div>
   );
 };

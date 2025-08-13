@@ -81,7 +81,7 @@ class Category(BaseModel):
         blank=True,
         null=True,
         verbose_name=_("Slug"),
-        help_text=_("URL-friendly identifier for the course"),
+        help_text=_("URL-friendly identifier for the category"),
     )
 
     class Meta:
@@ -97,6 +97,9 @@ class Category(BaseModel):
     def save(self, *args, **kwargs):
         if self.parent and self.parent == self:
             raise ValidationError(_("A category cannot be its own parent."))
+        
+        if not self.slug and self.name:
+            self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
 class CourseVisibility(models.TextChoices):
@@ -707,7 +710,7 @@ class Enrollment(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.first_name} - {self.course.name}"
+        return f"{self.user.email} - {self.course.name}"
 
     def update_progress(self):
         total_lectures = self.course.sections.aggregate(total_lectures=Count("lectures"))["total_lectures"] or 0

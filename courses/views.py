@@ -58,7 +58,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all().order_by("name")
     serializer_class = CourseSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["category"]
+    filterset_fields = ["category__slug"]
     lookup_field = 'slug'
 
 
@@ -118,6 +118,7 @@ class SectionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
+    filterset_fields = ["track"]
     ordering = ["track", "created_at"]
 
     def get_queryset(self):
@@ -469,6 +470,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 enrollment.track = track
                 enrollment.save(update_fields=["track"])
 
+            enrollment, created = Enrollment.objects.get_or_create(
+                user=user,
+                course=course,
+                defaults={'track': track}
+            )
+
+            if not created and enrollment.track is None:
+                enrollment.track = track
+                enrollment.save(update_fields=["track"])
             return Response({'status': 'success'})
 
         except razorpay.errors.SignatureVerificationError:
