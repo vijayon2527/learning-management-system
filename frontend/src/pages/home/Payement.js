@@ -1,48 +1,43 @@
-// ModalPaymentPopup.js
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
+import { toast } from 'react-toastify';
 
 const ModalPaymentPopup = ({ trackId, onCancel }) => {
   const onClose = onCancel;
   const [paymentData, setPaymentData] = useState(null);
-  const [error, setError] = useState(null);
 
   const initiatePayment = async () => {
     try {
-      const res = await axiosInstance.post('/api/courses/payment/initiate/', {
-        track_id: trackId,
-      });
+      const res = await axiosInstance.post('/api/courses/payment/initiate/', { track_id: trackId });
       setPaymentData(res.data);
     } catch (err) {
       const errorMsg = err?.response?.data?.error;
-      if (errorMsg === 'You have already enrolled in this track.') {
-        alert("✅ You're already enrolled in this track.");
-        onClose();
-      } else {
-        alert(`❌ ${errorMsg || 'Failed to initiate payment.'}`);
-        setError(errorMsg || 'Failed to initiate payment.');
-        onClose();
-      }
+      toast.error(errorMsg || 'Failed to initiate payment.');
+      onClose();
     }
   };
 
   const verifyPayment = async (response) => {
+    if (!response.razorpay_payment_id || !response.razorpay_order_id || !response.razorpay_signature) {
+      toast.error("Missing payment details. Verification aborted.");
+      return;
+    }
+
     try {
       const res = await axiosInstance.post('/api/courses/payment/verify/', {
-        razorpay_order_id: response.razorpay_order_id,
         razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_order_id: response.razorpay_order_id,
         razorpay_signature: response.razorpay_signature,
       });
 
       if (res.data.status === 'success') {
-        alert('✅ Payment successful!');
+        toast.success(res.data.message);
         window.location.href = '/my-learning';
       } else {
-        alert('❌ Payment verification failed.');
-        setError('Payment verification failed.');
+        toast.error(res.data.message || 'Payment verification failed.');
       }
     } catch (err) {
-      alert('❌ Payment verification failed.');
+      toast.error(err?.response?.data?.message || 'Payment verification failed.');
     }
   };
 
@@ -59,16 +54,8 @@ const ModalPaymentPopup = ({ trackId, onCancel }) => {
       handler: function (response) {
         verifyPayment(response);
       },
-      modal: {
-        ondismiss: function () {
-          alert('❌ Payment cancelled.');
-          onClose();
-        },
-      },
-      prefill: {
-        name: paymentData.user_name,
-        email: paymentData.user_email,
-      },
+      modal: { ondismiss: onClose },
+      prefill: { name: paymentData.user_name, email: paymentData.user_email },
       theme: { color: '#199fcc' },
     };
 
@@ -76,17 +63,10 @@ const ModalPaymentPopup = ({ trackId, onCancel }) => {
     rzp.open();
   };
 
-  useEffect(() => {
-    initiatePayment();
-  }, []);
+  useEffect(() => { initiatePayment(); }, []);
+  useEffect(() => { if (paymentData) handleRazorpay(); }, [paymentData]);
 
-  useEffect(() => {
-    if (paymentData) {
-      handleRazorpay();
-    }
-  }, [paymentData]);
-
-  return null; // No UI, just triggers Razorpay popup
+  return null;
 };
 
 export default ModalPaymentPopup;

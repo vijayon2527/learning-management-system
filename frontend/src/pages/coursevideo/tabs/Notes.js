@@ -352,7 +352,7 @@ const Notes = ({ lecture, videoRef }) => {
                 className="clickable-timestamp note-main-timestamp"
                 data-time={n.timestamp}
                 style={{
-                  color: '#007bff',
+                  color: '#199fcc',
                   marginRight: '10px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
@@ -382,7 +382,7 @@ const Notes = ({ lecture, videoRef }) => {
                 >
                   <CIcon
                     icon={cilPen}
-                    style={{ height: 14, width: 14, color: '#007bff' }}
+                    style={{ height: 14, width: 14, color: '#199fcc' }}
                   />
                 </button>
               </CTooltip>

@@ -68,21 +68,28 @@ const MyLearning = () => {
 
   const handleCardClick = async (course, track) => {
     try {
-      const res = await axiosInstance.get(
-        `/api/courses/sections/?track=${track.id}`
-      );
+      if (!track.slug) {
+        console.error("Track slug missing:", track);
+        alert("No slug found for this track.");
+        return;
+      }
+
+      const res = await axiosInstance.get(`/api/courses/sections/?track_slug=${track.slug}`);
       const sections = res.data;
 
-      if (!sections.length || !sections[0].lectures?.length) {
+      if (!sections.length) {
         alert("This track has no available sections or lectures.");
         return;
       }
 
-      const section = sections[0];
-      const lecture = section.lectures[0];
-      navigate(`/course-video/${course.slug}/${section.id}/${lecture.id}`);
+      const section = sections[0]; // first section
+      const lecture = section.lectures[0]; // first lecture
+
+      // ✅ Use section.slug and lecture.slug in URL
+      navigate(
+        `/course-video/${course.slug}/${track.slug}/${section.slug}/${lecture.slug}`
+      );
     } catch (err) {
-      console.error("Navigation error:", err);
       alert("Failed to load track content.");
     }
   };
@@ -146,7 +153,7 @@ const MyLearning = () => {
                   }}
                 >
                   <img
-                    src={course.logo || "/assets/images/default-thumb.jpg"}
+                    src={course.logo || "/assets/images/defaultcourse.jpg"}
                     alt={course.name || "Course Thumbnail"}
                     className="w-100 h-100"
                     style={{
@@ -213,4 +220,4 @@ const MyLearning = () => {
   );
 };
 
-export default MyLearning;
+export default MyLearning; 

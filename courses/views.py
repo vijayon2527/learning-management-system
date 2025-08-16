@@ -65,6 +65,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 class TrackViewSet(viewsets.ModelViewSet):
     serializer_class   = TrackSerializer
     permission_classes = [permissions.AllowAny]
+    # lookup_field = 'slug' 
 
     def get_queryset(self):
         qs = Track.objects.select_related("course").order_by("created_at")
@@ -116,20 +117,20 @@ class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.select_related("track", "track__course")
     serializer_class = SectionSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug'  
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
-    filterset_fields = ["track"]
     ordering = ["track", "created_at"]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        track_id = self.request.query_params.get("track")
-        course_slug = self.request.query_params.get("course_slug")  # ✅ new param
+        track_slug = self.request.query_params.get("track_slug")
+        course_slug = self.request.query_params.get("course_slug")
 
-        if track_id:
-            qs = qs.filter(track_id=track_id)
+        if track_slug:
+            qs = qs.filter(track__slug=track_slug)
         elif course_slug:
-            qs = qs.filter(track__course__slug=course_slug)  # ✅ filter by slug via foreign key relation
+            qs = qs.filter(track__course__slug=course_slug)
 
         if self.request.query_params.get("include_lectures"):
             qs = qs.prefetch_related("lectures")
@@ -137,7 +138,6 @@ class SectionViewSet(viewsets.ModelViewSet):
         return qs
 
     def get_serializer(self, *args, **kwargs):
-        # Pass context to allow serializer access request if needed
         return self.serializer_class(*args, context=self.get_serializer_context(), **kwargs)
 
     @action(detail=True, methods=["get"], url_path="lectures")
@@ -152,15 +152,13 @@ class LectureViewSet(viewsets.ModelViewSet):
     queryset = Lecture.objects.select_related("section", "section__track", "section__track__course")
     serializer_class = LectureSerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["name"]
-    ordering = ["section", "order"]
+    lookup_field = 'slug'
 
     def get_queryset(self):
         qs = super().get_queryset()
-        section_id = self.request.query_params.get("section")
-        if section_id:
-            qs = qs.filter(section_id=section_id)
+        section_slug = self.request.query_params.get("section_slug")
+        if section_slug:
+            qs = qs.filter(section__slug=section_slug)
         return qs
 
     @action(detail=False, methods=["post"], url_path="reorder")
@@ -201,27 +199,23 @@ class PublicCourseViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get"], url_path="track-content")
     def track_content(self, request, slug=None):
         user = request.user
-        print(f"[DEBUG] track_content called — user: {user}, course slug: {slug}")
+        track_slug = request.query_params.get("track_slug")
+
+        if not track_slug:
+            return Response({"error": "track_slug is required"}, status=400)
 
         try:
             course = Course.objects.get(slug=slug)
-            print(f"[DEBUG] Course found: {course.name}")
         except Course.DoesNotExist:
-            print(f"[ERROR] Course with slug '{slug}' not found.")
-            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Course not found"}, status=404)
 
         try:
-            enrollment = Enrollment.objects.get(user=user, course=course)
-            print(f"[DEBUG] Enrollment found — User: {user.email}, Track: {enrollment.track.name}")
+            enrollment = Enrollment.objects.get(user=user, course=course, track__slug=track_slug)
         except Enrollment.DoesNotExist:
-            print(f"[ERROR] Enrollment not found for user: {user.email}, course: {course.name}")
-            return Response({"error": "You are not enrolled in this course"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You are not enrolled in this track of the course"}, status=403)
 
-        track = enrollment.track
-
-        # ✅ Fetch only sections from the enrolled track
-        sections = Section.objects.filter(track=track).prefetch_related("lectures").order_by("order")
-        print(f"[DEBUG] Sections fetched for track: {track.name}, total sections: {sections.count()}")
+        sections = Section.objects.filter(track__slug=track_slug)\
+            .prefetch_related("lectures").order_by("order")
 
         serializer = SectionSerializer(sections, many=True)
         return Response(serializer.data)
@@ -435,20 +429,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if not all([payment_id, razorpay_order_id, signature]):
             return Response({'error': 'Missing razorpay payment details'}, status=status.HTTP_400_BAD_REQUEST)
 
-        params_dict = {
-            'razorpay_order_id': razorpay_order_id,
-            'razorpay_payment_id': payment_id,
-            'razorpay_signature': signature,
-        }
-
         try:
+            # Verify signature
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature,
+            }
             razorpay_client.utility.verify_payment_signature(params_dict)
 
-            try:
-                payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
-            except Payment.DoesNotExist:
-                return Response({'error': 'Payment not found'}, status=status.HTTP_404_NOT_FOUND)
+            # Fetch payment
+            payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
 
+            # Capture payment
             amount = int(payment.amount * 100)
             razorpay_client.payment.capture(payment_id, amount)
 
@@ -456,29 +449,24 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment.razorpay_signature = signature
             payment.status = 'Completed'
             payment.save()
+
+            # Enroll user
             track = payment.track
             course = track.course
             user = payment.user
 
+            # Only one get_or_create, safe version
             enrollment, created = Enrollment.objects.get_or_create(
                 user=user,
                 course=course,
-                defaults={'track': track}
+                track=track
             )
 
-            if not created and enrollment.track is None:
+            # If enrollment exists but track not set, update it
+            if not created and (enrollment.track is None or enrollment.track != track):
                 enrollment.track = track
-                enrollment.save(update_fields=["track"])
+                enrollment.save(update_fields=['track'])
 
-            enrollment, created = Enrollment.objects.get_or_create(
-                user=user,
-                course=course,
-                defaults={'track': track}
-            )
-
-            if not created and enrollment.track is None:
-                enrollment.track = track
-                enrollment.save(update_fields=["track"])
             return Response({'status': 'success'})
 
         except razorpay.errors.SignatureVerificationError:
@@ -487,6 +475,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 payment.status = 'Failed'
                 payment.save()
             return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Payment.DoesNotExist:
+            return Response({'error': 'Payment not found'}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -19,8 +19,10 @@ import uuid
 def course_thumbnail_path(instance, filename):
     return f"course/course_thumbnails/{instance.slug}/{filename}"
 
+
 def promo_video_path(instance, filename):
     return f"course/promotional_videos/{instance.slug}/{filename}"
+
 
 def lecture_video_path(instance, filename):
     return f"lecture/lecture_videos/{instance.section.track.course.slug}/{filename}"
@@ -101,6 +103,7 @@ class Category(BaseModel):
         if not self.slug and self.name:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
 
 class CourseVisibility(models.TextChoices):
     PAID = "paid", _("Paid")
@@ -314,6 +317,9 @@ class Track(BaseModel):
         help_text=_("Indicates whether the track is active"),
     )
 
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+
+
     def __str__(self):
         return f"{self.name} - {self.course.name}"
 
@@ -327,6 +333,11 @@ class Track(BaseModel):
             models.Index(fields=["course", "name"], name="track_course_name_idx"),
         ]
         ordering = ["course__name", "name"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class Feature(BaseModel):
@@ -452,6 +463,16 @@ class Section(BaseModel):
         help_text=_("JSON defining unlock conditions (e.g., sequential completion)"),
     )
 
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # ✅ Use only section name for slug
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
+
     class Meta:
         verbose_name = _("Section")
         verbose_name_plural = _("Sections")
@@ -501,6 +522,7 @@ class Lecture(BaseModel):
         verbose_name=_("Lecture Name"),
         help_text=_("Name of the lecture"),
     )
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
     video = models.FileField(
         upload_to=lecture_video_path,
         verbose_name=_("Lecture Video"),
@@ -566,12 +588,22 @@ class Lecture(BaseModel):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            # Generate a unique slug from lecture name only
+            if not self.slug:
+                base_slug = slugify(self.name)
+                slug = base_slug
+                counter = 1
+                while Lecture.objects.filter(slug=slug).exclude(id=self.id).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                self.slug = slug
+
+            # Auto-set order if not defined
             if not self.order:
-                max_order = (
-                    self.section.lectures.aggregate(Max("order"))["order__max"] or 0
-                )
+                max_order = self.section.lectures.aggregate(Max("order"))["order__max"] or 0
                 self.order = max_order + 1
-            super().save(*args, **kwargs)   # M2M saved afterwards by admin or DRF
+
+            super().save(*args, **kwargs)
 
     def is_accessible(self, user):
         if self.is_preview or not self.is_locked:
@@ -608,8 +640,6 @@ def validate_prerequisites(sender, instance, action, pk_set, **kwargs):
             _("Prerequisites must belong to the same course as this lecture.")
         )
     
-
-
 
 class LectureNote(models.Model):
     user = models.ForeignKey(
@@ -655,8 +685,6 @@ class LectureNote(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} - {self.lecture.name} @ {self.timestamp}"
-
-
 
 
 class Enrollment(models.Model):
@@ -723,7 +751,6 @@ class Enrollment(models.Model):
         self.save(update_fields=["progress", "completed"])
 
 
-
 class LectureCompletion(models.Model):
     user = models.ForeignKey(
         User,
@@ -769,9 +796,6 @@ def update_enrollment_progress(sender, instance, **kwargs):
         enrollment.update_progress()
 
 
-
-
-
 class Payment(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
@@ -808,4 +832,4 @@ class Payment(models.Model):
         ]
 
     def __str__(self):
-        return f"Payment {self.order_number} | {self.status}"
+        return f"Payment | {self.user.email} | {self.status}"

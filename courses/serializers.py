@@ -78,6 +78,7 @@ class TrackFeatureValueUpdateSerializer(serializers.ModelSerializer):
 
 
 class LectureSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
     section_name = serializers.CharField(source="section.name", read_only=True)
     track_name = serializers.CharField(source="section.track.name", read_only=True)
     course_name = serializers.CharField(source="section.track.course.name", read_only=True)
@@ -92,6 +93,7 @@ class LectureSerializer(serializers.ModelSerializer):
             "section_name",
             "track_name",
             "course_name",
+             "slug",
             "name",
             "video",
             "video_url",
@@ -126,6 +128,7 @@ class LectureSerializer(serializers.ModelSerializer):
 
 
 class SectionSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
     track_name = serializers.CharField(source="track.name", read_only=True)
     course_name = serializers.CharField(source="track.course.name", read_only=True)
     lectures = LectureSerializer(many=True, read_only=True)  # ✅ Explicitly add this
@@ -133,16 +136,17 @@ class SectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Section
         fields = (
-            "id", "track", "name", "description",
+            "id", "slug", "track", "name", "description",
             "is_locked", "unlock_criteria", "order",
             "estimated_duration", "created_at", "updated_at",
             "track_name", "course_name", "is_active",
-            "lectures",  
+            "lectures",
         )
         read_only_fields = (
             "id", "order", "estimated_duration",
             "created_at", "updated_at", "track_name", "course_name",
         )
+
 
 class PublicCourseSerializer(serializers.ModelSerializer):
     instructor = serializers.CharField(source='instructor.get_full_name', default='Instructor')
@@ -201,6 +205,7 @@ class PublicCourseSerializer(serializers.ModelSerializer):
     def get_is_enrolled(self, obj):
         user = self.context['request'].user
         return Enrollment.objects.filter(user=user, course=obj).exists()
+
 
 class LectureNoteSerializer(serializers.ModelSerializer):
     timestamp = serializers.CharField()  # accept string from frontend

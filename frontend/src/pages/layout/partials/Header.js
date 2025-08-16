@@ -127,7 +127,7 @@ const handleLogout = () => {
     {
       key: "categories",
       title: "Categories",
-      path: "/categories",
+      path: "/Categories",
       links: [
         { to: "/categories/aws", label: "AWS" },
         { to: "/categories/devops", label: "DevOps" },
@@ -377,10 +377,10 @@ const handleLogout = () => {
                                 onClick={() => {
                                   if (item.courseSlug && item.sectionId && item.lectureId) {
                                     navigate(`/course-video/${item.courseSlug}/${item.sectionId}/${item.lectureId}`);
-                                  } else {
-                                    alert("Invalid lecture data.");
-                                  }
-                                }}
+                                } else {
+                                  alert("Invalid lecture data.");
+                                }
+                              }}
                               >
                                 <img src={item.thumbnail} alt={item.title} className="learning-thumbnail" />
                                 <div className="learning-details">
