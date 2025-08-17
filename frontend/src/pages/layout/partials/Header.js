@@ -375,13 +375,14 @@ const handleLogout = () => {
                                 key={`rw-${idx}`}
                                 style={{ cursor: "pointer" }}
                                 onClick={() => {
-                                  if (item.courseSlug && item.sectionId && item.lectureId) {
-                                    navigate(`/course-video/${item.courseSlug}/${item.sectionId}/${item.lectureId}`);
-                                } else {
-                                  alert("Invalid lecture data.");
-                                }
-                              }}
-                              >
+                                  if (item.courseSlug && item.trackSlug && item.sectionSlug && item.lectureSlug) {
+                                    navigate(`/course-video/${item.courseSlug}/${item.trackSlug}/${item.sectionSlug}/${item.lectureSlug}`);
+                                  } else {
+                                    // fallback using ids if old data
+                                    navigate(`/course-video/${item.courseSlug}/${item.trackSlug}/${item.sectionId}/${item.lectureId}`);
+                                  }
+                                }}
+                                >
                                 <img src={item.thumbnail} alt={item.title} className="learning-thumbnail" />
                                 <div className="learning-details">
                                   <div className="learning-course-title">{item.courseName} — {item.title}</div>

@@ -29,6 +29,7 @@ import Login from "../../views/pages/login/Login";
 
 const CourseDetail = (user) => {
   const { slug } = useParams();
+  const courseSlug = slug;   
   const [course, setCourse] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [features, setFeatures] = useState([]);
@@ -89,56 +90,42 @@ useEffect(() => {
   fetchData();
 }, [slug]);
 
-  useEffect(() => {
-    const loadCurriculum = async () => {
-      if (!tracks.length) {
-        setCurriculumData([]);
-        return;
-      }
-      try {
-        const sectionPromises = tracks.map((track) =>
-          axiosInstance.get(`/api/courses/sections/?track=${track.id}`)
-        );
-        const sectionResponses = await Promise.all(sectionPromises);
-        const sectionsWithTrack = [];
-        sectionResponses.forEach((res, idx) => {
-          const track = tracks[idx];
-          res.data.forEach((section) => {
-            sectionsWithTrack.push({
-              ...section,
-              trackName: track.name,
-              trackId: track.id,
-            });
-          });
-        });
-        const lecturePromises = sectionsWithTrack.map((section) =>
-          axiosInstance.get(`/api/courses/lectures/?section=${section.id}`)
-        );
-        const lectureResponses = await Promise.all(lecturePromises);
-        const curriculum = sectionsWithTrack.map((section, index) => ({
-          id: section.id,
-          trackId: section.trackId,
-          trackName: section.trackName,
-          name: section.name,
-          description: `${lectureResponses[index].data.length} lectures`,
-          unlocked: true,
-          modules: lectureResponses[index].data.map((lec) => ({
-            id: lec.id,
-            title: lec.name,
-            duration: lec.duration || "00:05:00",
-            preview: lec.is_preview || false,
-            video_url: lec.video || null,
-          })),
-        }));
-        setCurriculumData(curriculum);
-        setExpandedCurriculum({ 0: true });
-      } catch (error) {
-        console.error("Error loading curriculum:", error);
-        setCurriculumData([]);
-      }
-    };
-    loadCurriculum();
-  }, [tracks]);
+useEffect(() => {
+  const loadCurriculum = async () => {
+    if (!courseSlug) {   // assume you're on CourseDetails or similar and have slug
+      setCurriculumData([]);
+      return;
+    }
+
+    try {
+      const resSec = await axiosInstance.get(`/api/courses/sections/?course_slug=${courseSlug}&include_lectures=true`);
+
+      // resSec.data now contains every section of this course + lectures prefetched
+      const curriculum = resSec.data.map((section) => ({
+        id: section.id,
+        trackId: section.track,          // track id field (you may need to check your serializer)
+        trackName: section.track_name,   // include this from serializer
+        name: section.name,
+        description: `${section.lectures.length} lectures`,
+        unlocked: true,
+        modules: section.lectures.map((lec) => ({
+          id: lec.id,
+          title: lec.name,
+          duration: lec.duration || "00:05:00",
+          preview: lec.is_preview || false,
+          video_url: lec.video || null,
+        })),
+      }));
+      setCurriculumData(curriculum);
+      setExpandedCurriculum({ 0: true });
+    } catch (e) {
+      console.error(e);
+      setCurriculumData([]);
+    }
+  };
+
+  loadCurriculum();
+}, [courseSlug]);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });

@@ -127,4 +127,46 @@
 }
 
   
-  
+  /* NoteEditor.css */
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.editor-footer span {
+  font-size: 14px;
+  color: #666;
+}
+
+.editor-footer .btn-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* NoteEditor.css */
+.btn-save-note {
+  background-color: #199fcc !important;
+  border-color: #199fcc !important;
+  color: #fff !important;
+}
+
+.btn-save-note:disabled {
+  opacity: 0.7;
+}
+.btn-save-note {
+  background-color: #199fcc !important;
+  border-color: #199fcc !important;
+  color: #fff !important;
+}
+
+.btn-cancel-note {
+  background-color: #f1f1f1 !important;
+  border-color: #ccc !important;
+  color: #555 !important;
+}
+
+.btn-cancel-note:hover {
+  background-color: #e5e5e5 !important;
+}

@@ -57,9 +57,10 @@ const Trainings = () => {
                 >
                   <div className="image-wrapper">
                     <img
-                      src={course.logo || "https://via.placeholder.com/600x300?text=No+Image"}
+                      src={course.logo || "/assets/images/defaultcourse.jpg"}
                       alt={course.name}
                       className="card-img"
+                       style={{ height: "280px", objectFit: "cover" }} 
                     />
                   </div>
                   <div className="card-text">

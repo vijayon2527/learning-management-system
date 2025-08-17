@@ -297,35 +297,28 @@ const Notes = ({ lecture, videoRef }) => {
             placeholder="Write your note... Type a time to jump video (e.g. 00:01:23)."
           />
 
-          <div className="editor-footer d-flex align-items-center justify-content-between">
-            <span>{wordCount} / 1000</span>
-            <div>
-              <CButton
-                type="button"
-                color="secondary"
-                variant="outline"
-                className="me-2"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </CButton>
-              <CButton
-                type="submit"
-                color="success"
-                disabled={isSubmitting}
-                onClick={handleSave}
-              >
-                {isSubmitting
-                  ? editingNoteId
-                    ? 'Updating...'
-                    : 'Saving...'
-                  : editingNoteId
-                  ? 'Update Note'
-                  : 'Save Note'}
-              </CButton>
-            </div>
-          </div>
+       <div className="editor-footer">
+      <span>{wordCount} / 1000</span>
+      <div className="btn-group">
+        <CButton
+          type="button"
+          className="btn-cancel-note"
+          variant="outline"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </CButton>
+        <CButton
+          type="button"
+           className="btn-save-note"
+          disabled={isSubmitting}
+          onClick={handleSave}
+        >
+          {editingNoteId ? (isSubmitting ? 'Updating...' : 'Update Note') : isSubmitting ? 'Saving...' : 'Save Note'}
+        </CButton>
+      </div>
+    </div>
         </div>
       )}
 

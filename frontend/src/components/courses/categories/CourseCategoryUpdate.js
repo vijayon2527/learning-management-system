@@ -194,19 +194,19 @@ const CategoryUpdate = ({ category, onUpdated, onClose, categories }) => {
         </div>
       )}
 
-      <div className="d-flex justify-content-end">
-        <CButton
-          type="button"
-          color="secondary"
-          onClick={onClose}
-          className="me-2"
-        >
-          Cancel
-        </CButton>
+    <div className="d-flex justify-content-end">
+      <CButton
+        type="button"
+        color="secondary"
+        onClick={onClose}
+        className="me-2"
+      >
+        Cancel
+      </CButton>
         <CButton type="submit" color="primary" disabled={submitting}>
-          {submitting ? "Updating..." : "Update"}
-        </CButton>
-      </div>
+        {submitting ? "Updating..." : "Update Category"}
+      </CButton>
+    </div>
     </CForm>
   );
 };
